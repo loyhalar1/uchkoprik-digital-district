@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "uchkoprik-digital-district",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-18",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/", "/index.html", "/api/*", "/media/*", "/sitemap.xml", "/robots.txt", "/admin", "/admin/*",
+      "/uz", "/uz/*", "/en", "/en/*", "/ru", "/ru/*", "/zh", "/zh/*", "/ar", "/ar/*",
+      "/tr", "/tr/*", "/ko", "/ko/*", "/de", "/de/*", "/fr", "/fr/*", "/es", "/es/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "uchkoprik-district",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "uchkoprik-media"
+    }
+  ],
+  "ai": { "binding": "AI" },
+  "vars": {
+    "ENABLE_WORKERS_AI": "false",
+    "PUBLIC_BASE_URL": ""
+  },
+  "observability": {"enabled": true}
+}

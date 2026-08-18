@@ -1,0 +1,4 @@
+# Local development only. Do not commit .dev.vars.
+ADMIN_TOKEN=replace-with-a-long-random-secret
+ENABLE_WORKERS_AI=false
+PUBLIC_BASE_URL=http://localhost:8787

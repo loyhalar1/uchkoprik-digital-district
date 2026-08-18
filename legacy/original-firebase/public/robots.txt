@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /boshqaruv-k9m2.html
+Disallow: /admin
+Disallow: /*?*session*
+
+Sitemap: https://uchkoprik.uz/sitemap.xml

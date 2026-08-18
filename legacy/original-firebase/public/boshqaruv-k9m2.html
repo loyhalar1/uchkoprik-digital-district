@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>SysOne — Admin | Uchko'prik tumani</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#0A0E1A; --bg-1:#0F1426; --bg-2:#141B33;
+  --glass:rgba(255,255,255,.06); --glass-strong:rgba(255,255,255,.10); --glass-border:rgba(255,255,255,.14);
+  --text:#F1F3F9; --text-dim:#8B93AB; --text-faint:#5B637C;
+  --accent-a:#6366F1; --accent-b:#06B6D4;
+  --accent-grad:linear-gradient(135deg,#6366F1 0%,#06B6D4 100%);
+  --danger:#F87171; --ok:#34D399; --warn:#FBBF24;
+  --r-xl:24px; --r-lg:18px; --r-md:13px; --r-sm:9px; --r-full:999px;
+  --shadow-soft:0 8px 24px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--bg-0);-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:'Outfit',system-ui,sans-serif;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+::-webkit-scrollbar{width:7px;height:7px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+#bg{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 900px 700px at 12% -8%, rgba(99,102,241,.20), transparent 60%),
+    radial-gradient(ellipse 800px 700px at 110% 18%, rgba(6,182,212,.14), transparent 60%),
+    linear-gradient(180deg,var(--bg-0),var(--bg-1) 50%,var(--bg-2));
+}
+.glass{background:var(--glass);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid var(--glass-border);border-radius:var(--r-lg);box-shadow:var(--shadow-soft);}
+.glass-strong{background:var(--glass-strong);backdrop-filter:blur(32px) saturate(180%);-webkit-backdrop-filter:blur(32px) saturate(180%);border:1px solid rgba(255,255,255,.18);}
+.brand-mark{display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.brand-mark.fallback{background:var(--accent-grad);font-family:'Outfit';font-weight:800;color:#fff;}
+.brand-mark img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* ---------- Login gate ---------- */
+#login-screen{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{width:360px;max-width:100%;padding:32px 28px;text-align:center;}
+.login-mark{width:60px;height:60px;border-radius:18px;font-size:23px;margin:0 auto 18px;}
+.login-box h1{font-size:18px;margin:0 0 4px;}
+.login-box p{font-size:12.5px;color:var(--text-dim);margin:0 0 22px;}
+.login-box input{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text);
+  border-radius:var(--r-md);padding:13px 16px;font-size:15px;outline:none;text-align:center;letter-spacing:2px;
+}
+.login-box input:focus{border-color:var(--accent-a);}
+.login-err{font-size:12px;color:var(--danger);margin-top:10px;display:none;}
+.login-btn{
+  width:100%;margin-top:16px;padding:13px;border-radius:var(--r-md);border:none;cursor:pointer;
+  font-weight:700;font-size:14px;background:var(--accent-grad);color:#fff;transition:.15s ease;
+}
+.login-btn:hover{filter:brightness(1.08);}
+.login-btn:disabled{opacity:.6;cursor:default;}
+.login-note{font-size:10.5px;color:var(--text-faint);margin-top:18px;line-height:1.5;}
+.tg-phone-pill{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px;border-radius:var(--r-md);margin-bottom:14px;
+  background:rgba(42,171,238,.10);border:1px solid rgba(42,171,238,.3);
+  color:#7CC7F0;font-size:13.5px;font-weight:700;letter-spacing:1px;
+}
+.tg-phone-pill svg{color:#2AABEE;flex-shrink:0;}
+.login-btn.secondary{
+  background:rgba(255,255,255,.06);color:var(--text-dim);
+  border:1px solid var(--glass-border);margin-top:10px;
+}
+.login-btn.secondary:not(:disabled):hover{color:var(--text);}
+#tg-code-input{letter-spacing:8px;font-size:19px;font-weight:700;}
+
+/* ---------- Dashboard shell ---------- */
+#dash{position:fixed;inset:0;z-index:1;display:none;flex-direction:column;}
+#dash.show{display:flex;}
+#dash-header{
+  display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--glass-border);
+  flex-shrink:0;
+}
+.dh-mark{width:38px;height:38px;border-radius:12px;font-size:15px;}
+#dash-header h1{font-size:15px;margin:0;}
+#dash-header span{font-size:11px;color:var(--text-dim);}
+
+/* TAB NAVIGATION */
+.dash-tabs { display:flex; gap:8px; margin-left:20px; }
+.tab-btn { background:rgba(255,255,255,.05); border:1px solid var(--glass-border); color:var(--text-dim); padding:8px 16px; border-radius:var(--r-full); font-size:13px; font-weight:600; cursor:pointer; transition:.15s ease; }
+.tab-btn:hover { background:rgba(255,255,255,.1); color:var(--text); }
+.tab-btn.active { background:var(--accent-grad); color:#fff; border-color:transparent; }
+
+.dash-spacer{flex:1;}
+.hbtn{
+  display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:var(--r-md);
+  border:1px solid var(--glass-border);background:rgba(255,255,255,.04);color:var(--text-dim);
+  font-size:12.5px;font-weight:600;transition:.15s ease;
+}
+.hbtn:hover{color:var(--text);background:var(--glass-strong);}
+.hbtn svg{width:15px;height:15px;}
+.hbtn.danger{color:var(--danger);border-color:rgba(248,113,113,.3);}
+
+#dash-body{flex:1;display:flex;overflow:hidden; position:relative;}
+
+/* TAB CONTENT AREAS */
+.tab-content { position:absolute; inset:0; display:none; }
+.tab-content.active { display:flex; }
+
+/* --- TAB 1: MFY LIST & EDIT (Original layout) --- */
+#mfy-list-panel{width:300px;flex-shrink:0;border-right:1px solid var(--glass-border);display:flex;flex-direction:column; height:100%;}
+#mfy-search{margin:14px;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text);border-radius:var(--r-full);padding:10px 16px;font-size:13px;outline:none;}
+#mfy-search:focus{border-color:var(--accent-a);}
+#stats-row{display:flex;gap:8px;margin:0 14px 12px;}
+.stat-chip{flex:1;text-align:center;padding:8px 4px;border-radius:var(--r-sm);background:rgba(255,255,255,.04);border:1px solid var(--glass-border);}
+.stat-chip b{display:block;font-family:'Outfit';font-size:15px;}
+.stat-chip span{font-size:9px;color:var(--text-faint);text-transform:uppercase;}
+#mfy-list{flex:1;overflow-y:auto;padding:0 8px 14px;}
+.mfy-list-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);cursor:pointer;
+  transition:.12s ease;margin-bottom:3px;
+}
+.mfy-list-item:hover{background:rgba(255,255,255,.04);}
+.mfy-list-item.active{background:rgba(99,102,241,.16);border:1px solid rgba(99,102,241,.3);}
+.mfy-list-item .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.mfy-list-item .nm{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mfy-list-item .stbadge{font-size:9.5px;padding:2px 7px;border-radius:99px;flex-shrink:0;}
+.mfy-list-item .stbadge.full{color:var(--ok);background:rgba(52,211,153,.12);}
+.mfy-list-item .stbadge.partial{color:var(--warn);background:rgba(251,191,36,.12);}
+
+#edit-panel{flex:1;overflow-y:auto;padding:24px 28px 60px;}
+#edit-empty{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-faint);}
+#edit-empty svg{width:42px;height:42px;opacity:.4;}
+.edit-form-wrap{max-width:640px;}
+.edit-form-wrap h2{font-size:19px;margin:0 0 18px;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field{margin-bottom:14px;}
+.field.full{grid-column:1/-1;}
+.field label{display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:6px;font-weight:600;}
+.field input,.field select{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text);
+  border-radius:var(--r-sm);padding:11px 13px;font-size:13.5px;outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--accent-a);}
+.photo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px;max-width:420px;}
+.photo-slot{aspect-ratio:1;border-radius:var(--r-sm);border:1.5px dashed var(--glass-border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;background:rgba(255,255,255,.03);}
+.photo-slot img{width:100%;height:100%;object-fit:cover;}
+.photo-slot svg{width:18px;height:18px;color:var(--text-faint);}
+.photo-slot .rm{position:absolute;top:3px;right:3px;width:19px;height:19px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;}
+.save-bar{display:flex;gap:10px;margin-top:22px;}
+.pbtn{padding:12px 22px;border-radius:var(--r-md);border:none;cursor:pointer;font-weight:700;font-size:13.5px;transition:.15s ease;}
+.pbtn.primary{background:var(--accent-grad);color:#fff;}
+.pbtn.primary:hover{filter:brightness(1.08);}
+.pbtn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--glass-border);color:var(--text);}
+.pbtn.danger-ghost{background:transparent;border:1px solid rgba(248,113,113,.3);color:var(--danger);}
+.pbtn:disabled{opacity:.6;cursor:default;}
+
+/* --- TAB 2: DISTRICT INFO --- */
+.district-panel { padding: 24px 28px 60px; overflow-y: auto; width: 100%; }
+.section-card { background: rgba(255,255,255,.02); border: 1px solid var(--glass-border); border-radius: var(--r-md); padding: 24px; margin-bottom: 24px; max-width: 800px; }
+
+/* ---------- Toast ---------- */
+#toast-wrap{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{padding:11px 20px;border-radius:var(--r-full);font-size:12.5px;font-weight:600;animation:toastIn .25s ease, toastOut .25s ease 2.6s forwards;}
+.toast.ok{color:var(--ok);}
+.toast.err{color:var(--danger);}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-8px);}}
+
+@media (max-width:820px){
+  #tab-mfy{flex-direction:column;}
+  #mfy-list-panel{width:auto;height:240px;border-right:none;border-bottom:1px solid var(--glass-border);flex-shrink:0;}
+  .field-grid{grid-template-columns:1fr;}
+  #edit-panel, .district-panel{padding:18px;}
+  #dash-header{flex-wrap: wrap; gap:10px;}
+  .dash-tabs{order: 3; width: 100%; margin-left: 0; padding-top: 10px; border-top: 1px solid var(--glass-border);}
+}
+/* --- ADMINLAR TAB (C-blok) --- */
+.admin-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-md);background:rgba(255,255,255,.03);border:1px solid var(--glass-border);}
+.admin-row.inactive{opacity:.5;}
+.admin-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-family:'Outfit';flex-shrink:0;}
+.admin-info{flex:1;min-width:0;}
+.admin-info b{display:block;font-size:14px;}
+.admin-info span{font-size:12px;color:var(--text-dim);}
+.admin-role-badge{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:var(--r-full);text-transform:uppercase;letter-spacing:.03em;}
+.admin-role-badge.superadmin{background:rgba(99,102,241,.18);color:#a5a8ff;}
+.admin-role-badge.admin{background:rgba(255,255,255,.08);color:var(--text-dim);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal-box{width:100%;max-width:440px;border-radius:var(--r-lg);padding:26px;}
+.modal-box h3{margin-top:0;font-family:'Outfit';}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="toast-wrap"></div>
+
+<div id="login-screen">
+  <div class="login-box glass-strong">
+    <div class="login-mark brand-mark fallback">S</div>
+    <h1>SysOne — Admin</h1>
+    <p>Boshqaruv paneliga kirish faqat Telegram tasdiqlash kodi orqali</p>
+
+    <div id="tg-step-1">
+      <div class="tg-phone-pill">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        <span>Telegram username orqali kirish</span>
+      </div>
+      <input type="text" id="tg-username-input" placeholder="@username" autocomplete="off" style="width:100%;box-sizing:border-box;margin:10px 0;padding:11px 14px;border-radius:var(--r-full);border:1px solid var(--glass-border);background:rgba(255,255,255,.06);color:var(--text);font-size:14px;outline:none;">
+      <button class="login-btn" id="tg-request-btn">Telegram orqali kod olish</button>
+      <p style="margin-top:10px;font-size:12px;color:var(--text-dim)">Birinchi marta kirayotgan bo'lsangiz, avval botga <b>/start</b> bosing, so'ng ID'ingizni superadministratorga yuboring.</p>
+    </div>
+
+    <div id="tg-step-2" style="display:none">
+      <p style="margin-top:0">Kod Telegramingizga yuborildi. 5 daqiqa ichida kiriting:</p>
+      <input type="text" id="tg-code-input" placeholder="● ● ● ● ● ●" autocomplete="one-time-code" inputmode="numeric" maxlength="6">
+      <button class="login-btn" id="tg-verify-btn">Tasdiqlash va kirish</button>
+      <button class="login-btn secondary" id="tg-resend-btn" disabled>Qayta yuborish (60)</button>
+    </div>
+
+    <div class="login-err" id="login-err">Kod noto'g'ri</div>
+    <div class="login-note" id="firebase-warn"></div>
+  </div>
+</div>
+
+<div id="dash">
+  <div id="dash-header" class="glass">
+    <div class="dh-mark brand-mark fallback">S</div>
+    <div><h1>SysOne — Admin</h1><span id="dh-sub">Uchko'prik tumani · boshqaruv paneli</span></div>
+    
+    <div class="dash-tabs">
+      <button class="tab-btn active" onclick="switchTab('mfy')">📍 MFY Tahrirlash</button>
+      <button class="tab-btn" onclick="switchTab('district')">🏛 Tuman Pasporti</button>
+      <button class="tab-btn" id="tab-btn-admins" onclick="switchTab('admins')" style="display:none">👥 Adminlar</button>
+    </div>
+
+    <div class="dash-spacer"></div>
+    <div class="hbtn danger" id="btn-logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Chiqish
+    </div>
+  </div>
+
+  <div id="dash-body">
+    <!-- 1. MFY TAHRIRLASH QISMI (ASL NUSXA) -->
+    <div id="tab-mfy" class="tab-content active">
+      <div id="mfy-list-panel">
+        <input id="mfy-search" type="text" placeholder="MFY qidirish…">
+        <div id="stats-row">
+          <div class="stat-chip"><b id="st-total">51</b><span>Jami</span></div>
+          <div class="stat-chip"><b id="st-full">0</b><span>To'liq</span></div>
+          <div class="stat-chip"><b id="st-partial">51</b><span>Bo'sh</span></div>
+        </div>
+        <div id="mfy-list"></div>
+      </div>
+      
+      <div id="edit-panel">
+        <div id="edit-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Tahrirlash uchun chapdan MFY tanlang</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TUMAN PASPORTI QISMI (YANGI) -->
+    <div id="tab-district" class="tab-content district-panel">
+      <div class="edit-form-wrap" style="max-width:800px; margin: 0 auto;">
+        <h2>Tuman umumiy ma'lumotlari va Pasporti</h2>
+        
+        <div class="section-card">
+          <h3 style="margin-top:0; font-family:'Outfit'">1. Asosiy ko'rsatkichlar</h3>
+          <div class="field-grid">
+            <div class="field"><label>Tuman hokimi</label><input id="dist-head" placeholder="F.I.Sh"></div>
+            <div class="field"><label>Tashkil topgan sana</label><input id="dist-founded" placeholder="Masalan: 1926 yil 29 sentyabr"></div>
+            <div class="field"><label>Umumiy maydon</label><input id="dist-area" placeholder="Masalan: 271 kv.km"></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3 style="margin-top:0; font-family:'Outfit'">2. Iqtisodiyot (2026-yil 1-yarim yillik)</h3>
+          <div class="field-grid">
+            <div class="field"><label>Sanoat hajmi (mlrd.so'm)</label><input id="dist-ind" placeholder="2 762,8"></div>
+            <div class="field"><label>Qishloq xo'jaligi hajmi (mlrd.so'm)</label><input id="dist-agr" placeholder="1 654,0"></div>
+            <div class="field"><label>Xizmatlar hajmi (mlrd.so'm)</label><input id="dist-srv" placeholder="1 264,9"></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3 style="margin-top:0; font-family:'Outfit'">3. Bandlik va ijtimoiy himoya</h3>
+          <div class="field-grid">
+            <div class="field"><label>Ishsizlik darajasi (%)</label><input id="dist-unemp" placeholder="4,0"></div>
+            <div class="field"><label>Kambag'allik darajasi (%)</label><input id="dist-pov" placeholder="4,4"></div>
+          </div>
+        </div>
+
+        <button class="pbtn primary" id="dist-save-btn">Barcha ma'lumotlarni saqlash</button>
+      </div>
+    </div>
+
+    <!-- 3. ADMINLAR QISMI (YANGI — C-blok) -->
+    <div id="tab-admins" class="tab-content" style="flex-direction:column;overflow:auto;padding:28px;">
+      <div style="max-width:820px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div>
+            <h2 style="margin:0 0 4px">Adminlar ro'yxati</h2>
+            <p style="margin:0;font-size:12.5px;color:var(--text-dim)">Boshqaruv paneliga kirish huquqi bor foydalanuvchilar</p>
+          </div>
+          <button class="pbtn primary" id="admin-add-open-btn" style="display:none">+ Yangi admin qo'shish</button>
+        </div>
+        <div id="admins-empty-note" style="display:none;font-size:12.5px;color:var(--text-dim)">Faqat superadmin adminlar ro'yxatini boshqara oladi. Sizga bu bo'lim faqat o'qish uchun ko'rinadi.</div>
+        <div id="admins-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- YANGI ADMIN QO'SHISH MODALI -->
+<div class="modal-overlay" id="admin-modal-overlay">
+  <div class="modal-box glass-strong">
+    <h3>Yangi admin qo'shish</h3>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:-8px">Avval yangi odam botga <b>/start</b> bosgan bo'lishi kerak. Uning username'ini kiriting — ID avtomatik topiladi.</p>
+    <div class="field" style="margin-bottom:12px">
+      <label>Telegram username</label>
+      <input id="admin-form-username" placeholder="@username">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Telegram ID <span id="admin-form-id-status" style="font-weight:400;color:var(--text-faint)"></span></label>
+      <input id="admin-form-id" placeholder="Avtomatik topiladi yoki qo'lda kiriting">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>F.I.Sh</label>
+      <input id="admin-form-fullname" placeholder="Familiya Ism Sharif">
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Rol</label>
+      <select id="admin-form-role">
+        <option value="admin">Admin</option>
+        <option value="superadmin">Superadmin</option>
+      </select>
+    </div>
+    <div class="login-err" id="admin-form-err"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="pbtn primary" id="admin-form-save" style="flex:1">Qo'shish</button>
+      <button class="pbtn ghost" id="admin-form-cancel" style="flex:1">Bekor qilish</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
+<script>
+// --- LOGO ---
+const LOGO_URL = "logo.svg"; 
+function applyBrandMarks(){
+  if(!LOGO_URL) return;
+  document.querySelectorAll('.brand-mark').forEach(el => { el.classList.remove('fallback'); el.innerHTML = `<img src="${LOGO_URL}" alt="SysOne">`; });
+}
+applyBrandMarks();
+
+// --- TABS LOGIC ---
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById('tab-' + tabId).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// --- BASE DATA ---
+const BASE_MFY = [{"id":1,"name":"Фаровон","head":"Хайдаров Кодиржон","phone":"90-588-41-16","lat":40.544674,"lng":70.997746,"population":4042,"households":753,"families":1246,"specialization":"Дехқончилик"},{"id":2,"name":"Янгиқишлоқ","head":"Aбдумуталибов Нуриддин Мухиддин ўғли","phone":"90-588-08-08","lat":40.518162,"lng":71.002826,"population":4114,"households":752,"families":976,"specialization":"Боғдочилик"},{"id":3,"name":"Турғоқ","head":"Ходжаев Рашид Абдурахмонович","phone":"90-150-17-11","lat":40.535308,"lng":71.004499,"population":4110,"households":689,"families":1178,"specialization":"Дехқончилик"},{"id":4,"name":"Яккамулла","head":"Мамажонов Нодиржон","phone":"99-608-58-30","lat":40.565068,"lng":70.982662,"population":5543,"households":1201,"families":1483,"specialization":"Савдо ва хизмат кўрсатиш"},{"id":5,"name":"Ҳасанқора","head":"Ёрматов Акрамжон","phone":"99-974-38-78","lat":40.553974,"lng":71.022554,"population":4017,"households":771,"families":1053,"specialization":"Дехқончилик"},{"id":6,"name":"Бахрин","head":"Сатторов Улуғбек","phone":"88-665-09-91","lat":40.554992,"lng":71.039505,"population":4264,"households":790,"families":1224,"specialization":"Дехқончилик"},{"id":7,"name":"Янгиобод","head":"Маматов Наримонжон","phone":"91-130-00-69","lat":40.541726,"lng":71.018373,"population":4174,"households":730,"families":1201,"specialization":"Дехқончилик"},{"id":8,"name":"Тинчлик","head":"Мелиқўзиев Муроджон","phone":"91-685-80-52","lat":40.543873,"lng":71.052059,"population":6347,"households":1207,"families":1881,"specialization":"Кичик ишлаб чиқариш"},{"id":9,"name":"Учкўприк","head":"Дехконов Аброржон Анварович","phone":"90-309-00-90","lat":40.541321,"lng":71.054152,"population":5249,"households":1147,"families":1208,"specialization":"Савдо ва хизмат кўрсатиш"},{"id":10,"name":"Янгибоғ","head":"Қодиров Нодиржон","phone":"91-698-26-02","lat":40.536138,"lng":71.057214,"population":4114,"households":1007,"families":1295,"specialization":"Дехқончилик"},{"id":11,"name":"Яккатут","head":"Тўйчиев Абдуқодир Абдуқаххорович","phone":"94-003-55-34","lat":40.568293,"lng":71.054859,"population":6323,"households":1307,"families":1429,"specialization":"Кичик ишлаб чиқариш"},{"id":12,"name":"Зиғир","head":"Абдулазизов Абдуматалжон Хамидуллаевич","phone":"91-204-33-53","lat":40.583409,"lng":71.037228,"population":7227,"households":1275,"families":1637,"specialization":"Дехқончилик"},{"id":13,"name":"Мерган","head":"Холдаров Шавкатжон Абдурахимович","phone":"99-080-97-48","lat":40.526525,"lng":71.040833,"population":4011,"households":747,"families":1046,"specialization":"Дехқончилик"},{"id":14,"name":"Ғози-ғиждон","head":"Шукуров Улуғбек Саидхонович","phone":"91-201-53-39","lat":40.581253,"lng":71.010075,"population":6796,"households":1221,"families":1948,"specialization":"Кичик ишлаб чиқариш"},{"id":15,"name":"Ғиждон","head":"Саидов Рафиқжон Ахмаджонович","phone":"90-343-96-15","lat":40.604675,"lng":70.998138,"population":5237,"households":1080,"families":1482,"specialization":"Кичик ишлаб чиқариш"},{"id":16,"name":"Мирзахўжа","head":"Умурзақов Расулжон","phone":"97-940-75-45","lat":40.587231,"lng":71.000834,"population":3126,"households":650,"families":802,"specialization":"Ҳунармандчилик"},{"id":17,"name":"Бешкапа","head":"Пўлатов Шухратжон","phone":"95-887-71-77","lat":40.569545,"lng":71.019741,"population":4052,"households":732,"families":1106,"specialization":"Ҳунармандчилик"},{"id":18,"name":"Қумариқ","head":"Мамадалиев Хасанбой","phone":"99-699-34-48","lat":40.571415,"lng":71.010643,"population":5378,"households":1636,"families":1670,"specialization":"Кичик ишлаб чиқариш"},{"id":19,"name":"Истиқбол","head":"Мўминов Дониёр Мадаминжонович","phone":"90-292-80-81","lat":40.605928,"lng":71.018177,"population":5419,"households":1107,"families":1616,"specialization":"Дехқончилик"},{"id":20,"name":"Полохон","head":"Давронов Баходиржон","phone":"91-655-26-86","lat":40.589214,"lng":71.020377,"population":4645,"households":874,"families":1335,"specialization":"Кичик ишлаб чиқариш"},{"id":21,"name":"Юлғунзор","head":"Обилжонов Тойиржон Жўреевич","phone":"94-042-01-54","lat":40.60936,"lng":71.037448,"population":3628,"households":661,"families":1100,"specialization":"Чорвачилик"},{"id":22,"name":"Янгийўл","head":"Усмонова Ферузахон","phone":"97-966-15-74","lat":40.631962,"lng":71.004615,"population":3189,"households":537,"families":962,"specialization":"Дехқончилик"},{"id":23,"name":"Наврўз","head":"Хакимов Абдужаббор","phone":"97-502-53-52","lat":40.641194,"lng":70.997219,"population":4595,"households":832,"families":1287,"specialization":"Дехқончилик"},{"id":24,"name":"Қораянтоқ","head":"Қорабоев Шаробиддин","phone":"77-707-30-62","lat":40.650509,"lng":70.992142,"population":4832,"households":1041,"families":1271,"specialization":"Чорвачилик"},{"id":25,"name":"Собиржон","head":"Деҳқонов Илёс Баходирович","phone":"97-501-00-06","lat":40.615003,"lng":70.98701,"population":5243,"households":1105,"families":1234,"specialization":"Дехқончилик"},{"id":26,"name":"Нихол","head":"Назарматов Абдурахмон","phone":"97-413-13-01","lat":40.603375,"lng":70.981951,"population":3365,"households":562,"families":879,"specialization":"Кичик ишлаб чиқариш"},{"id":27,"name":"Чанг","head":"Турғунов Нўмонжон","phone":"97-335-04-10","lat":40.64967,"lng":71.014599,"population":3549,"households":758,"families":1123,"specialization":"Чорвачилик"},{"id":28,"name":"Олтинводий","head":"Ғозев Саййидикромхон","phone":"91-698-03-68","lat":40.50923,"lng":71.053441,"population":4830,"households":1009,"families":1311,"specialization":"Дехқончилик"},{"id":29,"name":"Бегобод","head":"Эсонов Хамидулло","phone":"91-108-01-91","lat":40.506514,"lng":71.051158,"population":4699,"households":1013,"families":1391,"specialization":"Дехқончилик"},{"id":30,"name":"КаттаКенагас","head":"Муқимов Носиржон","phone":"90-150-19-50","lat":40.505652,"lng":71.08695,"population":3457,"households":750,"families":1008,"specialization":"Дехқончилик"},{"id":31,"name":"Сой бўйи","head":"Мамажонов Масруржон","phone":"90-565-88-55","lat":40.498245,"lng":71.086404,"population":4225,"households":873,"families":1281,"specialization":"Дехқончилик"},{"id":32,"name":"КичикКенагас","head":"Турсунова Мохирахон","phone":"90-274-45-23","lat":40.518402,"lng":71.092829,"population":6217,"households":1179,"families":1927,"specialization":"Дехқончилик"},{"id":33,"name":"КаттаҚашқар","head":"Набиев Абдурасул Мўминович","phone":"91-323-58-21","lat":40.478802,"lng":71.075406,"population":7193,"households":1473,"families":2287,"specialization":"Дехқончилик"},{"id":34,"name":"КаттаҚоракўл","head":"Рахмонова Умидахон Собировна","phone":"91-688-66-51","lat":40.504395,"lng":71.026264,"population":7087,"households":1248,"families":1878,"specialization":"Чорвачилик"},{"id":35,"name":"Олмурод","head":"Кенжаев Акбаржон Набиевич","phone":"98-558-20-87","lat":40.503727,"lng":70.999301,"population":4696,"households":725,"families":1075,"specialization":"Чорвачилик"},{"id":36,"name":"Тўқсонқовун","head":"Нажмиддинов Камолжон Мухторович","phone":"90-055-00-79","lat":40.483219,"lng":71.008709,"population":3903,"households":737,"families":1035,"specialization":"Чорвачилик"},{"id":37,"name":"КаттаҚўштепа","head":"Мавлонов Нодиржон","phone":"93-642-02-22","lat":40.509096,"lng":71.063153,"population":4941,"households":1021,"families":1210,"specialization":"Чорвачилик"},{"id":38,"name":"Чорбоғ","head":"Исматуллаев Камолдин","phone":"90-306-66-95","lat":40.547769,"lng":71.089687,"population":3219,"households":608,"families":857,"specialization":"Кичик ишлаб чиқариш"},{"id":39,"name":"Бегмурод","head":"Мамараимов Алижон","phone":"90-509-24-41","lat":40.548001,"lng":71.088014,"population":4125,"households":743,"families":1052,"specialization":"Кичик ишлаб чиқариш"},{"id":40,"name":"Машад","head":"Хўжаматов Мирзохиджон","phone":"90-305-67-69","lat":40.533325,"lng":71.089207,"population":3860,"households":730,"families":1198,"specialization":"Кичик ишлаб чиқариш"},{"id":41,"name":"Тепақўрғон","head":"Султонов Неъматжон","phone":"93-240-44-14","lat":40.571441,"lng":71.08588,"population":5542,"households":1017,"families":1751,"specialization":"Дехқончилик"},{"id":42,"name":"Султон","head":"Рашидов Абдуқундуз","phone":"94-497-66-27","lat":40.55767,"lng":71.094129,"population":3308,"households":586,"families":977,"specialization":"Кичик ишлаб чиқариш"},{"id":43,"name":"Пучуғой","head":"Исмоилов Олимжон","phone":"91-153-84-36","lat":40.556119,"lng":71.101634,"population":5660,"households":1200,"families":1348,"specialization":"Чорвачилик"},{"id":44,"name":"Бобошбек","head":"Одилов Шерзоджон","phone":"90-810-57-59","lat":40.535468,"lng":71.072284,"population":6277,"households":1065,"families":1520,"specialization":"Кичик ишлаб чиқариш"},{"id":45,"name":"Оқсув","head":"Исақов Исроилжон Муҳаммаджонович","phone":"90-360-79-76","lat":40.418416,"lng":71.027298,"population":5791,"households":1190,"families":1343,"specialization":"Боғдочилик"},{"id":46,"name":"Сариқўрғон","head":"Тохиров Охунжон Солиевич","phone":"91-148-62-18","lat":40.336972,"lng":71.026246,"population":4732,"households":946,"families":1205,"specialization":"Дехқончилик"},{"id":47,"name":"Тожик","head":"Камолов Туробжон","phone":"90-508-40-10","lat":40.443822,"lng":71.02574,"population":4364,"households":1004,"families":1358,"specialization":"Дехқончилик"},{"id":48,"name":"Боғибўстон","head":"Рахмонов Авазбек","phone":"99-997-58-07","lat":40.450457,"lng":71.033351,"population":13552,"households":1748,"families":2060,"specialization":"Боғдочилик"},{"id":49,"name":"Қурбонкашқар","head":"Хасанов Шерали Йигиталиевич","phone":"91-682-60-78","lat":40.413,"lng":71.004349,"population":6928,"households":1355,"families":1720,"specialization":"Дехқончилик"},{"id":50,"name":"Янгиер","head":"Абдуллаев Шавкатжон Ўктамович","phone":"91-286-64-02","lat":40.387082,"lng":71.022562,"population":5331,"households":1135,"families":1461,"specialization":"Дехқончилик"},{"id":51,"name":"Мехнатобод","head":"Хусанов Сарваржон Мухторжон ўғли","phone":"94-448-10-94","lat":40.581591,"lng":71.326658,"population":1612,"households":364,"families":485,"specialization":"Дехқончилик"}];
+const SPEC_COLORS = {
+  "Дехқончилик":"#22C55E", "Чорвачилик":"#F59E0B", "Кичик ишлаб чиқариш":"#6366F1",
+  "Боғдочилик":"#06B6D4", "Ҳунармандчилик":"#EC4899", "Савдо ва хизмат кўрсатиш":"#A855F7"
+};
+const SPEC_LABEL_UZ = {
+  "Дехқончилик":"Dehqonchilik", "Чорвачилик":"Chorvachilik", "Кичик ишлаб чиқариш":"Kichik ishlab chiqarish",
+  "Боғдочилик":"Bog'dorchilik", "Ҳунармандчилик":"Hunarmandchilik", "Савдо ва хизмат кўрсатиш":"Savdo va xizmat"
+};
+
+// --- FIREBASE ---
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyArc-jvUip_jMSbl0uYNP0sO0Z6-qgpBic",
+  authDomain: "uchkoprik-mfy.firebaseapp.com",
+  projectId: "uchkoprik-mfy",
+  storageBucket: "uchkoprik-mfy.firebasestorage.app",
+  messagingSenderId: "395284538428",
+  appId: "1:395284538428:web:3ed153549d27ed3b8a0f39"
+};
+const FIREBASE_ENABLED = !!(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY");
+let db = null;
+if(FIREBASE_ENABLED){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+  firebase.functions(); // us-central1 (default). Agar boshqa regionda deploy qilingan bo'lsa: firebase.app().functions('REGION')
+}
+
+// --- CLOUD FUNCTIONS (C-blok backend) ---
+// Bot tokeni endi bu yerda YO'Q — u faqat serverda (Cloud Functions secret) saqlanadi.
+// Quyidagi manzil sizning Firebase loyihangiz nomiga qarab avtomatik hosil qilinadi.
+const FUNCTIONS_BASE = `https://us-central1-${FIREBASE_CONFIG.projectId}.cloudfunctions.net`;
+
+const warns = [];
+if(!FIREBASE_ENABLED) warns.push("⚠ Firebase ulanmagan.");
+document.getElementById('firebase-warn').innerHTML = warns.join('<br>');
+
+let currentAdmin = null; // { uid, fullName, role }
+
+function getUsernameInput(){
+  return document.getElementById('tg-username-input').value.trim().replace(/^@/, '');
+}
+
+async function requestTelegramCode(){
+  const btn = document.getElementById('tg-request-btn');
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  const username = getUsernameInput();
+  if(!username){ err.textContent = "Telegram username kiriting"; err.style.display='block'; return; }
+
+  btn.disabled = true; btn.textContent = "Yuborilmoqda…";
+  try{
+    const res = await fetch(`${FUNCTIONS_BASE}/requestCode`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ telegramUsername: username })
+    });
+    const j = await res.json();
+    if(!j.ok) throw new Error(j.error || 'Kod yuborilmadi');
+
+    document.getElementById('tg-step-1').style.display = 'none';
+    document.getElementById('tg-step-2').style.display = 'block';
+    document.getElementById('tg-code-input').focus();
+    startResendTimer();
+  } catch(e) {
+    err.textContent = "Kod yuborilmadi: " + e.message; err.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = "Telegram orqali kod olish";
+}
+let resendTimer = null;
+function startResendTimer(){
+  const btn = document.getElementById('tg-resend-btn');
+  let s = 60; btn.disabled = true; btn.textContent = `Qayta yuborish (${s})`;
+  clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    s--;
+    if(s <= 0){ clearInterval(resendTimer); btn.disabled = false; btn.textContent = "Qayta yuborish"; }
+    else btn.textContent = `Qayta yuborish (${s})`;
+  }, 1000);
+}
+async function verifyTelegramCode(){
+  const err = document.getElementById('login-err');
+  const input = document.getElementById('tg-code-input');
+  const btn = document.getElementById('tg-verify-btn');
+  err.style.display = 'none';
+  const val = input.value.trim();
+  const username = getUsernameInput();
+
+  btn.disabled = true; btn.textContent = "Tekshirilmoqda…";
+  try{
+    const res = await fetch(`${FUNCTIONS_BASE}/verifyCode`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ telegramUsername: username, code: val })
+    });
+    const j = await res.json();
+    if(!j.ok) throw new Error(j.error || "Kod noto'g'ri");
+
+    await firebase.auth().signInWithCustomToken(j.token);
+    currentAdmin = { fullName: j.fullName, role: j.role };
+    enterDashboard();
+  } catch(e) {
+    err.textContent = e.message; err.style.display = 'block';
+    input.value = ''; input.focus();
+  }
+  btn.disabled = false; btn.textContent = "Tasdiqlash va kirish";
+}
+document.getElementById('tg-request-btn').addEventListener('click', requestTelegramCode);
+document.getElementById('tg-resend-btn').addEventListener('click', requestTelegramCode);
+document.getElementById('tg-verify-btn').addEventListener('click', verifyTelegramCode);
+document.getElementById('tg-code-input').addEventListener('keydown', e => { if(e.key==='Enter') verifyTelegramCode(); });
+
+function enterDashboard(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dash').classList.add('show');
+  if(currentAdmin && currentAdmin.role === 'superadmin'){
+    document.getElementById('tab-btn-admins').style.display = '';
+    document.getElementById('admin-add-open-btn').style.display = '';
+    document.getElementById('admins-empty-note').style.display = 'none';
+  } else {
+    document.getElementById('tab-btn-admins').style.display = '';
+    document.getElementById('admin-add-open-btn').style.display = 'none';
+    document.getElementById('admins-empty-note').style.display = '';
+  }
+  loadAdminsList();
+  startData();
+}
+document.getElementById('btn-logout').addEventListener('click', () => {
+  firebase.auth().signOut().finally(() => location.reload());
+});
+
+// Sahifa qayta yuklanganda — Firebase Auth sessiyasi hali kuchda bo'lsa
+// (custom token bilan kirilgan), avtomatik boshqaruv paneliga kiritamiz.
+if(FIREBASE_ENABLED){
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if(user && !currentAdmin){
+      try{
+        const snap = await db.collection('admins').doc(user.uid).get();
+        if(snap.exists && snap.data().active){
+          currentAdmin = { fullName: snap.data().fullName, role: snap.data().role };
+          enterDashboard();
+        } else {
+          await firebase.auth().signOut();
+        }
+      } catch(e){ console.warn('Sessiyani tiklashda xato:', e); }
+    }
+  });
+}
+
+// --- ADMINLAR TAB (C-blok, 9-band) ---
+function adminInitials(name){
+  return (name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+}
+async function loadAdminsList(){
+  const wrap = document.getElementById('admins-list');
+  if(!FIREBASE_ENABLED || !db) return;
+  wrap.innerHTML = '<p style="color:var(--text-dim);font-size:13px">Yuklanmoqda…</p>';
+  try{
+    const snap = await db.collection('admins').orderBy('addedAt','desc').get();
+    if(snap.empty){ wrap.innerHTML = '<p style="color:var(--text-dim);font-size:13px">Adminlar topilmadi</p>'; return; }
+    wrap.innerHTML = '';
+    snap.forEach(doc => {
+      const a = doc.data();
+      const row = document.createElement('div');
+      row.className = 'admin-row' + (a.active ? '' : ' inactive');
+      row.innerHTML = `
+        <div class="admin-avatar">${adminInitials(a.fullName)}</div>
+        <div class="admin-info">
+          <b>${a.fullName || 'Nomsiz'}</b>
+          <span>@${a.telegramUsername || '—'} · ID: ${doc.id}${a.active ? '' : ' · faolsizlantirilgan'}</span>
+        </div>
+        <span class="admin-role-badge ${a.role}">${a.role === 'superadmin' ? 'Superadmin' : 'Admin'}</span>
+        ${(currentAdmin && currentAdmin.role === 'superadmin' && a.active) ? `<button class="pbtn danger-ghost" data-remove-id="${doc.id}" style="padding:8px 14px;font-size:12px">Olib tashlash</button>` : ''}
+      `;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('[data-remove-id]').forEach(btn => {
+      btn.addEventListener('click', () => removeAdminAction(btn.getAttribute('data-remove-id')));
+    });
+  } catch(e){
+    wrap.innerHTML = `<p style="color:var(--danger);font-size:13px">Ro'yxatni yuklab bo'lmadi: ${e.message}</p>`;
+  }
+}
+async function removeAdminAction(telegramUserId){
+  if(!confirm("Bu adminni olib tashlaysizmi? U kirish huquqini yo'qotadi.")) return;
+  try{
+    const fn = firebase.functions().httpsCallable('removeAdmin');
+    await fn({ telegramUserId });
+    loadAdminsList();
+  } catch(e){
+    alert("Xatolik: " + e.message);
+  }
+}
+
+// --- Yangi admin qo'shish modali ---
+const adminModal = document.getElementById('admin-modal-overlay');
+document.getElementById('admin-add-open-btn').addEventListener('click', () => {
+  document.getElementById('admin-form-username').value = '';
+  document.getElementById('admin-form-id').value = '';
+  document.getElementById('admin-form-fullname').value = '';
+  document.getElementById('admin-form-role').value = 'admin';
+  document.getElementById('admin-form-id-status').textContent = '';
+  document.getElementById('admin-form-err').style.display = 'none';
+  adminModal.classList.add('show');
+});
+document.getElementById('admin-form-cancel').addEventListener('click', () => adminModal.classList.remove('show'));
+
+let lookupTimer = null;
+document.getElementById('admin-form-username').addEventListener('input', (e) => {
+  clearTimeout(lookupTimer);
+  const uname = e.target.value.trim().replace(/^@/, '');
+  const status = document.getElementById('admin-form-id-status');
+  if(!uname){ status.textContent = ''; return; }
+  status.textContent = 'qidirilmoqda…';
+  lookupTimer = setTimeout(async () => {
+    try{
+      const fn = firebase.functions().httpsCallable('lookupTelegramStart');
+      const res = await fn({ telegramUsername: uname });
+      if(res.data && res.data.found){
+        document.getElementById('admin-form-id').value = res.data.telegramUserId;
+        status.textContent = '✓ topildi (' + (res.data.firstName || '') + ')';
+      } else {
+        status.textContent = 'topilmadi — botga /start bosganini tekshiring, yoki ID ni qo\'lda kiriting';
+      }
+    } catch(e){ status.textContent = ''; }
+  }, 500);
+});
+
+document.getElementById('admin-form-save').addEventListener('click', async () => {
+  const err = document.getElementById('admin-form-err');
+  err.style.display = 'none';
+  const telegramUsername = document.getElementById('admin-form-username').value.trim().replace(/^@/, '');
+  const telegramUserId = document.getElementById('admin-form-id').value.trim();
+  const fullName = document.getElementById('admin-form-fullname').value.trim();
+  const role = document.getElementById('admin-form-role').value;
+  if(!telegramUserId || !fullName){ err.textContent = "Telegram ID va F.I.Sh majburiy"; err.style.display='block'; return; }
+
+  const btn = document.getElementById('admin-form-save');
+  btn.disabled = true; btn.textContent = "Qo'shilmoqda…";
+  try{
+    const fn = firebase.functions().httpsCallable('addAdmin');
+    await fn({ telegramUserId, telegramUsername, fullName, role });
+    adminModal.classList.remove('show');
+    loadAdminsList();
+  } catch(e){
+    err.textContent = "Xatolik: " + e.message; err.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = "Qo'shish";
+});
+
+// --- DATA MANAGEMENT ---
+let DATA = [];
+let selectedId = null;
+let listFilter = "";
+
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function mergeOverrides(overridesById){
+  DATA = BASE_MFY.map(b => overridesById[b.id] ? Object.assign({photos:[],status:'partial'}, b, overridesById[b.id]) : Object.assign({photos:[],status:'partial'}, b));
+  DATA.forEach(d => { if(!d.status) d.status = (d.photos && d.photos.length) ? 'full' : 'partial'; });
+}
+
+function startData(){
+  if(FIREBASE_ENABLED){
+    // 1. MFY ma'lumotlarini yuklash (Xatolik ushlagich bilan)
+    try {
+      db.collection('mfy').onSnapshot(snap => {
+        const overridesById = {};
+        snap.forEach(doc => { overridesById[Number(doc.id)] = doc.data(); });
+        mergeOverrides(overridesById);
+        renderList();
+        if(selectedId) renderEditForm(DATA.find(x=>x.id===selectedId));
+      }, err => { 
+        console.warn("MFY o'qishda xato (Ruxsat yo'q bo'lishi mumkin):", err);
+        toast("Firebase ruxsatida xato. Faqat mahalliy baza ko'rsatilmoqda.", "err");
+        mergeOverrides({}); renderList();
+      });
+    } catch(e) { console.error(e); mergeOverrides({}); renderList(); }
+
+    // 2. Tuman Pasportini yuklash
+    try {
+      db.collection('settings').doc('district').onSnapshot(doc => {
+        if(doc.exists) {
+          const d = doc.data();
+          document.getElementById('dist-head').value = d.head || '';
+          document.getElementById('dist-founded').value = d.founded || '';
+          document.getElementById('dist-area').value = d.area || '';
+          document.getElementById('dist-ind').value = d.indVol || '';
+          document.getElementById('dist-agr').value = d.agrVol || '';
+          document.getElementById('dist-srv').value = d.srvVol || '';
+          document.getElementById('dist-unemp').value = d.unempRate || '';
+          document.getElementById('dist-pov').value = d.povRate || '';
+        }
+      }, err => {
+        console.warn("Tuman pasportini o'qishda xato:", err);
+      });
+    } catch(e) { console.error(e); }
+
+  } else {
+    mergeOverrides({});
+    renderList();
+  }
+}
+
+// --- TAB 1: MFY LIST RENDERING ---
+function renderList(){
+  const wrap = document.getElementById('mfy-list');
+  const q = listFilter.trim().toLowerCase();
+  const filtered = DATA.filter(m => !q || m.name.toLowerCase().includes(q) || (m.head||'').toLowerCase().includes(q));
+  wrap.innerHTML = filtered.map(m => `
+    <div class="mfy-list-item${selectedId===m.id?' active':''}" data-id="${m.id}">
+      <span class="dot" style="background:${SPEC_COLORS[m.specialization]||'#7C8798'}"></span>
+      <span class="nm">${escapeHtml(m.name)} МФЙ</span>
+      <span class="stbadge ${m.status==='full'?'full':'partial'}">${m.status==='full'?"To'liq":"Bo'sh"}</span>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.mfy-list-item').forEach(el => el.addEventListener('click', () => {
+    selectedId = Number(el.dataset.id);
+    renderList();
+    renderEditForm(DATA.find(x=>x.id===selectedId));
+  }));
+  document.getElementById('st-total').textContent = DATA.length;
+  const full = DATA.filter(d=>d.status==='full').length;
+  document.getElementById('st-full').textContent = full;
+  document.getElementById('st-partial').textContent = DATA.length - full;
+}
+document.getElementById('mfy-search').addEventListener('input', e => { listFilter = e.target.value; renderList(); });
+
+// --- TAB 1: MFY EDIT FORM ---
+function numOrNull(v){ return v===''||v==null ? null : Number(v); }
+function compressImage(file, maxW, quality){
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderEditForm(m){
+  const panel = document.getElementById('edit-panel');
+  if(!m){ panel.innerHTML = document.getElementById('edit-empty').outerHTML; return; }
+  const specOpts = Object.keys(SPEC_COLORS).map(s=>`<option value="${escapeHtml(s)}" ${m.specialization===s?'selected':''}>${escapeHtml(SPEC_LABEL_UZ[s])}</option>`).join('');
+  panel.innerHTML = `
+    <div class="edit-form-wrap">
+      <h2>${escapeHtml(m.name)} МФЙ <span style="color:var(--text-faint);font-weight:400;font-size:13px;">#${String(m.id).padStart(2,'0')}</span></h2>
+      <div class="field-grid">
+        <div class="field"><label>MFY nomi</label><input id="ef-name" value="${escapeHtml(m.name)}"></div>
+        <div class="field"><label>Rais F.I.Sh</label><input id="ef-head" value="${escapeHtml(m.head||'')}"></div>
+        <div class="field"><label>Telefon</label><input id="ef-phone" value="${escapeHtml(m.phone||'')}" placeholder="90-123-45-67"></div>
+        <div class="field"><label>Ixtisoslashuv</label><select id="ef-spec">${specOpts}</select></div>
+        <div class="field"><label>Kenglik (lat)</label><input id="ef-lat" type="number" step="0.000001" value="${m.lat}"></div>
+        <div class="field"><label>Uzunlik (lng)</label><input id="ef-lng" type="number" step="0.000001" value="${m.lng}"></div>
+        <div class="field"><label>Aholi soni</label><input id="ef-pop" type="number" value="${m.population ?? ''}"></div>
+        <div class="field"><label>Xonadon soni</label><input id="ef-house" type="number" value="${m.households ?? ''}"></div>
+        <div class="field"><label>Oila soni</label><input id="ef-fam" type="number" value="${m.families ?? ''}"></div>
+        <div class="field"><label>Holat</label><select id="ef-status">
+          <option value="full" ${m.status==='full'?'selected':''}>To'liq</option>
+          <option value="partial" ${m.status==='partial'?'selected':''}>To'ldirilmoqda</option>
+        </select></div>
+        <div class="field full">
+          <label>Rasmlar (5 tagacha)</label>
+          <div class="photo-grid" id="ef-photos"></div>
+          <input type="file" id="ef-photo-input" accept="image/*" multiple style="display:none">
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="pbtn primary" id="ef-save">Saqlash</button>
+        <button class="pbtn ghost" id="ef-reload">O'zgarishlarni bekor qilish</button>
+        <button class="pbtn danger-ghost" id="ef-delete">Default holatga qaytarish</button>
+      </div>
+    </div>
+  `;
+
+  let workingPhotos = (m.photos || []).slice();
+  const grid = document.getElementById('ef-photos');
+  function renderGrid(){
+    let html = '';
+    for(let i=0;i<5;i++){
+      if(workingPhotos[i]) html += `<div class="photo-slot"><img src="${workingPhotos[i]}"><div class="rm" data-i="${i}">✕</div></div>`;
+      else html += `<div class="photo-slot" data-add="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll('.rm').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); workingPhotos.splice(+b.dataset.i,1); renderGrid(); }));
+    grid.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => document.getElementById('ef-photo-input').click()));
+  }
+  renderGrid();
+  document.getElementById('ef-photo-input').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files).slice(0, 5 - workingPhotos.length);
+    for(const f of files){ workingPhotos.push(await compressImage(f, 680, 0.62)); }
+    renderGrid();
+    e.target.value = '';
+  });
+
+  document.getElementById('ef-reload').addEventListener('click', () => renderEditForm(DATA.find(x=>x.id===m.id)));
+
+  document.getElementById('ef-save').addEventListener('click', async () => {
+    const btn = document.getElementById('ef-save'); btn.disabled = true;
+    const overrides = {
+      name: document.getElementById('ef-name').value.trim() || m.name,
+      head: document.getElementById('ef-head').value.trim(),
+      phone: document.getElementById('ef-phone').value.trim(),
+      specialization: document.getElementById('ef-spec').value,
+      lat: parseFloat(document.getElementById('ef-lat').value) || m.lat,
+      lng: parseFloat(document.getElementById('ef-lng').value) || m.lng,
+      population: numOrNull(document.getElementById('ef-pop').value),
+      households: numOrNull(document.getElementById('ef-house').value),
+      families: numOrNull(document.getElementById('ef-fam').value),
+      status: document.getElementById('ef-status').value,
+      photos: workingPhotos
+    };
+    try{
+      await db.collection('mfy').doc(String(m.id)).set(overrides, { merge:true });
+      toast('Saqlandi ✓', 'ok');
+    }catch(err){ console.error(err); toast('Xatolik (Rules?): ' + err.message, 'err'); }
+    btn.disabled = false;
+  });
+
+  document.getElementById('ef-delete').addEventListener('click', async () => {
+    if(!confirm("Boshlang'ich holatga qaytarilsinmi?")) return;
+    try{ await db.collection('mfy').doc(String(m.id)).delete(); toast("Qaytarildi", 'ok'); }
+    catch(err){ console.error(err); toast('Xatolik: ' + err.message, 'err'); }
+  });
+}
+
+// --- TAB 2: DISTRICT SAVING ---
+document.getElementById('dist-save-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('dist-save-btn'); btn.disabled = true; btn.textContent = 'Saqlanmoqda...';
+  const data = {
+    head: document.getElementById('dist-head').value.trim(),
+    founded: document.getElementById('dist-founded').value.trim(),
+    area: document.getElementById('dist-area').value.trim(),
+    indVol: document.getElementById('dist-ind').value.trim(),
+    agrVol: document.getElementById('dist-agr').value.trim(),
+    srvVol: document.getElementById('dist-srv').value.trim(),
+    unempRate: document.getElementById('dist-unemp').value.trim(),
+    povRate: document.getElementById('dist-pov').value.trim()
+  };
+  try {
+    await db.collection('settings').doc('district').set(data, { merge: true });
+    toast("Tuman ma'lumotlari yangilandi!", 'ok');
+  } catch(e) { toast("Xatolik (Ruxsat yo'q): " + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = "Barcha ma'lumotlarni saqlash";
+});
+
+
+// --- TOAST ---
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = `toast glass ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(), 3000);
+}
+
+// --- INIT ---
+// Eslatma: sessiya endi Firebase Auth (custom token) orqali boshqariladi —
+// tepadagi onAuthStateChanged shu vazifani avtomatik bajaradi.
+</script>
+</body>
+</html>

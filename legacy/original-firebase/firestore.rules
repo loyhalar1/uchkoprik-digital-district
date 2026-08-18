@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------
+    // Yordamchi funksiyalar
+    // ---------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function callerAdminData() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
+
+    function isActiveAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && callerAdminData().active == true;
+    }
+
+    function isSuperadmin() {
+      return isActiveAdmin() && callerAdminData().role == 'superadmin';
+    }
+
+    // ---------------------------------------------------------------
+    // Ommaviy ma'lumotlar — hamma o'qiy oladi (public sayt uchun),
+    // faqat faol adminlar yoza oladi.
+    // ---------------------------------------------------------------
+    match /mfy/{docId} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    match /businesses/{docId} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    match /categories/{docId} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    match /zones/{docId} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // Adminlar ro'yxati — faqat tizimga kirgan faol adminlar o'qiy oladi
+    // (Telegram ID, username, F.I.Sh — bu PII, hammaga ochiq emas),
+    // faqat superadmin qo'sha/o'chira oladi.
+    // ---------------------------------------------------------------
+    match /admins/{telegramUserId} {
+      allow read: if isActiveAdmin();
+      allow write: if isSuperadmin();
+    }
+
+    // ---------------------------------------------------------------
+    // Ichki texnik kolleksiyalar — mijoz (brauzer) tomonidan hech qachon
+    // to'g'ridan-to'g'ri o'qilmaydi/yozilmaydi. Faqat Cloud Functions
+    // (Admin SDK orqali, bu qoidalarni chetlab o'tadi) ular bilan ishlaydi.
+    // ---------------------------------------------------------------
+    match /otp_codes/{docId} {
+      allow read, write: if false;
+    }
+
+    match /telegram_starts/{docId} {
+      allow read, write: if false;
+    }
+
+    // Boshqa har qanday hujjat — standart bo'yicha berkitilgan.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

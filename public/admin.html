@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="uz" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Uchko‘prik Digital District — Admin</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card glass">
+      <img src="/logo.svg" alt="" width="56" height="56">
+      <span class="eyebrow">UCHKO‘PRIK DIGITAL DISTRICT</span>
+      <h1>Boshqaruv paneli</h1>
+      <p>Cloudflare Worker uchun <code>ADMIN_TOKEN</code> qiymatini kiriting. Token brauzerning faqat joriy sessiyasida saqlanadi.</p>
+      <form id="loginForm">
+        <label>Admin token<input id="adminToken" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" required></label>
+        <button type="submit" class="primary">Kirish</button>
+      </form>
+      <div id="loginError" class="error hidden"></div>
+    </div>
+  </section>
+
+  <div id="adminApp" class="admin-app hidden">
+    <aside class="sidebar glass">
+      <a class="admin-brand" href="/uz/" target="_blank"><img src="/logo.svg" alt=""><span><strong>UCHKO‘PRIK</strong><small>Digital District</small></span></a>
+      <nav id="adminNav">
+        <button class="nav-item active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="mahallas">MFYlar</button>
+        <button class="nav-item" data-view="businesses">Korxonalar</button>
+        <button class="nav-item" data-view="places">Joylar</button>
+        <button class="nav-item" data-view="products">Mahsulotlar</button>
+        <button class="nav-item" data-view="categories">Kategoriyalar</button>
+        <button class="nav-item" data-view="district">Tuman ko‘rsatkichlari</button>
+        <button class="nav-item" data-view="translations">Tarjimalar</button>
+        <button class="nav-item" data-view="presentation">Taqdimot</button>
+      </nav>
+      <div class="sidebar-foot">
+        <a href="/uz/" target="_blank">Public platforma</a>
+        <button id="logoutBtn">Chiqish</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="admin-topbar glass">
+        <div><span class="eyebrow" id="viewEyebrow">SYSTEM OVERVIEW</span><h1 id="viewTitle">Dashboard</h1></div>
+        <div class="top-actions"><button id="refreshBtn" class="secondary">Yangilash</button><button id="addBtn" class="primary hidden">+ Yangi</button></div>
+      </header>
+
+      <section id="dashboardView" class="view">
+        <div class="health-hero glass">
+          <div class="health-score"><div class="ring"><strong id="healthScore">—</strong><small>Data Health</small></div></div>
+          <div class="health-copy"><span class="eyebrow">DATA FRESHNESS</span><h2>Ma’lumotlar sifati va yangiligi</h2><p>Tasdiqlangan, eskirgan, yetishmaydigan va demo yozuvlar real vaqtga yaqin ko‘rinishda nazorat qilinadi.</p></div>
+          <div class="health-meta"><span>Oxirgi tekshiruv</span><strong id="healthChecked">—</strong></div>
+        </div>
+        <div id="healthCards" class="metric-grid"></div>
+        <div class="dashboard-grid">
+          <section class="panel glass"><div class="panel-head"><h2>Ma’lumot bloklari</h2></div><div id="coverageList" class="coverage-list"></div></section>
+          <section class="panel glass"><div class="panel-head"><h2>Tuman asosiy ko‘rsatkichlari</h2></div><div id="districtPreview" class="district-preview"></div></section>
+        </div>
+      </section>
+
+      <section id="tableView" class="view hidden">
+        <div class="table-toolbar glass"><input id="tableSearch" type="search" placeholder="Qidirish…"><div id="tableCount" class="table-count"></div></div>
+        <div class="table-wrap glass"><table><thead id="dataHead"></thead><tbody id="dataBody"></tbody></table></div>
+      </section>
+
+      <section id="specialView" class="view hidden"></section>
+    </main>
+  </div>
+
+  <section id="editorBackdrop" class="modal-backdrop hidden">
+    <form id="editorForm" class="editor glass">
+      <div class="editor-head"><div><span class="eyebrow" id="editorEyebrow">DATA EDITOR</span><h2 id="editorTitle">Yozuv</h2></div><button id="editorClose" type="button" class="icon-btn">×</button></div>
+      <div id="editorFields" class="editor-fields"></div>
+      <div class="editor-actions"><button id="deleteBtn" type="button" class="danger hidden">O‘chirish</button><span></span><button type="button" id="cancelBtn" class="secondary">Bekor qilish</button><button type="submit" class="primary">Saqlash</button></div>
+    </form>
+  </section>
+
+  <div id="toastHost" class="toast-host"></div>
+  <script type="module" src="/assets/js/admin.js"></script>
+</body>
+</html>

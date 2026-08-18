@@ -1,0 +1,158 @@
+{
+  "categories": [
+    {
+      "id": "mahalla",
+      "name": "Mahallalar",
+      "icon": "home",
+      "kind": "mahalla",
+      "color": "#6be3ff",
+      "active": 1
+    },
+    {
+      "id": "business",
+      "name": "Korxonalar",
+      "icon": "briefcase",
+      "kind": "business",
+      "color": "#a78bfa",
+      "active": 1
+    },
+    {
+      "id": "education",
+      "name": "Ta’lim",
+      "icon": "school",
+      "kind": "place",
+      "color": "#60a5fa",
+      "active": 1
+    },
+    {
+      "id": "health",
+      "name": "Tibbiyot",
+      "icon": "health",
+      "kind": "place",
+      "color": "#fb7185",
+      "active": 1
+    },
+    {
+      "id": "culture",
+      "name": "Madaniyat",
+      "icon": "landmark",
+      "kind": "place",
+      "color": "#f59e0b",
+      "active": 1
+    },
+    {
+      "id": "service",
+      "name": "Xizmatlar",
+      "icon": "service",
+      "kind": "place",
+      "color": "#34d399",
+      "active": 1
+    },
+    {
+      "id": "investment",
+      "name": "Investitsiya",
+      "icon": "chart",
+      "kind": "investment",
+      "color": "#fbbf24",
+      "active": 1
+    }
+  ],
+  "places": [
+    {
+      "id": "district-center",
+      "slug": "uchkoprik-markazi",
+      "type": "place",
+      "category": "service",
+      "name": "Uchko‘prik tumani markazi",
+      "lat": 40.5413,
+      "lng": 71.0542,
+      "description": "Tumanning markaziy hududi. Rasmiy obyekt ma’lumotlari admin panel orqali to‘ldiriladi.",
+      "verified": false,
+      "updatedAt": "2026-08-18"
+    },
+    {
+      "id": "demo-education",
+      "slug": "talim-demo",
+      "type": "place",
+      "category": "education",
+      "name": "Ta’lim obyekti (demo)",
+      "lat": 40.548,
+      "lng": 71.065,
+      "description": "Bu demo marker. Haqiqiy ta’lim obyektlarini admin panel orqali kiriting.",
+      "verified": false,
+      "updatedAt": "2026-08-18"
+    },
+    {
+      "id": "demo-health",
+      "slug": "tibbiyot-demo",
+      "type": "place",
+      "category": "health",
+      "name": "Tibbiyot obyekti (demo)",
+      "lat": 40.532,
+      "lng": 71.043,
+      "description": "Bu demo marker. Haqiqiy tibbiyot obyektlarini admin panel orqali kiriting.",
+      "verified": false,
+      "updatedAt": "2026-08-18"
+    }
+  ],
+  "businesses": [
+    {
+      "id": "demo-textile",
+      "slug": "demo-textile",
+      "type": "business",
+      "category": "business",
+      "name": "Textile korxonasi (demo)",
+      "lat": 40.552,
+      "lng": 71.081,
+      "industry": "To‘qimachilik",
+      "description": "Namuna yozuv. Haqiqiy korxona ma’lumotlari D1/admin paneldan boshqariladi.",
+      "verified": false,
+      "updatedAt": "2026-08-18"
+    },
+    {
+      "id": "demo-agro",
+      "slug": "demo-agro",
+      "type": "business",
+      "category": "business",
+      "name": "Agro korxona (demo)",
+      "lat": 40.505,
+      "lng": 71.026,
+      "industry": "Qishloq xo‘jaligi",
+      "description": "Namuna yozuv. Haqiqiy korxona ma’lumotlari D1/admin paneldan boshqariladi.",
+      "verified": false,
+      "updatedAt": "2026-08-18"
+    }
+  ],
+  "products": [
+    {
+      "id": "textile",
+      "slug": "textile-products",
+      "name": "To‘qimachilik mahsulotlari",
+      "category": "Textile",
+      "producer": "Uchko‘prik ishlab chiqaruvchilari",
+      "description": "Mahalliy ishlab chiqarish salohiyatini ko‘rsatish uchun demo karta.",
+      "image": "",
+      "verified": false
+    },
+    {
+      "id": "agro",
+      "slug": "agro-products",
+      "name": "Qishloq xo‘jaligi mahsulotlari",
+      "category": "Agriculture",
+      "producer": "Mahalliy ishlab chiqaruvchilar",
+      "description": "Mahalliy mahsulotlar xalqaro vitrinasi uchun demo karta.",
+      "image": "",
+      "verified": false
+    },
+    {
+      "id": "craft",
+      "slug": "craft-products",
+      "name": "Hunarmandchilik",
+      "category": "Crafts",
+      "producer": "Uchko‘prik hunarmandlari",
+      "description": "Mahalliy hunarmandchilik yo‘nalishi uchun demo karta.",
+      "image": "",
+      "verified": false
+    }
+  ]
+}

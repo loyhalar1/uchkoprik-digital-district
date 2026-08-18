@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Uchko'prik tumani — Drayver</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="manifest" href="manifest.json">
+<link rel="canonical" href="https://uchkoprik.uz/">
+<meta name="theme-color" content="#0A0E1A">
+<meta name="description" content="Uchko'prik tumani interaktiv xaritasi va iqtisodiy pasporti — SysOne Digital Solutions">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph (Facebook, Telegram, boshqa ijtimoiy tarmoqlarda ulashganda ko'rinish) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Uchko'prik tumani — interaktiv xarita va iqtisodiy pasport">
+<meta property="og:description" content="Uchko'prik tumani MFYlari, korxonalari va iqtisodiy ko'rsatkichlari — interaktiv xaritada.">
+<meta property="og:image" content="https://uchkoprik.uz/og-image.png">
+<meta property="og:url" content="https://uchkoprik.uz/">
+<meta property="og:locale" content="uz_UZ">
+<meta property="og:site_name" content="Uchko'prik tumani">
+
+<!-- Twitter/X karta -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Uchko'prik tumani — interaktiv xarita va iqtisodiy pasport">
+<meta name="twitter:description" content="Uchko'prik tumani MFYlari, korxonalari va iqtisodiy ko'rsatkichlari — interaktiv xaritada.">
+<meta name="twitter:image" content="https://uchkoprik.uz/og-image.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){
+  try{ var th = localStorage.getItem('sysone-uchkoprik-theme-v1') || 'dark'; document.documentElement.setAttribute('data-theme', th); }catch(e){}
+})();
+</script>
+<style>
+:root{
+  --bg-0:#0A0E1A; --bg-1:#0F1426; --bg-2:#141B33;
+  --glass:rgba(255,255,255,.06); --glass-strong:rgba(255,255,255,.10); --glass-border:rgba(255,255,255,.14);
+  --text:#FFFFFF; --text-dim:#A0A8C0; --text-faint:#6B728E;
+  --accent-a:#6366F1; --accent-b:#06B6D4;
+  --accent-grad:linear-gradient(135deg,#6366F1 0%,#06B6D4 100%);
+  --danger:#F87171; --ok:#34D399; --warn:#FBBF24;
+  --r-xl:24px; --r-lg:18px; --r-md:12px; --r-sm:8px; --r-full:999px;
+  --shadow-float:0 24px 60px -12px rgba(0,0,0,.6);
+  --shadow-soft:0 8px 24px rgba(0,0,0,.3);
+  --map-tiles:1;
+}
+html[data-theme="light"]{
+  --bg-0:#EEF0F6; --bg-1:#F4F5FA; --bg-2:#E7E9F3;
+  --glass:rgba(255,255,255,.75); --glass-strong:rgba(255,255,255,.9); --glass-border:rgba(20,24,46,.10);
+  --text:#11141E; --text-dim:#4A5068; --text-faint:#7C839D;
+  --shadow-float:0 24px 50px -10px rgba(30,35,70,.2); --shadow-soft:0 8px 20px rgba(30,35,70,.10); --map-tiles:1;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--text); background:var(--bg-0); overflow:hidden; -webkit-font-smoothing:antialiased; transition:background .3s ease, color .3s ease;}
+h1,h2,h3,.display{font-family:'Outfit',system-ui,sans-serif;}
+::selection{background:rgba(99,102,241,.4);}
+button,input,select,textarea{font-family:inherit;}
+a{color:inherit;text-decoration:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:rgba(127,127,127,.25);border-radius:99px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* Zamin */
+#bg{ position:fixed; inset:0; z-index:0; overflow:hidden; background: radial-gradient(ellipse 900px 700px at 12% -8%, rgba(99,102,241,.22), transparent 60%), radial-gradient(ellipse 800px 700px at 110% 18%, rgba(6,182,212,.16), transparent 60%), radial-gradient(ellipse 900px 800px at 50% 120%, rgba(168,85,247,.14), transparent 60%), linear-gradient(180deg,var(--bg-0),var(--bg-1) 50%,var(--bg-2)); transition:background .3s ease; }
+html[data-theme="light"] #bg{ background: radial-gradient(ellipse 900px 700px at 12% -8%, rgba(99,102,241,.12), transparent 60%), radial-gradient(ellipse 800px 700px at 110% 18%, rgba(6,182,212,.10), transparent 60%), radial-gradient(ellipse 900px 800px at 50% 120%, rgba(168,85,247,.08), transparent 60%), linear-gradient(180deg,var(--bg-0),var(--bg-1) 50%,var(--bg-2)); }
+
+.glass{ background:var(--glass); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid var(--glass-border); border-radius:var(--r-lg); box-shadow:var(--shadow-soft); transition:background .3s ease, border-color .3s ease; }
+.glass-strong{ background:var(--glass-strong); backdrop-filter:blur(36px) saturate(180%); -webkit-backdrop-filter:blur(36px) saturate(180%); border:1px solid var(--glass-border); border-radius:var(--r-xl); box-shadow:var(--shadow-float); transition:background .3s ease, border-color .3s ease; }
+.brand-mark{display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0; background:var(--accent-grad);font-family:'Outfit';font-weight:800;color:#fff;}
+.brand-mark img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* Loading Ekrani */
+#loading { position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding: 60px 20px 30px; background:var(--bg-0); transition:opacity .6s ease, visibility .6s ease; }
+#loading.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.loading-center { display:flex; flex-direction:column; align-items:center; flex: 1; justify-content:center; }
+.loading-logo { width:96px; height:96px; border-radius: 28px; margin-bottom:24px; font-size: 36px; box-shadow: 0 16px 40px rgba(99,102,241, 0.4); }
+.loading-title { font-family:'Outfit',sans-serif; font-weight:800; font-size:32px; letter-spacing: 2px; color:#fff; text-align:center; margin: 0 0 6px; }
+.loading-welcome { font-family:'Inter',sans-serif; font-size: 15px; color: var(--accent-b); font-weight: 600; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; }
+.loading-footer { font-size:10px; font-weight:700; letter-spacing:3px; color:var(--text-faint); text-transform:uppercase; opacity: 0.7; }
+.spinner { position: relative; width: 115px; height: 60px; }
+.spinner span { position: absolute; top: 50%; left: var(--left); width: 35px; height: 7px; background: #fff; border-radius: 2px; animation: dominos 1s ease infinite; box-shadow: 2px 2px 3px 0 rgba(0,0,0,.35); }
+.spinner span:nth-child(1) { --left: 80px; animation-delay: 0.125s; } .spinner span:nth-child(2) { --left: 70px; animation-delay: 0.3s; }
+.spinner span:nth-child(3) { --left: 60px; animation-delay: 0.425s; } .spinner span:nth-child(4) { --left: 50px; animation-delay: 0.54s; }
+.spinner span:nth-child(5) { --left: 40px; animation-delay: 0.665s; } .spinner span:nth-child(6) { --left: 30px; animation-delay: 0.79s; }
+.spinner span:nth-child(7) { --left: 20px; animation-delay: 0.915s; } .spinner span:nth-child(8) { --left: 10px; }
+@keyframes dominos { 50% { opacity: 0.7; } 75% { transform: rotate(90deg); } 80% { opacity: 1; } }
+
+#app{position:fixed;inset:0;z-index:1;visibility:hidden;}
+#app.ready{visibility:visible;}
+
+/* Animatsiyali Suzuvchi Xarita */
+#map-wrap { position:absolute; top:0; left:0; right:0; bottom:0; transition:all 0.65s cubic-bezier(0.22, 1, 0.36, 1); z-index: 10; background:#11162A; }
+#map { position:absolute; inset:0; filter:brightness(var(--map-tiles)); transition:filter .45s ease; }
+#map-wrap.overview-mode {
+  top: 90px;
+  left: 24px;
+  right: calc(min(460px, 100vw - 32px) + 48px);
+  bottom: calc(100vh - 90px - 45vh);
+  border-radius: 24px;
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.leaflet-control-zoom{border:none !important;}
+.leaflet-top.leaflet-right{top:74px;right:16px;}
+.leaflet-control-zoom a{ background:var(--glass-strong) !important;backdrop-filter:blur(14px); color:var(--text) !important;border:1px solid var(--glass-border) !important; }
+.leaflet-control-zoom a:first-child{border-radius:var(--r-md) var(--r-md) 0 0 !important;}
+.leaflet-control-zoom a:last-child{border-radius:0 0 var(--r-md) var(--r-md) !important;}
+@media (max-width:760px){.leaflet-top.leaflet-right{top:70px;right:14px;}}
+.leaflet-control-attribution{ background:var(--glass) !important;color:var(--text-faint) !important; backdrop-filter:blur(10px);border-radius:var(--r-sm) 0 0 0 !important;font-size:10px !important; }
+.leaflet-control-attribution a{color:var(--text-dim) !important;}
+.leaflet-popup,.leaflet-tooltip{display:none !important;}
+
+/* Pinlar */
+.mfy-pin{display:flex;align-items:center;justify-content:center;}
+.mfy-pin .dot{ width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(10,14,26,.9); box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .15s ease; }
+html[data-theme="light"] .mfy-pin .dot{border-color:rgba(255,255,255,.95);}
+.mfy-pin.active .dot{transform:scale(1.45);box-shadow:0 0 0 6px rgba(99,102,241,.18),0 2px 14px rgba(0,0,0,.5);}
+.mfy-pin:hover .dot{transform:scale(1.25);}
+.marker-cluster-sysone{background:transparent;}
+.marker-cluster-sysone div{ width:40px;height:40px;border-radius:50%; background:var(--glass-strong);backdrop-filter:blur(10px); border:1.5px solid var(--glass-border); display:flex;align-items:center;justify-content:center; color:var(--text);font-family:'Outfit';font-weight:700;font-size:13px; box-shadow:0 6px 18px rgba(0,0,0,.25); }
+
+/* Top Bar */
+#topbar{ position:absolute;top:16px;left:16px;right:16px;z-index:40; display:flex;align-items:center;justify-content:space-between;gap:10px; pointer-events:none; }
+#topbar > *{pointer-events:auto;}
+.icon-btn{ width:46px;height:46px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center; cursor:pointer;border:1px solid var(--glass-border);color:var(--text);flex-shrink:0; transition:.15s ease; }
+.icon-btn:hover{background:var(--glass-strong);transform:translateY(-1px);}
+.icon-btn svg{width:20px;height:20px;}
+#title-pill{ padding:11px 24px;border-radius:var(--r-full); display:flex;flex-direction:column;align-items:center; position:absolute;left:50%;top:16px;transform:translateX(-50%); pointer-events:auto; }
+#title-pill h1{margin:0;font-size:14px;font-weight:700;letter-spacing:2.5px;white-space:nowrap;}
+#title-pill span{font-size:9.5px;color:var(--text-dim);letter-spacing:1.5px;margin-top:1px;}
+#visit-pill{ padding:0 16px;height:46px;border-radius:var(--r-full);display:flex;align-items:center;gap:8px; font-size:12.5px;color:var(--text-dim);font-weight:600;white-space:nowrap; }
+#visit-pill b{color:var(--text);font-weight:700;font-family:'Outfit';}
+#visit-pill svg{width:15px;height:15px;flex-shrink:0;}
+
+#district-toggle-btn{ padding:0 22px;height:46px;border-radius:var(--r-full);display:flex;align-items:center;gap:8px; font-size:13.5px;color:#fff !important;font-weight:700;white-space:nowrap;cursor:pointer;border:none; background:var(--accent-grad);transition:.15s ease; box-shadow: 0 4px 14px rgba(99,102,241,.3); }
+#district-toggle-btn span{color:#fff !important;}
+#district-toggle-btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow: 0 6px 18px rgba(99,102,241,.4);}
+#district-toggle-btn.active{background:rgba(255,255,255,.12);color:var(--text) !important; box-shadow:none; border:1px solid var(--glass-border);}
+#district-toggle-btn.active span{color:var(--text) !important;}
+
+#announce-banner{ position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:39; max-width:min(520px, calc(100vw - 32px));padding:9px 18px;border-radius:var(--r-full); display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600; opacity:0;visibility:hidden;transition:.3s ease;pointer-events:none; }
+#announce-banner.show{opacity:1;visibility:visible;pointer-events:auto;}
+#announce-banner svg{width:15px;height:15px;color:var(--warn);flex-shrink:0;}
+#announce-banner span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#announce-banner .ab-close{margin-left:auto;cursor:pointer;color:var(--text-faint);flex-shrink:0;}
+
+/* Overview Panels Wrapper */
+#overview-wrapper { position: fixed; inset: 0; z-index: 35; pointer-events: none; opacity: 0; visibility: hidden; transition: all 0.5s ease; }
+#overview-wrapper.show { opacity: 1; visibility: visible; }
+
+/* O'ng taraf panel */
+#overview-panel { position:absolute; top:90px; right:24px; bottom:24px; width:min(460px, calc(100vw - 48px)); display:flex; flex-direction:column; overflow:hidden; pointer-events:none; transform:translateX(30px); transition:all 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+#overview-wrapper.show #overview-panel { transform:translateX(0); pointer-events:auto; }
+
+.ov-head{display:flex;align-items:center;gap:10px;padding:22px 24px 14px;flex-shrink:0; border-bottom: 1px solid var(--glass-border);}
+.ov-head h2{margin:0;font-size:18px;flex:1;}
+.ov-close{width:34px;height:34px;border-radius:50%;background:rgba(127,127,127,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0; transition:.15s ease;}
+.ov-close:hover{background:rgba(255,255,255,.1);color:#fff;}
+.ov-body{flex:1;overflow-y:auto;padding:20px 24px;}
+.ov-sub{font-size:13px;color:var(--text-dim);margin:-4px 0 20px;}
+
+.ov-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
+.ov-stat{background:rgba(255,255,255,.03);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:16px;}
+.ov-stat b{display:block;font-family:'Outfit';font-size:24px;color:var(--text);}
+.ov-stat span{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+
+.ov-section-title{font-size:11.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);font-weight:700;margin:24px 0 12px;display:flex;align-items:center;justify-content:space-between;}
+.ov-bar-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;}
+.ov-bar-row .sw{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ov-bar-row .nm{width:110px;flex-shrink:0;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ov-bar-track{flex:1;height:8px;border-radius:99px;background:rgba(127,127,127,.15);overflow:hidden;}
+.ov-bar-fill{height:100%;border-radius:99px;}
+.ov-bar-val{width:36px;text-align:right;flex-shrink:0;font-weight:700;font-family:'Outfit';font-size:12px;color:var(--text);}
+
+.ov-rank-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+.ov-rank-item:last-child{border-bottom:none;}
+.ov-rank-num{width:22px;height:22px;border-radius:50%;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+.ov-rank-nm{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.ov-rank-val{font-family:'Outfit';font-weight:700;color:var(--accent-b);flex-shrink:0;}
+
+.ov-chart-wrap{background:rgba(255,255,255,.02);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:14px;margin-bottom:8px;}
+.ov-export-btn{ width:100%;margin-top:12px;padding:14px;border-radius:var(--r-md);border:1px solid var(--glass-border); background:rgba(255,255,255,.05);color:var(--text);font-weight:700;font-size:13px;cursor:pointer; display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s ease; }
+.ov-export-btn:hover{background:rgba(255,255,255,.1);}
+
+/* Chap pastki panel (Iqtisodiy va ijtimoiy pasport) */
+#left-bottom-panel { position:absolute; top:calc(90px + 45vh + 24px); left:24px; right:calc(min(460px, 100vw - 32px) + 48px); bottom:24px; display:flex; gap:16px; pointer-events:none; opacity:0; transform:translateY(20px); transition:all 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+#overview-wrapper.show #left-bottom-panel { opacity:1; pointer-events:auto; transform:translateY(0); }
+.lb-card { flex:1; background:var(--glass-strong); backdrop-filter:blur(36px); border:1px solid var(--glass-border); border-radius:var(--r-xl); padding:20px 24px; display:flex; flex-direction:column; overflow-y:auto; box-shadow:var(--shadow-float); }
+.lb-title { font-size:14px; font-weight:700; color:var(--accent-b); text-transform:uppercase; letter-spacing:1px; margin:0 0 16px; font-family:'Outfit'; }
+.lb-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+.lb-row:last-child { border-bottom:none; }
+.lb-label { color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+.lb-label svg { width:16px; height:16px; color:var(--text-faint); }
+.lb-val { font-weight:700; color:var(--text); text-align:right; }
+.lb-val.green { color:var(--ok); }
+.lb-val span { display:block; font-size:10px; color:var(--text-faint); font-weight:500; margin-top:2px; text-transform:uppercase; }
+
+@media (max-width: 960px) {
+  #map-wrap.overview-mode { opacity: 0; pointer-events: none; }
+  #overview-wrapper { flex-direction: column; overflow-y: auto; padding: 80px 16px 24px; gap: 16px; background:var(--bg-0); pointer-events:auto; }
+  #overview-panel, #left-bottom-panel { position: relative; top: 0; left: 0; right: 0; bottom: 0; width: 100%; transform: none; height: auto; }
+  #left-bottom-panel { flex-direction: column; opacity: 1; }
+  .lb-card { padding: 16px; }
+}
+
+/* Kichik qismlar (Menyu, Toolbar, Detail) */
+#scrim{ position:fixed;inset:0;background:rgba(5,7,14,.6);backdrop-filter:blur(4px); z-index:50;opacity:0;visibility:hidden;transition:.3s ease; }
+#scrim.show{opacity:1;visibility:visible;}
+#side-menu{ position:fixed;top:0;left:0;bottom:0;width:280px;max-width:84vw;z-index:60; border-radius:0 var(--r-xl) var(--r-xl) 0;border-left:none; transform:translateX(-104%);transition:transform .35s cubic-bezier(.22,1,.36,1); display:flex;flex-direction:column;padding:22px 18px; }
+#side-menu.open{transform:translateX(0);}
+.menu-head{display:flex;align-items:center;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--glass-border);margin-bottom:14px;}
+.menu-mark{width:42px;height:42px;border-radius:13px;font-size:16px;}
+.menu-head div h2{margin:0;font-size:15.5px;}
+.menu-head div span{font-size:11px;color:var(--text-dim);}
+.menu-item{ display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:var(--r-md);cursor:pointer; color:var(--text-dim);font-size:14px;font-weight:600;transition:.15s ease;margin-bottom:4px; }
+.menu-item svg{width:19px;height:19px;flex-shrink:0;opacity:.85;}
+.menu-item:hover{background:var(--glass-strong);color:var(--text);}
+.menu-sep{height:1px;background:var(--glass-border);margin:10px 2px;}
+.menu-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--glass-border);}
+.menu-foot-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-faint);}
+.menu-foot-row b{color:var(--text-dim);}
+.menu-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-faint);font-weight:700;padding:0 14px;margin-bottom:8px;}
+.lang-row,.theme-row{display:flex;gap:6px;padding:0 14px 14px;}
+.lang-btn,.theme-btn{ flex:1;padding:8px 0;border-radius:var(--r-sm);text-align:center;font-size:12px;font-weight:700; border:1px solid var(--glass-border);color:var(--text-dim);cursor:pointer;transition:.15s ease; display:flex;align-items:center;justify-content:center;gap:6px; }
+.theme-btn svg{width:14px;height:14px;}
+.lang-btn:hover,.theme-btn:hover{color:var(--text);}
+.lang-btn.active,.theme-btn.active{background:var(--accent-grad);color:#fff;border-color:transparent;}
+
+#toolbar{ position:absolute;left:24px;bottom:24px;z-index:35; width:360px;max-width:calc(100vw - 48px); padding:16px;display:flex;flex-direction:column;gap:12px; transition:transform .4s ease, opacity .4s ease; }
+#overview-wrapper.show ~ #toolbar { transform:translateY(calc(100% + 30px)); opacity:0; pointer-events:none; }
+#toolbar.collapsed{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none;}
+
+.tb-row{display:flex;gap:8px;align-items:center;}
+#mfy-select-head{ flex:1;display:flex;align-items:center;gap:10px; background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text); border-radius:var(--r-full);padding:12px 18px;font-size:13.5px;font-weight:600;cursor:pointer; transition:.15s ease;user-select:none; }
+#mfy-select-head:hover{background:rgba(255,255,255,.1);}
+#mfy-select-head svg.pin-ic{width:16px;height:16px;color:var(--accent-b);flex-shrink:0;}
+#mfy-select-head .msh-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#mfy-select-head svg.chev{width:16px;height:16px;color:var(--text-dim);flex-shrink:0;transition:transform .25s ease;}
+#mfy-select-head.open svg.chev{transform:rotate(180deg);}
+
+#mfy-select-search{ display:none;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text); border-radius:var(--r-sm);padding:10px 14px;font-size:13px;outline:none;margin-bottom:2px; }
+#mfy-select-search.open{display:block;}
+#mfy-select-list{ display:flex;flex-direction:column;gap:2px;overflow-y:auto; max-height:0;opacity:0;transition:max-height .3s ease, opacity .22s ease; padding-right:2px; }
+#mfy-select-list.open{max-height:240px;opacity:1;}
+.mfy-opt{ display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm); font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:.12s ease;flex-shrink:0; }
+.mfy-opt:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.mfy-opt.active{background:rgba(99,102,241,.16);color:var(--text);border:1px solid rgba(99,102,241,.35);}
+.mfy-opt .sw{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.mfy-opt .nm{flex:1;white-space:nowrap;overflow:hidden;}
+
+#filters-toggle{ width:42px;height:42px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center; background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text-dim);cursor:pointer;transition:.15s ease; }
+#filters-toggle:hover{color:var(--text);background:rgba(255,255,255,.1);}
+#filters-toggle svg{width:18px;height:18px;}
+#filters-toggle.open svg{transform:rotate(180deg);}
+#filters-body{display:flex;flex-direction:column;gap:10px;overflow:hidden;max-height:320px;transition:max-height .3s ease, opacity .2s ease;opacity:1;}
+#filters-body.hide{max-height:0;opacity:0;}
+
+.chip-scroll{display:flex;gap:6px;}
+.chip-scroll.scroll-x{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;}
+.chip-scroll.scroll-x::-webkit-scrollbar{display:none;}
+.chip-scroll.scroll-y{flex-direction:column;max-height:190px;overflow-y:auto;padding-right:4px;}
+.f-chip{ flex-shrink:0;padding:8px 14px;border-radius:var(--r-full);font-size:11.5px;font-weight:600; border:1px solid var(--glass-border);color:var(--text-dim);cursor:pointer;white-space:nowrap;transition:.15s ease; display:flex;align-items:center;gap:6px; }
+.f-chip:hover{color:var(--text);background:rgba(255,255,255,.05);}
+.f-chip.active{background:var(--accent-grad);color:#fff;border-color:transparent;}
+.f-chip .sw{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+#detail-scrim{ position:fixed;inset:0;z-index:69;background:transparent;opacity:0;visibility:hidden; }
+#detail-scrim.show{opacity:1;visibility:visible;}
+#detail-card{ position:fixed;top:50%;right:26px;width:340px;max-width:calc(100vw - 52px);z-index:70; max-height:min(78vh, 640px); border-radius:var(--r-xl); border:1.5px solid var(--dc-accent, var(--glass-border)); transform:translate(24px,-50%) scale(.95);opacity:0; transition:transform .4s cubic-bezier(.22,1,.36,1), opacity .3s ease; display:flex;flex-direction:column;overflow:hidden; background:var(--bg-1); box-shadow:0 24px 70px -12px rgba(0,0,0,.6), 0 0 0 5px var(--dc-glow, transparent); }
+#detail-card.show{transform:translate(0,-50%) scale(1);opacity:1;}
+.dc-cover{position:relative;height:160px;flex-shrink:0;background:var(--bg-2);overflow:hidden;}
+.dc-cover img{width:100%;height:100%;object-fit:cover;}
+.dc-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;z-index:5;}
+.dc-spec-badge{position:absolute;top:14px;left:14px;padding:6px 14px;border-radius:var(--r-full);font-size:11px;font-weight:700;color:#fff;backdrop-filter:blur(8px);z-index:5;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.dc-body{flex:1;overflow-y:auto;padding:20px;}
+.dc-name{font-size:18px;font-weight:700;margin:0 0 4px;color:var(--text);}
+.dc-id{font-size:11px;color:var(--text-faint);margin-bottom:14px;}
+.dc-status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:5px 12px;border-radius:var(--r-full);margin-bottom:16px;}
+.dc-status.full{color:var(--ok);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);}
+.dc-status.partial{color:var(--warn);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);}
+.dc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.dc-stat{background:rgba(255,255,255,.03);border:1px solid var(--glass-border);border-radius:var(--r-md);padding:12px 10px;text-align:center;}
+.dc-stat b{display:block;font-family:'Outfit';font-size:17px;color:var(--text);}
+.dc-stat span{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.dc-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.dc-row:last-child{border-bottom:none;}
+.dc-row svg{width:18px;height:18px;color:var(--text-dim);flex-shrink:0;}
+.dc-row .lab{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;}
+.dc-row .val{font-size:14px;font-weight:600;margin-top:2px;color:var(--text);}
+.dc-btn{ width:100%;margin-top:10px;padding:14px;border-radius:var(--r-md);border:none;cursor:pointer; font-weight:700;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px; background:var(--accent-grad);color:#fff;transition:.15s ease; box-shadow:0 6px 20px rgba(99,102,241,.3); }
+.dc-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4);}
+
+.region-legend{ position:absolute;right:24px;bottom:24px;z-index:35;padding:16px;width:180px; }
+.region-legend h4{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);}
+.rl-item{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-dim);padding:4px 0;font-weight:500;}
+.rl-item i{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+#tb-toggle{ position:absolute;left:16px;bottom:16px;z-index:34;width:46px;height:46px;display:none; align-items:center;justify-content:center;cursor:pointer; }
+@media (max-width:760px){
+  #title-pill{display:none;} #topbar{top:12px;left:12px;right:12px;}
+  #toolbar{left:12px;right:12px;bottom:12px;width:auto;max-width:none;}
+  #detail-card{ top:auto;right:12px;left:12px;bottom:12px;width:auto;max-width:none; max-height:70vh;border-radius:var(--r-xl); transform:translateY(30px) scale(.97); }
+  #detail-card.show{transform:translateY(0) scale(1);}
+  .region-legend{display:none;}
+}
+
+.modal-scrim{position:fixed;inset:0;background:rgba(5,7,14,.5);backdrop-filter:blur(3px);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:.25s ease;}
+.modal-scrim.show{opacity:1;visibility:visible;}
+.modal-box{width:380px;max-width:100%;max-height:86vh;overflow-y:auto;padding:26px;transform:scale(.94) translateY(10px);transition:.3s cubic-bezier(.22,1,.36,1);position:relative;}
+.modal-scrim.show .modal-box{transform:scale(1) translateY(0);}
+.modal-title{font-size:17px;font-weight:700;margin:0 0 4px;}
+.modal-sub{font-size:12px;color:var(--text-dim);margin-bottom:18px;}
+.about-mark{width:54px;height:54px;border-radius:17px;font-size:21px;margin-bottom:14px;}
+.about-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--glass-border);font-size:13px;}
+.about-row svg{width:17px;height:17px;color:var(--text-dim);flex-shrink:0;}
+.about-row a{color:var(--text);text-decoration:none;}
+.about-row a:hover{color:var(--accent-b);}
+.social-row{display:flex;gap:10px;margin-top:18px;}
+.social-btn{ flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:13px 6px; border-radius:var(--r-md);background:rgba(127,127,127,.06);border:1px solid var(--glass-border); color:var(--text);text-decoration:none;font-size:11px;font-weight:600;transition:.15s ease; }
+.social-btn svg{width:22px;height:22px;}
+.social-btn.tg svg{color:#2AABEE;} .social-btn.ig svg{color:#E1306C;} .social-btn.yt svg{color:#FF0000;}
+.social-btn:hover{background:var(--glass-strong);transform:translateY(-2px);box-shadow:var(--shadow-soft);}
+.menu-powered{ display:flex;align-items:center;justify-content:center;gap:6px; margin-top:10px;padding-top:12px;border-top:1px solid var(--glass-border); font-size:10.5px;letter-spacing:1.5px;color:var(--text-faint);text-transform:uppercase;font-weight:600; }
+.menu-powered b{ font-family:'Outfit';font-weight:800;letter-spacing:1px; background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent; }
+.modal-close-btn{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:rgba(127,127,127,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+#lightbox{position:fixed;inset:0;z-index:120;background:rgba(5,7,14,.92);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s ease;}
+#lightbox.show{opacity:1;visibility:visible;}
+#lightbox img{max-width:92vw;max-height:88vh;border-radius:var(--r-md);box-shadow:var(--shadow-float);}
+#lightbox .dc-close{top:20px;right:20px;}
+#toast-wrap{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{padding:11px 20px;border-radius:var(--r-full);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px; animation:toastIn .25s ease, toastOut .25s ease 2.6s forwards;}
+.toast.ok{color:var(--ok);} .toast.err{color:var(--danger);}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-8px);}}
+
+</style>
+</head>
+<body>
+<div id="bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<div id="loading">
+  <div></div>
+  <div class="loading-center">
+    <h1 class="loading-title">UCHKO'PRIK TUMANI</h1>
+    <div class="loading-welcome">XUSH KELIBSIZ</div>
+    <div class="spinner"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+  <div class="loading-footer">POWERED BY SYSONE</div>
+</div>
+
+<div id="app">
+  <div id="map-wrap"><div id="map"></div></div>
+
+  <div id="announce-banner" class="glass"></div>
+
+  <div id="topbar">
+    <div class="icon-btn glass" id="menu-btn" title="Menyu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
+    </div>
+    <div id="title-pill" style="display:flex; gap:12px; padding:0; background:transparent; border:none; box-shadow:none;">
+      <div class="glass" style="padding:11px 24px; border-radius:var(--r-full); display:flex; flex-direction:column; align-items:center;">
+        <h1 id="title-h1">UCHKO'PRIK TUMANI</h1>
+        <span id="title-sub">51 MFY · interaktiv xarita</span>
+      </div>
+      <button id="district-toggle-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 3 5-7"/></svg>
+        <span id="district-toggle-label">Tuman haqida</span>
+      </button>
+    </div>
+    <div id="visit-pill" class="glass">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <b id="visit-count">—</b>
+    </div>
+  </div>
+
+  <div id="scrim"></div>
+  <nav id="side-menu" class="glass-strong"></nav>
+
+  <div id="tb-toggle" class="icon-btn glass"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+
+  <div id="toolbar" class="glass-strong">
+    <div class="tb-row">
+      <div id="mfy-select-head" title="MFY tanlash">
+        <svg class="pin-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="msh-label" id="mfy-select-label">MFY tanlash…</span>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="filters-toggle" class="open" title="Filtrlar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <input id="mfy-select-search" type="text" placeholder="Qidirish…">
+    <div id="mfy-select-list"></div>
+    <div id="filters-body">
+      <div class="chip-scroll scroll-y" id="spec-chips"></div>
+      <div class="chip-scroll scroll-x" id="status-chips"></div>
+      <div class="chip-scroll scroll-x" id="mode-chips"></div>
+    </div>
+    <div id="result-count" style="font-size:11px;color:var(--text-faint);padding-top:4px;">51 / 51 MFY ko'rsatilmoqda</div>
+  </div>
+
+  <div class="region-legend glass" id="region-legend"></div>
+
+  <!-- YANGLILANGAN TUMAN HAQIDA QISMI (Xarita osti va Yon panel) -->
+  <div id="overview-wrapper">
+    <!-- Chap tomon: Xarita bo'shatgan joy ostida keladigan Pasport -->
+    <div id="left-bottom-panel">
+      <!-- 1. Iqtisodiyot -->
+      <div class="lb-card">
+        <div class="lb-title">Iqtisodiyot (2026-yil 1-yarm)</div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Sanoat</div><div class="lb-val green" id="lb-ind">2 762,8 mlrd<span>O'sish: 110,4%</span></div></div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Qishloq xo'jaligi</div><div class="lb-val" id="lb-agr">1 654,0 mlrd<span>O'sish: 100,1%</span></div></div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Xizmatlar hajmi</div><div class="lb-val green" id="lb-srv">1 264,9 mlrd<span>O'sish: 118,6%</span></div></div>
+      </div>
+      <!-- 2. Bandlik -->
+      <div class="lb-card">
+        <div class="lb-title">Mehnat balansi va ijtimoiy himoya</div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Jami resurslar</div><div class="lb-val">128,4 ming kishi</div></div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Rasmiy bandlar</div><div class="lb-val green">57,6 ming kishi</div></div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Ishsizlik darajasi</div><div class="lb-val" id="lb-unemp">4,0 %</div></div>
+        <div class="lb-row"><div class="lb-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Kambag'allik</div><div class="lb-val" id="lb-pov">4,4 %</div></div>
+      </div>
+      <!-- 3. Umumiy ma'lumotlar -->
+      <div class="lb-card">
+        <div class="lb-title">Umumiy ko'rsatkichlar</div>
+        <div class="lb-row"><div class="lb-label">Tashkil topgan:</div><div class="lb-val" id="lb-found">1926 yil 29 sentyabr</div></div>
+        <div class="lb-row"><div class="lb-label">Maydoni:</div><div class="lb-val" id="lb-area">271 kv.km</div></div>
+        <div class="lb-row"><div class="lb-label">Chegara uzunligi:</div><div class="lb-val">85,8 km</div></div>
+        <div class="lb-row"><div class="lb-label">Sog'liqni saqlash:</div><div class="lb-val">31 ta muassasa</div></div>
+      </div>
+    </div>
+
+    <!-- O'ng tomon: Asosiy Overview panel (Reyting, Tarix) -->
+    <div id="overview-panel" class="glass-strong">
+      <div class="ov-head"><h2>Tuman haqida</h2><div class="ov-close" id="ov-close-btn">✕</div></div>
+      <div class="ov-body" id="ov-body-content"></div>
+    </div>
+  </div>
+
+</div> <!-- /app -->
+
+<div id="detail-scrim"></div>
+<svg id="connector-svg" xmlns="http://www.w3.org/2000/svg" style="position:fixed;inset:0;z-index:68;pointer-events:none;opacity:0;transition:opacity .35s ease"></svg>
+<div id="detail-card" class="glass-strong"></div>
+
+<div class="modal-scrim" id="about-modal"></div>
+<div id="toast-wrap"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+// MFY BAZASI - TO'LIQ 51 TA MFY KIRTILGAN
+const BASE_MFY = [{"id":1,"name":"Фаровон","head":"Хайдаров Кодиржон","phone":"90-588-41-16","lat":40.544674,"lng":70.997746,"population":4042,"households":753,"families":1246,"specialization":"Дехқончилик"},{"id":2,"name":"Янгиқишлоқ","head":"Aбдумуталибов Нуриддин Мухиддин ўғли","phone":"90-588-08-08","lat":40.518162,"lng":71.002826,"population":4114,"households":752,"families":976,"specialization":"Боғдочилик"},{"id":3,"name":"Турғоқ","head":"Ходжаев Рашид Абдурахмонович","phone":"90-150-17-11","lat":40.535308,"lng":71.004499,"population":4110,"households":689,"families":1178,"specialization":"Дехқончилик"},{"id":4,"name":"Яккамулла","head":"Мамажонов Нодиржон","phone":"99-608-58-30","lat":40.565068,"lng":70.982662,"population":5543,"households":1201,"families":1483,"specialization":"Савдо ва хизмат кўрсатиш"},{"id":5,"name":"Ҳасанқора","head":"Ёрматов Акрамжон","phone":"99-974-38-78","lat":40.553974,"lng":71.022554,"population":4017,"households":771,"families":1053,"specialization":"Дехқончилик"},{"id":6,"name":"Бахрин","head":"Сатторов Улуғбек","phone":"88-665-09-91","lat":40.554992,"lng":71.039505,"population":4264,"households":790,"families":1224,"specialization":"Дехқончилик"},{"id":7,"name":"Янгиобод","head":"Маматов Наримонжон","phone":"91-130-00-69","lat":40.541726,"lng":71.018373,"population":4174,"households":730,"families":1201,"specialization":"Дехқончилик"},{"id":8,"name":"Тинчлик","head":"Мелиқўзиев Муроджон","phone":"91-685-80-52","lat":40.543873,"lng":71.052059,"population":6347,"households":1207,"families":1881,"specialization":"Кичик ишлаб чиқариш"},{"id":9,"name":"Учкўприк","head":"Дехконов Аброржон Анварович","phone":"90-309-00-90","lat":40.541321,"lng":71.054152,"population":5249,"households":1147,"families":1208,"specialization":"Савдо ва хизмат кўрсатиш"},{"id":10,"name":"Янгибоғ","head":"Қодиров Нодиржон","phone":"91-698-26-02","lat":40.536138,"lng":71.057214,"population":4114,"households":1007,"families":1295,"specialization":"Дехқончилик"},{"id":11,"name":"Яккатут","head":"Тўйчиев Абдуқодир Абдуқаххорович","phone":"94-003-55-34","lat":40.568293,"lng":71.054859,"population":6323,"households":1307,"families":1429,"specialization":"Кичик ишлаб чиқариш"},{"id":12,"name":"Зиғир","head":"Абдулазизов Абдуматалжон Хамидуллаевич","phone":"91-204-33-53","lat":40.583409,"lng":71.037228,"population":7227,"households":1275,"families":1637,"specialization":"Дехқончилик"},{"id":13,"name":"Мерган","head":"Холдаров Шавкатжон Абдурахимович","phone":"99-080-97-48","lat":40.526525,"lng":71.040833,"population":4011,"households":747,"families":1046,"specialization":"Дехқончилик"},{"id":14,"name":"Ғози-ғиждон","head":"Шукуров Улуғбек Саидхонович","phone":"91-201-53-39","lat":40.581253,"lng":71.010075,"population":6796,"households":1221,"families":1948,"specialization":"Кичик ишлаб чиқариш"},{"id":15,"name":"Ғиждон","head":"Саидов Рафиқжон Ахмаджонович","phone":"90-343-96-15","lat":40.604675,"lng":70.998138,"population":5237,"households":1080,"families":1482,"specialization":"Кичик ишлаб чиқариш"},{"id":16,"name":"Мирзахўжа","head":"Умурзақов Расулжон","phone":"97-940-75-45","lat":40.587231,"lng":71.000834,"population":3126,"households":650,"families":802,"specialization":"Ҳунармандчилик"},{"id":17,"name":"Бешкапа","head":"Пўлатов Шухратжон","phone":"95-887-71-77","lat":40.569545,"lng":71.019741,"population":4052,"households":732,"families":1106,"specialization":"Ҳунармандчилик"},{"id":18,"name":"Қумариқ","head":"Мамадалиев Хасанбой","phone":"99-699-34-48","lat":40.571415,"lng":71.010643,"population":5378,"households":1636,"families":1670,"specialization":"Кичик ишлаб чиқариш"},{"id":19,"name":"Истиқбол","head":"Мўминов Дониёр Мадаминжонович","phone":"90-292-80-81","lat":40.605928,"lng":71.018177,"population":5419,"households":1107,"families":1616,"specialization":"Дехқончилик"},{"id":20,"name":"Полохон","head":"Давронов Баходиржон","phone":"91-655-26-86","lat":40.589214,"lng":71.020377,"population":4645,"households":874,"families":1335,"specialization":"Кичик ишлаб чиқариш"},{"id":21,"name":"Юлғунзор","head":"Обилжонов Тойиржон Жўреевич","phone":"94-042-01-54","lat":40.60936,"lng":71.037448,"population":3628,"households":661,"families":1100,"specialization":"Чорвачилик"},{"id":22,"name":"Янгийўл","head":"Усмонова Ферузахон","phone":"97-966-15-74","lat":40.631962,"lng":71.004615,"population":3189,"households":537,"families":962,"specialization":"Дехқончилик"},{"id":23,"name":"Наврўз","head":"Хакимов Абдужаббор","phone":"97-502-53-52","lat":40.641194,"lng":70.997219,"population":4595,"households":832,"families":1287,"specialization":"Дехқончилик"},{"id":24,"name":"Қораянтоқ","head":"Қорабоев Шаробиддин","phone":"77-707-30-62","lat":40.650509,"lng":70.992142,"population":4832,"households":1041,"families":1271,"specialization":"Чорвачилик"},{"id":25,"name":"Собиржон","head":"Деҳқонов Илёс Баходирович","phone":"97-501-00-06","lat":40.615003,"lng":70.98701,"population":5243,"households":1105,"families":1234,"specialization":"Дехқончилик"},{"id":26,"name":"Нихол","head":"Назарматов Абдурахмон","phone":"97-413-13-01","lat":40.603375,"lng":70.981951,"population":3365,"households":562,"families":879,"specialization":"Кичик ишлаб чиқариш"},{"id":27,"name":"Чанг","head":"Турғунов Нўмонжон","phone":"97-335-04-10","lat":40.64967,"lng":71.014599,"population":3549,"households":758,"families":1123,"specialization":"Чорвачилик"},{"id":28,"name":"Олтинводий","head":"Ғозев Саййидикромхон","phone":"91-698-03-68","lat":40.50923,"lng":71.053441,"population":4830,"households":1009,"families":1311,"specialization":"Дехқончилик"},{"id":29,"name":"Бегобод","head":"Эсонов Хамидулло","phone":"91-108-01-91","lat":40.506514,"lng":71.051158,"population":4699,"households":1013,"families":1391,"specialization":"Дехқончилик"},{"id":30,"name":"КаттаКенагас","head":"Муқимов Носиржон","phone":"90-150-19-50","lat":40.505652,"lng":71.08695,"population":3457,"households":750,"families":1008,"specialization":"Дехқончилик"},{"id":31,"name":"Сой бўйи","head":"Мамажонов Масруржон","phone":"90-565-88-55","lat":40.498245,"lng":71.086404,"population":4225,"households":873,"families":1281,"specialization":"Дехқончилик"},{"id":32,"name":"КичикКенагас","head":"Турсунова Мохирахон","phone":"90-274-45-23","lat":40.518402,"lng":71.092829,"population":6217,"households":1179,"families":1927,"specialization":"Дехқончилик"},{"id":33,"name":"КаттаҚашқар","head":"Набиев Абдурасул Мўминович","phone":"91-323-58-21","lat":40.478802,"lng":71.075406,"population":7193,"households":1473,"families":2287,"specialization":"Дехқончилик"},{"id":34,"name":"КаттаҚоракўл","head":"Рахмонова Умидахон Собировна","phone":"91-688-66-51","lat":40.504395,"lng":71.026264,"population":7087,"households":1248,"families":1878,"specialization":"Чорвачилик"},{"id":35,"name":"Олмурод","head":"Кенжаев Акбаржон Набиевич","phone":"98-558-20-87","lat":40.503727,"lng":70.999301,"population":4696,"households":725,"families":1075,"specialization":"Чорвачилик"},{"id":36,"name":"Тўқсонқовун","head":"Нажмиддинов Камолжон Мухторович","phone":"90-055-00-79","lat":40.483219,"lng":71.008709,"population":3903,"households":737,"families":1035,"specialization":"Чорвачилик"},{"id":37,"name":"КаттаҚўштепа","head":"Мавлонов Нодиржон","phone":"93-642-02-22","lat":40.509096,"lng":71.063153,"population":4941,"households":1021,"families":1210,"specialization":"Чорвачилик"},{"id":38,"name":"Чорбоғ","head":"Исматуллаев Камолдин","phone":"90-306-66-95","lat":40.547769,"lng":71.089687,"population":3219,"households":608,"families":857,"specialization":"Кичик ишлаб чиқариш"},{"id":39,"name":"Бегмурод","head":"Мамараимов Алижон","phone":"90-509-24-41","lat":40.548001,"lng":71.088014,"population":4125,"households":743,"families":1052,"specialization":"Кичик ишлаб чиқариш"},{"id":40,"name":"Машад","head":"Хўжаматов Мирзохиджон","phone":"90-305-67-69","lat":40.533325,"lng":71.089207,"population":3860,"households":730,"families":1198,"specialization":"Кичик ишлаб чиқариш"},{"id":41,"name":"Тепақўрғон","head":"Султонов Неъматжон","phone":"93-240-44-14","lat":40.571441,"lng":71.08588,"population":5542,"households":1017,"families":1751,"specialization":"Дехқончилик"},{"id":42,"name":"Султон","head":"Рашидов Абдуқундуз","phone":"94-497-66-27","lat":40.55767,"lng":71.094129,"population":3308,"households":586,"families":977,"specialization":"Кичик ишлаб чиқариш"},{"id":43,"name":"Пучуғой","head":"Исмоилов Олимжон","phone":"91-153-84-36","lat":40.556119,"lng":71.101634,"population":5660,"households":1200,"families":1348,"specialization":"Чорвачилик"},{"id":44,"name":"Бобошбек","head":"Одилов Шерзоджон","phone":"90-810-57-59","lat":40.535468,"lng":71.072284,"population":6277,"households":1065,"families":1520,"specialization":"Кичик ишлаб чиқариш"},{"id":45,"name":"Оқсув","head":"Исақов Исроилжон Муҳаммаджонович","phone":"90-360-79-76","lat":40.418416,"lng":71.027298,"population":5791,"households":1190,"families":1343,"specialization":"Боғдочилик"},{"id":46,"name":"Сариқўрғон","head":"Тохиров Охунжон Солиевич","phone":"91-148-62-18","lat":40.336972,"lng":71.026246,"population":4732,"households":946,"families":1205,"specialization":"Дехқончилик"},{"id":47,"name":"Тожик","head":"Камолов Туробжон","phone":"90-508-40-10","lat":40.443822,"lng":71.02574,"population":4364,"households":1004,"families":1358,"specialization":"Дехқончилик"},{"id":48,"name":"Боғибўстон","head":"Рахмонов Авазбек","phone":"99-997-58-07","lat":40.450457,"lng":71.033351,"population":13552,"households":1748,"families":2060,"specialization":"Боғдочилик"},{"id":49,"name":"Қурбонкашқар","head":"Хасанов Шерали Йигиталиевич","phone":"91-682-60-78","lat":40.413,"lng":71.004349,"population":6928,"households":1355,"families":1720,"specialization":"Дехқончилик"},{"id":50,"name":"Янгиер","head":"Абдуллаев Шавкатжон Ўктамович","phone":"91-286-64-02","lat":40.387082,"lng":71.022562,"population":5331,"households":1135,"families":1461,"specialization":"Дехқончилик"},{"id":51,"name":"Мехнатобод","head":"Хусанов Сарваржон Мухторжон ўғли","phone":"94-448-10-94","lat":40.581591,"lng":71.326658,"population":1612,"households":364,"families":485,"specialization":"Дехқончилик"}];
+
+const SPEC_COLORS = { "Дехқончилик":"#22C55E", "Чорвачилик":"#F59E0B", "Кичик ишлаб чиқариш":"#6366F1", "Боғдочилик":"#06B6D4", "Ҳунармандчилик":"#EC4899", "Савдо ва хизмат кўрсатиш":"#A855F7" };
+function specLabel(key){ return key || '—'; }
+
+const FIREBASE_CONFIG = { apiKey: "AIzaSyArc-jvUip_jMSbl0uYNP0sO0Z6-qgpBic", authDomain: "uchkoprik-mfy.firebaseapp.com", projectId: "uchkoprik-mfy" };
+const FIREBASE_ENABLED = !!(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY");
+let db = null; 
+if(FIREBASE_ENABLED){ firebase.initializeApp(FIREBASE_CONFIG); db = firebase.firestore(); }
+
+let DATA = []; 
+let map, cluster, markers = {}, regionLayers = {}, searchHighlightLayer;
+let activeId = null, overviewOpen = false;
+let DISTRICT = { history:[] };
+let ANNOUNCEMENTS = [];
+
+function num(v){ return v==null ? '—' : v.toLocaleString('ru-RU'); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fullName(m){ return m.name + " МФЙ"; }
+
+function mergeOverrides(overridesById){
+  DATA = BASE_MFY.map(b => {
+    const defaults = {photos:[],status:'partial',schools:0,kindergartens:0,clinics:0,mosques:0,shops:0};
+    return overridesById[b.id] ? Object.assign({}, defaults, b, overridesById[b.id]) : Object.assign({}, defaults, b);
+  });
+  DATA.forEach(d => { if(!d.status) d.status = (d.photos && d.photos.length) ? 'full' : 'partial'; });
+}
+
+function onDataChanged(){
+  const totalPop = DATA.reduce((sum, m) => sum + (Number(m.population) || 0), 0);
+  const popBadge = document.getElementById('total-pop-badge');
+  if(popBadge) popBadge.textContent = "👥 " + totalPop.toLocaleString('ru-RU');
+
+  if(!map) return;
+  DATA.forEach(m => refreshMarker(m.id));
+  buildMfyList(); updateMfyLabel();
+  applyFilters();
+  if(activeId) renderDetail();
+  if(overviewOpen) renderOverviewPanel();
+}
+
+function loadData(cb){
+  if(FIREBASE_ENABLED){
+    try {
+      db.collection('mfy').onSnapshot(snap => {
+        const overridesById = {};
+        snap.forEach(doc => { overridesById[Number(doc.id)] = doc.data(); });
+        mergeOverrides(overridesById);
+        onDataChanged();
+        if(cb){ cb(); cb = null; }
+      }, err => { 
+        console.warn("Firebase rules prevented reading. Loading local data safely.", err.message); 
+        mergeOverrides({}); 
+        onDataChanged();
+        if(cb){ cb(); cb=null; } 
+      });
+    } catch(e) {
+      console.warn("Firebase error.", e);
+      mergeOverrides({});
+      onDataChanged();
+      if(cb){ cb(); cb=null; }
+    }
+  } else { 
+    mergeOverrides({}); 
+    onDataChanged();
+    if(cb) cb(); 
+  }
+}
+
+function initMap(){
+  map = L.map('map', { zoomControl:false, attributionControl:false, minZoom:9, maxZoom:18 }).setView([40.555, 71.02], 11.3);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+  L.control.zoom({ position:'topright' }).addTo(map);
+  
+  cluster = L.markerClusterGroup({ iconCreateFunction: c => L.divIcon({ html:`<div>${c.getChildCount()}</div>`, className:'marker-cluster-sysone', iconSize:[40,40] }) });
+  searchHighlightLayer = L.layerGroup().addTo(map);
+  
+  DATA.forEach(m => {
+    const col = SPEC_COLORS[m.specialization] || '#7C8798';
+    const ic = L.divIcon({ className:'mfy-pin', iconSize:[22,22], iconAnchor:[11,11], html:`<div class="dot" style="background:${col}"></div>` });
+    const mk = L.marker([m.lat, m.lng], { icon: ic });
+    mk.on('click', () => openDetail(m.id));
+    markers[m.id] = mk; cluster.addLayer(mk);
+    
+    const halo = L.circle([m.lat, m.lng], { radius:380, color:col, weight:0, fillColor:col, fillOpacity:.05 });
+    regionLayers[m.id] = halo; halo.addTo(map);
+  });
+  map.addLayer(cluster);
+}
+
+function refreshMarker(id){
+  const m = DATA.find(x=>x.id===id); if(!m) return;
+  const color = SPEC_COLORS[m.specialization] || '#7C8798';
+  const icon = L.divIcon({ className:'mfy-pin', iconSize:[22,22], iconAnchor:[11,11], html:`<div class="dot" style="background:${color}"></div>` });
+  markers[id].setIcon(icon);
+  regionLayers[id].setStyle({ color, fillColor:color });
+}
+
+let selectedMfyId = null, mfySearchQuery = "";
+function updateMfyLabel(){
+  const lab = document.getElementById('mfy-select-label');
+  if(selectedMfyId){ const m = DATA.find(x=>x.id===selectedMfyId); lab.innerHTML = m ? `<span class="chosen">${escapeHtml(fullName(m))}</span>` : "MFY tanlash…"; }
+  else { lab.textContent = "MFY tanlash…"; }
+}
+function buildMfyList(){
+  const wrap = document.getElementById('mfy-select-list');
+  const q = mfySearchQuery.trim().toLowerCase();
+  let sorted = [...DATA].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  if(q){ sorted = sorted.filter(m => m.name.toLowerCase().includes(q) || (m.head||'').toLowerCase().includes(q)); }
+  wrap.innerHTML = sorted.map(m => {
+    const color = SPEC_COLORS[m.specialization] || '#7C8798';
+    return `<div class="mfy-opt${selectedMfyId===m.id?' active':''}" data-id="${m.id}"><span class="sw" style="background:${color}"></span><span class="nm">${escapeHtml(fullName(m))}</span></div>`;
+  }).join('') || `<div class="ov-empty-note">—</div>`;
+  wrap.querySelectorAll('.mfy-opt').forEach(el => el.addEventListener('click', () => selectMfy(Number(el.dataset.id))));
+}
+function selectMfy(id){
+  const m = DATA.find(x=>x.id===id); if(!m) return;
+  selectedMfyId = id; updateMfyLabel();
+  document.getElementById('mfy-select-list').querySelectorAll('.mfy-opt').forEach(el => el.classList.toggle('active', Number(el.dataset.id)===id));
+  searchHighlightLayer.clearLayers();
+  const color = SPEC_COLORS[m.specialization] || '#6366F1';
+  const pulseIcon = L.divIcon({ className:'search-pulse-wrap', iconSize:[1,1], iconAnchor:[0,0], html:`<div class="search-pulse-ring" style="border-color:${color}"></div>` });
+  L.marker([m.lat, m.lng], { icon: pulseIcon, interactive:false }).addTo(searchHighlightLayer);
+  if(overviewOpen) closeOverview();
+  map.flyTo([m.lat, m.lng], 15, { duration:.7 });
+  setTimeout(() => { if(selectedMfyId===id) openDetail(id); }, 780);
+  if(window.innerWidth <= 760){ document.getElementById('mfy-select-list').classList.remove('open'); document.getElementById('mfy-select-head').classList.remove('open'); document.getElementById('mfy-select-search').classList.remove('open'); }
+}
+document.getElementById('mfy-select-head').addEventListener('click', () => { document.getElementById('mfy-select-list').classList.toggle('open'); document.getElementById('mfy-select-head').classList.toggle('open'); document.getElementById('mfy-select-search').classList.toggle('open'); });
+document.getElementById('mfy-select-search').addEventListener('input', e => { mfySearchQuery = e.target.value; buildMfyList(); });
+document.getElementById('mfy-select-search').addEventListener('click', e => e.stopPropagation());
+
+let filters = { spec:"", status:"", density:false };
+function buildSpecChips(){
+  const wrap = document.getElementById('spec-chips');
+  wrap.innerHTML = `<div class="f-chip${filters.spec===''?' active':''}" data-spec="">Hammasi</div>` +
+    Object.keys(SPEC_COLORS).map(s => `<div class="f-chip${filters.spec===s?' active':''}" data-spec="${escapeHtml(s)}"><span class="sw" style="background:${SPEC_COLORS[s]}"></span>${escapeHtml(specLabel(s))}</div>`).join('');
+  wrap.querySelectorAll('.f-chip').forEach(ch => ch.addEventListener('click', () => { wrap.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('active')); ch.classList.add('active'); filters.spec = ch.dataset.spec; applyFilters(); }));
+}
+function buildStatusChips(){
+  const wrap = document.getElementById('status-chips');
+  wrap.innerHTML = `<div class="f-chip${filters.status===''?' active':''}" data-status="">Barchasi</div><div class="f-chip${filters.status==='full'?' active':''}" data-status="full">✓ To'liq</div><div class="f-chip${filters.status==='partial'?' active':''}" data-status="partial">○ To'ldirilmoqda</div>`;
+  wrap.querySelectorAll('.f-chip').forEach(ch => ch.addEventListener('click', () => { wrap.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('active')); ch.classList.add('active'); filters.status = ch.dataset.status; applyFilters(); }));
+}
+function buildModeChips(){
+  const wrap = document.getElementById('mode-chips');
+  wrap.innerHTML = `<div class="f-chip${filters.density?' active':''}" id="density-chip">📊 Zichlik rejimi</div>`;
+  document.getElementById('density-chip').addEventListener('click', () => { filters.density = !filters.density; buildModeChips(); applyFilters(); });
+}
+function buildRegionLegend(){
+  document.getElementById('region-legend').innerHTML = `<h4>Ixtisoslashuv</h4>` + Object.keys(SPEC_COLORS).map(s=>`<div class="rl-item"><i style="background:${SPEC_COLORS[s]}"></i>${escapeHtml(specLabel(s))}</div>`).join('');
+}
+function applyFilters(){
+  let shown = 0;
+  DATA.forEach(m => {
+    let ok = true;
+    if(filters.spec && m.specialization !== filters.spec) ok = false;
+    if(filters.status && m.status !== filters.status) ok = false;
+    const layer = markers[m.id];
+    if(ok){
+      if(!cluster.hasLayer(layer)) cluster.addLayer(layer);
+      if(filters.density){
+        const pop = Number(m.population)||0; const radius = 150 + pop * 0.09;
+        regionLayers[m.id].setRadius(radius); regionLayers[m.id].setStyle({opacity:.5, fillOpacity:.22});
+      } else { regionLayers[m.id].setRadius(380); regionLayers[m.id].setStyle({opacity: filters.spec?1:0, fillOpacity:filters.spec?.14:.05}); }
+      shown++;
+    } else { if(cluster.hasLayer(layer)) cluster.removeLayer(layer); }
+  });
+  document.getElementById('result-count').textContent = `${shown} / ${DATA.length} MFY ko'rsatilmoqda`;
+}
+document.getElementById('filters-toggle').addEventListener('click', () => { document.getElementById('filters-body').classList.toggle('hide'); document.getElementById('filters-toggle').classList.toggle('open'); });
+
+// ----------------------------------------------------
+// OCHILADIGAN DETAIL PANEL FUNKSIYALARI
+// ----------------------------------------------------
+window.openDetail = function(id) {
+  if(overviewOpen) closeOverview();
+  activeId = id; photoIdx = 0;
+  document.getElementById('detail-scrim').classList.add('show');
+  renderDetail();
+  document.getElementById('detail-card').classList.add('show');
+  Object.values(markers).forEach(mk => mk.getElement()?.classList.remove('active'));
+  const el = markers[id].getElement(); if(el) el.classList.add('active');
+};
+
+window.closeDetail = function() {
+  activeId = null;
+  document.getElementById('detail-scrim').classList.remove('show');
+  document.getElementById('detail-card').classList.remove('show');
+  Object.values(markers).forEach(mk => mk.getElement()?.classList.remove('active'));
+};
+document.getElementById('detail-scrim').addEventListener('click', closeDetail);
+
+function hexToRgba(hex, a){ const h = hex.replace('#',''); const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
+
+function renderDetail(){
+  const m = DATA.find(x=>x.id===activeId); if(!m) return;
+  const card = document.getElementById('detail-card');
+  const color = SPEC_COLORS[m.specialization] || '#7C8798';
+  card.style.setProperty('--dc-accent', color); card.style.setProperty('--dc-glow', hexToRgba(color, .16));
+  const photos = m.photos || []; const digits = (m.phone||'').replace(/[^0-9]/g,''); const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`;
+  card.innerHTML = `
+    <div class="dc-cover">
+      ${photos.length ? `<img id="dc-img" src="${photos[0]}" alt="">${photos.length>1?`<div class="ph-nav ph-prev">‹</div><div class="ph-nav ph-next">›</div><div class="ph-dots">${photos.map((p,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>`:''}` : `<div class="ph-empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-4 4-2-2-5 5"/></svg><span>Rasm yuklanmagan</span></div>`}
+      <div class="dc-spec-badge" style="background:${color}">${escapeHtml(specLabel(m.specialization))}</div><div class="dc-close" id="dc-close-btn">✕</div>
+    </div>
+    <div class="dc-body">
+      <div class="dc-name">${escapeHtml(fullName(m))}</div>
+      <div class="dc-id">ID: ${String(m.id).padStart(2,'0')} · UCHKO'PRIK TUMANI</div>
+      <div class="dc-status ${m.status==='full'?'full':'partial'}">${m.status==='full'?"✓ To'liq":"○ To'ldirilmoqda"}</div>
+      <div class="dc-grid">
+        <div class="dc-stat"><b>${num(m.population)}</b><span>Aholi soni</span></div>
+        <div class="dc-stat"><b>${num(m.households)}</b><span>Xonadon</span></div>
+        <div class="dc-stat"><b>${num(m.families)}</b><span>Oila</span></div>
+      </div>
+      <div class="dc-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><div><div class="lab">Rais</div><div class="val">${escapeHtml(m.head||'—')}</div></div></div>
+      <div class="dc-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.11a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"/></svg><div><div class="lab">Telefon</div><a class="val" href="tel:+998${digits}">${escapeHtml(m.phone||'—')}</a></div></div>
+      <div class="dc-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><div><div class="lab">Joylashuv</div><div class="val">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</div></div></div>
+      <a class="dc-btn" href="${mapsUrl}" target="_blank" rel="noopener">📍 Google xaritada ko'rish</a>
+      
+      <div class="dc-section-title">Infratuzilma (jami)</div>
+      <div class="dc-infra-grid">
+        <div class="dc-infra"><b>${num(m.schools)}</b><span>Maktab</span></div>
+        <div class="dc-infra"><b>${num(m.kindergartens)}</b><span>Bog'cha</span></div>
+        <div class="dc-infra"><b>${num(m.clinics)}</b><span>Tibbiyot</span></div>
+        <div class="dc-infra"><b>${num(m.mosques)}</b><span>Masjid</span></div>
+        <div class="dc-infra"><b>${num(m.shops)}</b><span>Do'kon/bozor</span></div>
+      </div>
+    </div>`;
+  document.getElementById('dc-close-btn').addEventListener('click', closeDetail);
+  if(photos.length>1){
+    const dcImg = document.getElementById('dc-img'), dots = card.querySelectorAll('.ph-dots i');
+    card.querySelector('.ph-prev')?.addEventListener('click', ()=>{ photoIdx=(photoIdx-1+photos.length)%photos.length; dcImg.src=photos[photoIdx]; dots.forEach((d,i)=>d.classList.toggle('on',i===photoIdx)); });
+    card.querySelector('.ph-next')?.addEventListener('click', ()=>{ photoIdx=(photoIdx+1)%photos.length; dcImg.src=photos[photoIdx]; dots.forEach((d,i)=>d.classList.toggle('on',i===photoIdx)); });
+  }
+}
+
+// ----------------------------------------------------
+// ASOISY ANIMATSIYA: Xaritani qisish va Ma'lumotlarni chiqarish
+// ----------------------------------------------------
+function openOverview(){
+  if(activeId) closeDetail();
+  overviewOpen = true;
+  document.getElementById('map-wrap').classList.add('overview-mode');
+  document.getElementById('overview-wrapper').classList.add('show');
+  
+  const btn = document.getElementById('district-toggle-btn');
+  btn.classList.add('active');
+  document.getElementById('district-toggle-label').textContent = 'Yopish';
+  
+  renderOverviewPanel();
+  setTimeout(() => { if(map) map.invalidateSize(); }, 650);
+}
+
+function closeOverview(){
+  overviewOpen = false;
+  document.getElementById('map-wrap').classList.remove('overview-mode');
+  document.getElementById('overview-wrapper').classList.remove('show');
+  
+  const btn = document.getElementById('district-toggle-btn');
+  btn.classList.remove('active');
+  document.getElementById('district-toggle-label').textContent = 'Tuman haqida';
+  
+  setTimeout(() => { if(map) map.invalidateSize(); }, 650);
+}
+
+document.getElementById('district-toggle-btn').addEventListener('click', () => overviewOpen ? closeOverview() : openOverview());
+document.getElementById('ov-close-btn').addEventListener('click', closeOverview);
+
+function renderOverviewPanel(){
+  const body = document.getElementById('ov-body-content');
+  const totalPop = DATA.reduce((s,m)=>s+(Number(m.population)||0),0);
+  const totalHouse = DATA.reduce((s,m)=>s+(Number(m.households)||0),0);
+  const totalFam = DATA.reduce((s,m)=>s+(Number(m.families)||0),0);
+  const specCounts = {}; Object.keys(SPEC_COLORS).forEach(s=>specCounts[s]=0); DATA.forEach(m=>{ if(specCounts[m.specialization]!=null) specCounts[m.specialization]++; });
+  const maxSpec = Math.max(1, ...Object.values(specCounts)), top5 = [...DATA].sort((a,b)=>(b.population||0)-(a.population||0)).slice(0,5);
+  
+  body.innerHTML = `
+    <div class="ov-sub">Umumiy statistika va ma'lumotlar ${DISTRICT.head ? `· ${escapeHtml(DISTRICT.head)}` : ''}</div>
+    <div class="ov-stat-grid">
+      <div class="ov-stat"><b>${num(totalPop)}</b><span>Umumiy Aholi</span></div>
+      <div class="ov-stat"><b>${num(totalHouse)}</b><span>Umumiy Xonadon</span></div>
+      <div class="ov-stat"><b>${num(totalFam)}</b><span>Umumiy Oila</span></div>
+      <div class="ov-stat"><b>${DATA.length}</b><span>MFY Soni</span></div>
+    </div>
+    
+    <div class="ov-section-title">Ixtisoslashuv bo'yicha taqsimot</div>
+    ${Object.keys(SPEC_COLORS).map(s => `<div class="ov-bar-row"><span class="sw" style="background:${SPEC_COLORS[s]}"></span><span class="nm">${escapeHtml(specLabel(s))}</span><div class="ov-bar-track"><div class="ov-bar-fill" style="width:${(specCounts[s]/maxSpec*100).toFixed(0)}%;background:${SPEC_COLORS[s]}"></div></div><span class="ov-bar-val">${specCounts[s]}</span></div>`).join('')}
+    
+    <div class="ov-section-title">Eng ko'p aholili 5 MFY</div>
+    ${top5.map((m,i)=>`<div class="ov-rank-item"><div class="ov-rank-num">${i+1}</div><div class="ov-rank-nm">${escapeHtml(fullName(m))}</div><div class="ov-rank-val">${num(m.population)}</div></div>`).join('')}
+    
+    <div class="ov-section-title">Aholi dinamikasi (Tarix)</div>
+    <div class="ov-chart-wrap">${buildMiniChart(DISTRICT.history)}</div>
+    
+    <button class="ov-export-btn" onclick="window.print()">🖨 Chop etish / PDF</button>
+  `;
+}
+
+function buildMiniChart(history){
+  if(!history || history.length < 2) return `<div style="font-size:12px;color:var(--text-faint);text-align:center;padding:10px 0;">Ma'lumot yetarli emas</div>`;
+  const w = 400, h = 90, pad = 8;
+  const vals = history.map(hh => Number(hh.population)||0);
+  const min = Math.min(...vals), max = Math.max(...vals), range = (max-min) || 1;
+  const pts = history.map((hh,i) => `${(pad + (i/(history.length-1))*(w-pad*2)).toFixed(1)},${(h - pad - ((Number(hh.population)-min)/range)*(h-pad*2)).toFixed(1)}`);
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:90px;overflow:visible"><defs><linearGradient id="ovg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366F1" stop-opacity=".4"/><stop offset="100%" stop-color="#6366F1" stop-opacity="0"/></linearGradient></defs><polygon points="${pad},${h-pad} ${pts.join(' ')} ${w-pad},${h-pad}" fill="url(#ovg)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="3.5" fill="#06B6D4" stroke="#0A0E1A" stroke-width="1.5"/>`).join('')}</svg>`;
+}
+
+// Boshlang'ich yuklash
+setTimeout(() => {
+  loadData(() => {
+    initMap();
+    buildSpecChips(); buildStatusChips(); buildModeChips(); buildRegionLegend();
+    
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('app').classList.add('ready');
+    
+    if(FIREBASE_ENABLED && db) {
+       try {
+         db.collection('settings').doc('district').onSnapshot(doc => {
+           if(doc.exists){ 
+              DISTRICT = doc.data(); 
+              if(DISTRICT.indVol) document.getElementById('lb-ind').innerHTML = `${DISTRICT.indVol} mlrd`;
+              if(DISTRICT.agrVol) document.getElementById('lb-agr').innerHTML = `${DISTRICT.agrVol} mlrd`;
+              if(DISTRICT.srvVol) document.getElementById('lb-srv').innerHTML = `${DISTRICT.srvVol} mlrd`;
+              if(DISTRICT.unempRate) document.getElementById('lb-unemp').innerHTML = `${DISTRICT.unempRate} %`;
+              if(DISTRICT.povRate) document.getElementById('lb-pov').innerHTML = `${DISTRICT.povRate} %`;
+              if(DISTRICT.founded) document.getElementById('lb-found').innerHTML = DISTRICT.founded;
+              if(DISTRICT.area) document.getElementById('lb-area').innerHTML = DISTRICT.area;
+           }
+           if(overviewOpen) renderOverviewPanel();
+         }, err => console.warn("District ma'lumotlarini o'qishda xato (Ruxsat yo'q)", err));
+       } catch(e) { console.warn(e); }
+    }
+  });
+}, 1500);
+
+</script>
+</body>
+</html>
