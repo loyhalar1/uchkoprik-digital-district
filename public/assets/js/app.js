@@ -74,6 +74,7 @@ function showSmooth(target,options={}){
   if(!el)return Promise.resolve();
   cancelMotion(el);
   el.classList.remove('hidden');
+  scheduleLiquidGlassRedraw(el);
   if(motionDisabled())return Promise.resolve();
   const duration=options.duration||420;
   const keyframes=options.keyframes||[
@@ -127,6 +128,174 @@ function liquidPress(el){
     {scale:.94,offset:.42},
     {scale:1}
   ],{duration:260,easing:easeOut()});
+}
+
+
+/* =========================================================
+   LIQUID GLASS REFRACTION ENGINE
+   Adapted for vanilla JS from the user-provided MIT-licensed
+   "liquid-glass" project by Nikita Stadnik.
+   Runtime has no Astro/Tailwind/Anime.js dependency.
+========================================================= */
+
+const liquidGlassState = {
+  initialized: false,
+  supportsUrlFilter: null,
+  observer: null,
+  elements: new Set(),
+  resizeTimer: null
+};
+
+function getDisplacementMap({height,width,radius,depth}){
+  const safeHeight=Math.max(1,Math.round(height));
+  const safeWidth=Math.max(1,Math.round(width));
+  const safeRadius=Math.max(0,Number(radius)||0);
+  const safeDepth=Math.max(1,Math.min(Number(depth)||10,Math.floor(Math.min(safeHeight,safeWidth)/3)));
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg height="${safeHeight}" width="${safeWidth}" viewBox="0 0 ${safeWidth} ${safeHeight}" xmlns="http://www.w3.org/2000/svg">
+    <style>.mix{mix-blend-mode:screen}</style>
+    <defs>
+      <linearGradient id="Y" x1="0" x2="0" y1="${Math.ceil((safeRadius/safeHeight)*15)}%" y2="${Math.floor(100-(safeRadius/safeHeight)*15)}%">
+        <stop offset="0%" stop-color="#0F0"/><stop offset="100%" stop-color="#000"/>
+      </linearGradient>
+      <linearGradient id="X" x1="${Math.ceil((safeRadius/safeWidth)*15)}%" x2="${Math.floor(100-(safeRadius/safeWidth)*15)}%" y1="0" y2="0">
+        <stop offset="0%" stop-color="#F00"/><stop offset="100%" stop-color="#000"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="#808080"/>
+    <g filter="blur(2px)">
+      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="#000080"/>
+      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="url(#Y)" class="mix"/>
+      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="url(#X)" class="mix"/>
+      <rect x="${safeDepth}" y="${safeDepth}" height="${Math.max(1,safeHeight-2*safeDepth)}" width="${Math.max(1,safeWidth-2*safeDepth)}" fill="#808080" rx="${safeRadius}" ry="${safeRadius}" filter="blur(${safeDepth}px)"/>
+    </g>
+  </svg>`);
+}
+
+function getDisplacementFilter({height,width,radius,depth,strength=36,chromaticAberration=1.25}){
+  const map=getDisplacementMap({height,width,radius,depth});
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="displace" color-interpolation-filters="sRGB">
+        <feImage x="0" y="0" height="${height}" width="${width}" href="${map}" result="displacementMap"/>
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength+chromaticAberration*2}" xChannelSelector="R" yChannelSelector="G"/>
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedR"/>
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength+chromaticAberration}" xChannelSelector="R" yChannelSelector="G"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedG"/>
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="displacedB"/>
+        <feBlend in="displacedR" in2="displacedG" mode="screen"/>
+        <feBlend in2="displacedB" mode="screen"/>
+      </filter>
+    </defs>
+  </svg>`)+"#displace";
+}
+
+function supportsBackdropFilterUrl(){
+  if(liquidGlassState.supportsUrlFilter!==null)return liquidGlassState.supportsUrlFilter;
+  const test=document.createElement('div');
+  test.style.cssText='backdrop-filter:url(#test)';
+  liquidGlassState.supportsUrlFilter=(test.style.backdropFilter==='url(#test)'||test.style.backdropFilter==='url("#test")');
+  return liquidGlassState.supportsUrlFilter;
+}
+
+function glassConfig(el){
+  const isButton=el.matches('button,.dock-item,.ux-top-button,.language-btn,.icon-btn,.sphere-test-button,.filter-specialization,.category-chip');
+  const isLarge=el.matches('.explore-panel,.detail-card,.mode-panel,.search-dialog,.ai-panel,.sheet,.passport-card');
+  return {
+    depth:isButton?6:(isLarge?12:9),
+    strength:isButton?16:(isLarge?34:26),
+    chromaticAberration:isButton?.75:1.35,
+    blur:isButton?1.5:(isLarge?3.5:2.5),
+    brightness:isButton?1.12:1.06,
+    saturate:isButton?1.35:1.55
+  };
+}
+
+function redrawLiquidGlass(el){
+  if(!el||!el.isConnected)return;
+  const rect=el.getBoundingClientRect();
+  if(rect.width<2||rect.height<2)return;
+  const styles=getComputedStyle(el);
+  const radius=parseFloat(styles.borderTopLeftRadius)||0;
+  const cfg=glassConfig(el);
+  el.classList.add('liquid-refraction');
+  if(document.documentElement.classList.contains('reduce-transparency')){
+    el.style.removeProperty('backdrop-filter');
+    el.style.removeProperty('-webkit-backdrop-filter');
+    return;
+  }
+  if(supportsBackdropFilterUrl()){
+    const filterUrl=getDisplacementFilter({
+      height:Math.round(rect.height),
+      width:Math.round(rect.width),
+      radius,
+      depth:cfg.depth,
+      strength:cfg.strength,
+      chromaticAberration:cfg.chromaticAberration
+    });
+    const value=`blur(${cfg.blur/2}px) url("${filterUrl}") blur(${cfg.blur}px) brightness(${cfg.brightness}) saturate(${cfg.saturate})`;
+    el.style.setProperty('backdrop-filter',value,'important');
+    el.style.setProperty('-webkit-backdrop-filter',`blur(${Math.max(8,Math.min(24,rect.width/28))}px) saturate(165%)`,'important');
+  }else{
+    const fallback=`blur(${Math.max(10,Math.min(28,rect.width/24))}px) saturate(170%)`;
+    el.style.setProperty('backdrop-filter',fallback,'important');
+    el.style.setProperty('-webkit-backdrop-filter',fallback,'important');
+  }
+}
+
+function scheduleLiquidGlassRedraw(el){
+  if(!el)return;
+  requestAnimationFrame(()=>redrawLiquidGlass(el));
+}
+
+function initLiquidGlassElement(el){
+  if(!el||el.dataset.liquidReady==='1')return;
+  el.dataset.liquidReady='1';
+  liquidGlassState.elements.add(el);
+  el.classList.add('liquid-refraction');
+  liquidGlassState.observer?.observe(el);
+  const updatePointer=e=>{
+    const r=el.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    el.style.setProperty('--lg-x',`${((e.clientX-r.left)/r.width*100).toFixed(2)}%`);
+    el.style.setProperty('--lg-y',`${((e.clientY-r.top)/r.height*100).toFixed(2)}%`);
+  };
+  el.addEventListener('pointermove',updatePointer,{passive:true});
+  el.addEventListener('pointerleave',()=>{
+    el.style.setProperty('--lg-x','18%');
+    el.style.setProperty('--lg-y','8%');
+  },{passive:true});
+  redrawLiquidGlass(el);
+}
+
+function initLiquidGlassSystem(){
+  if(liquidGlassState.initialized)return;
+  liquidGlassState.initialized=true;
+  liquidGlassState.observer=new ResizeObserver(entries=>{
+    entries.forEach(entry=>scheduleLiquidGlassRedraw(entry.target));
+  });
+  const selector=[
+    '.glass','.floating','.ux-top-button','.language-btn','.icon-btn',
+    '.category-chip','.filter-specialization','.dock-item','.sphere-test-button',
+    '.search-result','.ai-suggestion','.primary-btn','.secondary-btn'
+  ].join(',');
+  $$(selector).forEach(initLiquidGlassElement);
+  const mutationObserver=new MutationObserver(records=>{
+    records.forEach(record=>record.addedNodes.forEach(node=>{
+      if(!(node instanceof HTMLElement))return;
+      if(node.matches?.(selector))initLiquidGlassElement(node);
+      node.querySelectorAll?.(selector).forEach(initLiquidGlassElement);
+    }));
+  });
+  mutationObserver.observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('resize',()=>{
+    clearTimeout(liquidGlassState.resizeTimer);
+    liquidGlassState.resizeTimer=setTimeout(()=>liquidGlassState.elements.forEach(redrawLiquidGlass),120);
+  },{passive:true});
+}
+
+function refreshLiquidGlass(){
+  liquidGlassState.elements.forEach(el=>scheduleLiquidGlassRedraw(el));
 }
 
 function detectLanguage(){const seg=location.pathname.split('/').filter(Boolean)[0];state.lang=LANGUAGES.some(l=>l.code===seg)?seg:(localStorage.getItem('uchkoprik-lang')||'uz')}
@@ -210,7 +379,7 @@ async function closeMajorPanels(except=null){const jobs=[];['investorPanel','pro
 function setDockActive(name){$$('.dock-item').forEach(x=>x.classList.toggle('active',!!name&&x.dataset.nav===name))}
 async function openPanel(name){if(name==='explore'){await openFilterPanel();return}closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();await closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')await showSmooth('#investorPanel',{duration:420});if(name==='products')await showSmooth('#productsPanel',{duration:420});state.activePanel=name;setDockActive(name)}
 function openInvestorMode(){openPanel('invest');state.activeLayer='business';renderCategories();renderMarkers();state.map?.easeTo({pitch:35,bearing:-5,duration:750})}
-function closeInvestorMode(){$('#investorPanel')?.classList.add('hidden');openFilterPanel();state.map?.easeTo({pitch:10,bearing:0,duration:550})}
+async function closeInvestorMode(){await hideSmooth('#investorPanel',{duration:280});await openFilterPanel();state.map?.easeTo({pitch:10,bearing:0,duration:550})}
 
 function allSearchItems(){return[...state.data.mahallas.map(x=>({...x,_kind:'mahalla',_type:'MFY'})),...state.data.businesses.map(x=>({...x,_kind:'business',_type:x.categoryName||'Tashkilot'})),...state.data.places.map(x=>({...x,_kind:'place',_type:categoryLabel(getCategory(x.category))})),...state.data.products.map(x=>({...x,_kind:'product',_type:'Mahsulot'}))]}
 function searchLocal(q){q=normalize(q).trim();const all=allSearchItems();if(!q)return all.slice(0,12);const terms=q.split(/\s+/);return all.map(item=>{const hay=normalize([item.name,item.officialName,item.specialization,item.description,item.industry,item.sector,item.address,item.categoryName,item.organizationType,item._type].filter(Boolean).join(' '));let score=hay.startsWith(q)?4:0;terms.forEach(t=>{if(hay.includes(t))score+=2});return{item,score}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,30).map(x=>x.item)}
@@ -229,9 +398,9 @@ async function openAI(){await closeMajorPanels('aiPanel');await showSmooth('#aiP
 function setupVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;const r=new SR();r.interimResults=false;r.continuous=false;r.onstart=()=>$('#voiceBtn')?.classList.add('listening');r.onend=()=>$('#voiceBtn')?.classList.remove('listening');r.onresult=e=>{const q=e.results[0][0].transcript;if($('#aiInput'))$('#aiInput').value=q;askAI(q)};state.voiceRecognition=r}
 function startVoice(){if(!state.voiceRecognition){toast('Ovozli qidiruv','Brauzer qo‘llab-quvvatlamaydi');return}state.voiceRecognition.lang=localeCode();state.voiceRecognition.start()}
 
-function openSheet(id){$('#'+id)?.classList.remove('hidden')}function closeSheet(id){$('#'+id)?.classList.add('hidden')}
+function openSheet(id){showSmooth('#'+id,{duration:360,keyframes:[{opacity:0,filter:'blur(8px)'},{opacity:1,filter:'blur(0px)'}]});setTimeout(refreshLiquidGlass,80)}function closeSheet(id){hideSmooth('#'+id,{duration:260,keyframes:[{opacity:1},{opacity:0,filter:'blur(6px)'}]})}
 function loadPrefs(){let p={};try{p=JSON.parse(localStorage.getItem('uchkoprik-prefs')||'{}')}catch{}document.documentElement.dataset.theme=p.light?'light':'dark';document.documentElement.classList.toggle('reduce-motion',!!p.reduceMotion);document.documentElement.classList.toggle('reduce-transparency',!!p.reduceTransparency);document.documentElement.classList.toggle('high-contrast',!!p.highContrast);document.documentElement.style.setProperty('--font-scale',p.fontScale||1);if($('#lightModeToggle'))$('#lightModeToggle').checked=!!p.light;if($('#reduceMotionToggle'))$('#reduceMotionToggle').checked=!!p.reduceMotion;if($('#reduceTransparencyToggle'))$('#reduceTransparencyToggle').checked=!!p.reduceTransparency;if($('#highContrastToggle'))$('#highContrastToggle').checked=!!p.highContrast}
-function savePrefs(){const p={light:!!$('#lightModeToggle')?.checked,reduceMotion:!!$('#reduceMotionToggle')?.checked,reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,highContrast:!!$('#highContrastToggle')?.checked,fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1};localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));loadPrefs();applyMapTheme();updateIdleSphereTheme()}
+function savePrefs(){const p={light:!!$('#lightModeToggle')?.checked,reduceMotion:!!$('#reduceMotionToggle')?.checked,reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,highContrast:!!$('#highContrastToggle')?.checked,fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1};localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));loadPrefs();applyMapTheme();updateIdleSphereTheme();refreshLiquidGlass()}
 function setFont(key){document.documentElement.style.setProperty('--font-scale',{small:.92,normal:1,large:1.12}[key]||1);$$('[data-font]').forEach(b=>b.classList.toggle('active',b.dataset.font===key));savePrefs()}
 
 const scenes=()=>[
@@ -252,11 +421,36 @@ function sceneStep(d){state.presentation.index=(state.presentation.index+d+scene
 function ensureIdleOverlay(){
   let overlay=$('#idleSphereOverlay');
   if(!overlay){
-    overlay=document.createElement('div');
+    overlay=document.createElement('section');
     overlay.id='idleSphereOverlay';
     overlay.setAttribute('aria-hidden','true');
-    overlay.innerHTML=`<div id="idleSphereStars" aria-hidden="true"></div><button id="idleSphereClose" type="button" aria-label="Sphere rejimini yopish" title="Yopish"><span class="icon">${svg('x')}</span></button><div id="idleSphereCanvas"></div><div id="idleSphereLabel">SPHERE MODE</div>`;
     document.body.appendChild(overlay);
+  }
+  if(!$('#idleSphereStars',overlay)){
+    const stars=document.createElement('div');
+    stars.id='idleSphereStars';
+    stars.setAttribute('aria-hidden','true');
+    overlay.prepend(stars);
+  }
+  if(!$('#idleSphereClose',overlay)){
+    const close=document.createElement('button');
+    close.id='idleSphereClose';
+    close.type='button';
+    close.setAttribute('aria-label','Sphere rejimini yopish');
+    close.title='Yopish';
+    close.innerHTML=`<span class="icon">${svg('x')}</span>`;
+    overlay.appendChild(close);
+  }
+  if(!$('#idleSphereCanvas',overlay)){
+    const canvas=document.createElement('div');
+    canvas.id='idleSphereCanvas';
+    overlay.appendChild(canvas);
+  }
+  if(!$('#idleSphereLabel',overlay)){
+    const label=document.createElement('div');
+    label.id='idleSphereLabel';
+    label.textContent='UCHKO‘PRIK DIGITAL DISTRICT';
+    overlay.appendChild(label);
   }
   populateIdleStars();
 }
@@ -306,8 +500,25 @@ async function initIdleSphere(){
     const ambient=new THREE.AmbientLight(0xffffff,1);scene.add(ambient);
     const resize=()=>{const w=Math.max(1,container.clientWidth),h=Math.max(1,container.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
     new ResizeObserver(resize).observe(container);resize();
-    state.idle={...state.idle,initialized:true,renderer,scene,camera,group,points};
-    const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;const t=performance.now();group.rotation.y+=.0014;group.rotation.x=.12+Math.sin(t*.0002)*.028;group.rotation.z=Math.sin(t*.00011)*.06;group.scale.setScalar(1+Math.sin(t*.00072)*.007);points.material.opacity=.82+Math.sin(t*.0013)*.12;renderer.render(scene,camera)};
+    state.idle={...state.idle,initialized:true,renderer,scene,camera,group,points,dragging:false,lastX:0,lastY:0,targetX:.12,targetY:0};
+    const canvas=renderer.domElement;
+    canvas.style.touchAction='none';
+    canvas.addEventListener('pointerdown',e=>{state.idle.dragging=true;state.idle.lastX=e.clientX;state.idle.lastY=e.clientY;canvas.setPointerCapture?.(e.pointerId)});
+    canvas.addEventListener('pointermove',e=>{
+      const rect=canvas.getBoundingClientRect();
+      if(!state.idle.dragging){
+        state.idle.targetY+=(((e.clientX-rect.left)/Math.max(1,rect.width))-.5)*.00025;
+        state.idle.targetX=.12+(.5-((e.clientY-rect.top)/Math.max(1,rect.height)))*.08;
+        return;
+      }
+      const dx=e.clientX-state.idle.lastX,dy=e.clientY-state.idle.lastY;
+      state.idle.targetY+=dx*.0045;
+      state.idle.targetX=Math.max(-.7,Math.min(.7,state.idle.targetX+dy*.0035));
+      state.idle.lastX=e.clientX;state.idle.lastY=e.clientY;
+    },{passive:true});
+    const release=()=>{state.idle.dragging=false};
+    canvas.addEventListener('pointerup',release,{passive:true});canvas.addEventListener('pointercancel',release,{passive:true});canvas.addEventListener('pointerleave',release,{passive:true});
+    const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;const t=performance.now();if(!state.idle.dragging)state.idle.targetY+=.00135;group.rotation.x+=(state.idle.targetX-group.rotation.x)*.045;group.rotation.y+=(state.idle.targetY-group.rotation.y)*.055;group.rotation.z=Math.sin(t*.00011)*.045;group.scale.setScalar(1+Math.sin(t*.00072)*.007);points.material.opacity=.82+Math.sin(t*.0013)*.12;renderer.render(scene,camera)};
     animate();
   }catch(e){console.warn('Idle sphere:',e)}
 }
@@ -353,22 +564,27 @@ function setupIdleDetection(){
 
 function ensureSphereTestButton(){
   ensureIdleOverlay();
-  if($('#sphereTestBtn'))return;
-  const button=document.createElement('button');
-  button.id='sphereTestBtn';
-  button.type='button';
-  button.className='sphere-test-button glass floating';
-  button.setAttribute('aria-label','Sphere animatsiyasini sinash');
-  button.title='Sphere animatsiyasini sinash';
-  button.innerHTML=`<span class="icon">${svg('globe')}</span><span class="sphere-test-label">Sphere</span>`;
+  let button=$('#sphereTestBtn');
+  if(!button){
+    button=document.createElement('button');
+    button.id='sphereTestBtn';
+    button.type='button';
+    button.className='sphere-test-button glass floating';
+    button.setAttribute('aria-label','Sphere animatsiyasini sinash');
+    button.title='Sphere animatsiyasini sinash';
+    button.innerHTML=`<span class="icon">${svg('globe')}</span><span class="sphere-test-label">Sphere</span>`;
+    document.body.appendChild(button);
+  }
+  if(button.dataset.sphereBound==='1')return;
+  button.dataset.sphereBound='1';
   button.addEventListener('click',async e=>{
+    e.preventDefault();
     e.stopPropagation();
     liquidPress(button);
     if(state.idle.active)return;
     clearTimeout(state.idle.timer);
     await enterIdleMode(true);
   });
-  document.body.appendChild(button);
 }
 function toast(title,body=''){const host=$('#toastHost');if(!host)return;const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${body?`<small>${esc(body)}</small>`:''}`;host.appendChild(el);setTimeout(()=>el.remove(),3200)}
 function renderAllTextual(){renderCategories();renderProducts();renderDistrictMetrics();renderAISuggestions()}
@@ -381,10 +597,10 @@ function setupEvents(){
   $('#investorClose')?.addEventListener('click',closeInvestorMode);$('#showBusinesses')?.addEventListener('click',()=>{state.activeLayer='business';renderCategories();renderMarkers();closeInvestorMode()});$('#askInvestment')?.addEventListener('click',()=>askAI('Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'));$('#productsClose')?.addEventListener('click',openFilterPanel);
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
   $('#aiClose')?.addEventListener('click',()=>{hideSmooth('#aiPanel',{duration:260});setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
-  $('#languageBtn')?.addEventListener('click',()=>openSheet('languageSheet'));$('#accessibilityBtn')?.addEventListener('click',()=>openSheet('accessibilitySheet'));$$('[data-sheet-close]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.sheetClose)));$$('.sheet-backdrop').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)s.classList.add('hidden')}));['lightModeToggle','reduceMotionToggle','reduceTransparencyToggle','highContrastToggle'].forEach(id=>$('#'+id)?.addEventListener('change',savePrefs));$$('[data-font]').forEach(btn=>btn.addEventListener('click',()=>setFont(btn.dataset.font)));
+  $('#languageBtn')?.addEventListener('click',()=>openSheet('languageSheet'));$('#accessibilityBtn')?.addEventListener('click',()=>openSheet('accessibilitySheet'));$$('[data-sheet-close]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.sheetClose)));$$('.sheet-backdrop').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)closeSheet(s.id)}));['lightModeToggle','reduceMotionToggle','reduceTransparencyToggle','highContrastToggle'].forEach(id=>$('#'+id)?.addEventListener('change',savePrefs));$$('[data-font]').forEach(btn=>btn.addEventListener('click',()=>setFont(btn.dataset.font)));
   $('#presentationBtn')?.addEventListener('click',openPresentation);$('#presentationExit')?.addEventListener('click',closePresentation);$('#scenePrev')?.addEventListener('click',()=>sceneStep(-1));$('#sceneNext')?.addEventListener('click',()=>sceneStep(1));$('#scenePlay')?.addEventListener('click',togglePresentationPlay);$('#idleSphereClose')?.addEventListener('click',()=>{exitIdleMode();resetIdleTimer()});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}if(e.key==='Escape'){if(state.selected){closeDetail();return}if(document.body.classList.contains('passport-mode')){closePassportMode();return}$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden');if(!$('#presentationOverlay')?.classList.contains('hidden'))closePresentation()}if(!$('#presentationOverlay')?.classList.contains('hidden')){if(e.key==='ArrowRight')sceneStep(1);if(e.key==='ArrowLeft')sceneStep(-1)}});window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize()});
 }
 
-async function boot(){detectLanguage();bindIcons();loadPrefs();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();ensureSphereTestButton();setupIdleDetection();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
+async function boot(){detectLanguage();loadPrefs();ensureIdleOverlay();ensureSphereTestButton();bindIcons();initLiquidGlassSystem();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();setupIdleDetection();refreshLiquidGlass();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
 boot().catch(error=>{console.error('Application error:',error);toast('Application error',error.message)});
