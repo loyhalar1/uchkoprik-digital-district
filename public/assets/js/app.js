@@ -179,7 +179,7 @@ function renderSpecializationFilters(){const section=$('#specializationFilters')
 function renderOrganizationFilters(){const section=$('#organizationFilters'),host=$('#organizationFilterList');if(!section||!host)return;const isOrg=state.activeLayer==='business'||(state.activeLayer!=='all'&&state.activeLayer!=='mahalla'&&state.data.businesses.some(b=>b.category===state.activeLayer));if(!isOrg||!state.data.businesses.length){section.classList.add('hidden');return}section.classList.remove('hidden');const items=getOrganizationTypes();host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedOrganizationType===i.name?'active':''}" type="button" data-organization-type="${esc(i.name)}" style="--spec-color:#8b7cff"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-organization-type]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.organizationType;state.selectedOrganizationType=state.selectedOrganizationType===v?null:v;renderOrganizationFilters();applyMarkerFilters()}))}
 
 function clearMarkers(){state.markers.forEach(x=>x.marker.remove());state.markers=[]}
-function markerElement(item,kind,color){const el=document.createElement('button');el.type='button';el.className=kind==='mahalla'?'mfy-marker':'place-marker';el.setAttribute('aria-label',item.name||'');el.innerHTML=kind==='mahalla'?`<span class="mfy-dot" style="--marker:${color}"></span>`:`<span class="place-pin" style="--marker:${color}"><span class="icon">${svg(getCategoryIcon(item.category))}</span></span>`;el.addEventListener('click',e=>{e.stopPropagation();openDetail(item,kind)});return el}
+function markerElement(item,kind,color){const el=document.createElement('button');el.type='button';el.className=kind==='mahalla'?'mfy-marker':'place-marker';el.setAttribute('aria-label',item.name||'');el.title=item.name||'';el.innerHTML=kind==='mahalla'?`<span class="mfy-dot" style="--marker:${color}"></span>`:`<span class="place-pin" style="--marker:${color}"><span class="icon">${svg(getCategoryIcon(item.category))}</span></span>`;el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openDetail(item,kind)});return el}
 function addMarker(item,kind,color){if(!validCoords(item))return;const el=markerElement(item,kind,color);const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(state.map);state.markers.push({item,kind,marker,el})}
 function renderMarkers(){if(!state.map)return;clearMarkers();const layer=state.activeLayer;if(layer==='all'||layer==='mahalla')state.data.mahallas.forEach(m=>addMarker(m,'mahalla',getSpecializationColor(m.specialization)));state.data.places.forEach(p=>{if(layer==='all'||layer===p.category)addMarker(p,'place',getCategoryColor(p.category))});state.data.businesses.forEach(b=>{if(layer==='all'||layer==='business'||layer===b.category)addMarker(b,'business',b.categoryColor||getCategoryColor(b.category))});applyMarkerFilters()}
 function applyMarkerFilters(){state.markers.forEach(m=>{let dim=false;if(m.kind==='mahalla'&&state.selectedSpecialization)dim=m.item.specialization!==state.selectedSpecialization;if(m.kind==='business'&&state.selectedOrganizationType)dim=m.item.organizationType!==state.selectedOrganizationType;m.el.classList.toggle('is-dim',dim)})}
@@ -193,7 +193,7 @@ function renderDistrictTopMahallas(){const host=$('#districtTopMahallas');if(!ho
 async function openPassportMode(){closeDetail(false);await closeMajorPanels();if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();document.body.classList.add('passport-mode');state.activePanel='district';setDockActive(null);showSmooth('#districtPanel',{duration:520,keyframes:[{opacity:0,translate:'38px 0',scale:.97,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});setTimeout(()=>{state.map?.resize();fitDistrict(true)},520)}
 function closePassportMode(restore=true){if(!document.body.classList.contains('passport-mode'))return;hideSmooth('#districtPanel',{duration:340,keyframes:[{opacity:1,translate:'0 0',scale:1},{opacity:0,translate:'30px 0',scale:.98}]});document.body.classList.remove('passport-mode');state.activePanel='explore';setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,900);else fitDistrict(true);state.passportCamera=null},470)}
 
-async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};document.body.classList.add('detail-focus');setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
+async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
   const verify=$('#detailVerification');if(verify)verify.innerHTML=`<span class="badge ${item.verified?'verified':'demo'}"><span class="icon">${svg(item.verified?'shield':'info')}</span>${item.verified?'Tasdiqlangan':'Tasdiqlanmagan'}</span>${item.updatedAt?`<span class="badge">${esc(item.updatedAt)}</span>`:''}`;
   const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;showSmooth('#detailCard',{duration:460,keyframes:[{opacity:0,translate:'30px 0',scale:.955,filter:'blur(12px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));flyToItem(item);setTimeout(showConnector,430)}
 function renderDetailExtra(item,kind){const host=$('#detailExtra');if(!host)return;const rows=[];if(kind==='mahalla'){if(item.schools)rows.push(['Maktablar',item.schools]);if(item.kindergartens)rows.push(['Bog‘chalar',item.kindergartens]);if(item.clinics)rows.push(['Tibbiyot',item.clinics]);if(item.mosques)rows.push(['Masjidlar',item.mosques]);if(item.shops)rows.push(['Savdo nuqtalari',item.shops]);if(item.head)rows.push(['MFY raisi',item.head])}if(kind==='business'){if(item.address)rows.push(['Manzil',item.address]);if(item.website)rows.push(['Veb-sayt',item.website])}host.innerHTML=rows.length?`<div class="detail-extra-grid">${rows.map(([l,v])=>`<div class="passport-row"><span>${esc(l)}</span><strong>${typeof v==='number'?fmt(v):esc(v)}</strong></div>`).join('')}</div>`:''}
@@ -248,14 +248,111 @@ function renderScene(){const all=scenes(),s=all[state.presentation.index];setTex
 function scheduleScene(){clearTimeout(state.presentation.timer);if(!state.presentation.playing)return;state.presentation.timer=setTimeout(()=>{state.presentation.index=(state.presentation.index+1)%scenes().length;renderScene();scheduleScene()},6500)}
 function sceneStep(d){state.presentation.index=(state.presentation.index+d+scenes().length)%scenes().length;renderScene();scheduleScene()}function togglePresentationPlay(){state.presentation.playing=!state.presentation.playing;renderScene();scheduleScene()}
 
-async function initIdleSphere(){if(state.idle.initialized)return;const container=$('#idleSphereCanvas');if(!container)return;try{const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.1,100);camera.position.z=3.25;const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x000000,0);container.innerHTML='';container.appendChild(renderer.domElement);const count=innerWidth<760?4500:8000,positions=new Float32Array(count*3),gold=Math.PI*(3-Math.sqrt(5));for(let i=0;i<count;i++){const y=1-(i/(count-1))*2,r=Math.sqrt(Math.max(0,1-y*y)),th=gold*i;positions[i*3]=Math.cos(th)*r;positions[i*3+1]=y;positions[i*3+2]=Math.sin(th)*r}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({size:innerWidth<760?.013:.0105,color:document.documentElement.dataset.theme==='light'?0x132b36:0xffffff,transparent:true,opacity:.92,depthWrite:false,blending:THREE.AdditiveBlending});const points=new THREE.Points(geo,mat),group=new THREE.Group();group.add(points);scene.add(group);const resize=()=>{const w=Math.max(1,container.clientWidth),h=Math.max(1,container.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};new ResizeObserver(resize).observe(container);resize();state.idle={...state.idle,initialized:true,renderer,scene,camera,group,points};const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;group.rotation.y+=.0016;group.rotation.x=.12+Math.sin(performance.now()*.00022)*.03;group.scale.setScalar(1+Math.sin(performance.now()*.00065)*.008);renderer.render(scene,camera)};animate()}catch(e){console.warn('Idle sphere:',e)}}
-function updateIdleSphereTheme(){if(!state.idle.points)return;state.idle.points.material.color.setHex(document.documentElement.dataset.theme==='light'?0x132b36:0xffffff)}
-function resetIdleTimer(){clearTimeout(state.idle.timer);if(state.idle.active)exitIdleMode();state.idle.timer=setTimeout(enterIdleMode,state.idle.timeout)}
-async function enterIdleMode(manual=false){if(state.idle.active)return;if(!state.idle.initialized)await initIdleSphere();if(!state.idle.initialized)return;closeDetail(false);await closeMajorPanels();if(document.body.classList.contains('passport-mode'))closePassportMode(false);state.idle.active=true;state.idle.manualGraceUntil=manual?Date.now()+650:0;document.body.classList.add('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','false');if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:0,scale:.22,rotate:'-8deg',filter:'blur(20px)'},{opacity:1,scale:1,rotate:'0deg',filter:'blur(0px)'}],{duration:1050,easing:easeOut()})}
-function exitIdleMode(){if(!state.idle.active)return;state.idle.active=false;if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:1,scale:1,filter:'blur(0px)'},{opacity:0,scale:.28,filter:'blur(18px)'}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)'});document.body.classList.remove('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','true');setTimeout(()=>{state.map?.resize();if(!motionDisabled())$('#map')?.animate([{scale:.82,opacity:.28,filter:'blur(12px)'},{scale:1,opacity:1,filter:'blur(0px)'}],{duration:820,easing:easeOut()})},420)}
-function setupIdleDetection(){let last=0;['pointerdown','pointermove','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{const now=Date.now();if(state.idle.active&&now<(state.idle.manualGraceUntil||0))return;if(ev==='pointermove'&&now-last<450)return;last=now;resetIdleTimer()},{passive:true}));resetIdleTimer()}
+
+function ensureIdleOverlay(){
+  let overlay=$('#idleSphereOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='idleSphereOverlay';
+    overlay.setAttribute('aria-hidden','true');
+    overlay.innerHTML=`<div id="idleSphereStars" aria-hidden="true"></div><button id="idleSphereClose" type="button" aria-label="Sphere rejimini yopish" title="Yopish"><span class="icon">${svg('x')}</span></button><div id="idleSphereCanvas"></div><div id="idleSphereLabel">SPHERE MODE</div>`;
+    document.body.appendChild(overlay);
+  }
+  populateIdleStars();
+}
+function populateIdleStars(){
+  const host=$('#idleSphereStars');
+  if(!host)return;
+  const total=innerWidth<760?110:180;
+  host.innerHTML='';
+  for(let i=0;i<total;i++){
+    const star=document.createElement('span');
+    star.className='idle-star';
+    star.style.left=`${Math.random()*100}%`;
+    star.style.top=`${Math.random()*100}%`;
+    star.style.setProperty('--size',`${(Math.random()*2.4+.8).toFixed(2)}px`);
+    star.style.setProperty('--alpha',`${(Math.random()*.65+.2).toFixed(2)}`);
+    star.style.setProperty('--dur',`${(Math.random()*3.6+1.8).toFixed(2)}s`);
+    star.style.setProperty('--delay',`${(Math.random()*4).toFixed(2)}s`);
+    host.appendChild(star);
+  }
+}
+async function initIdleSphere(){
+  ensureIdleOverlay();
+  if(state.idle.initialized)return;
+  const container=$('#idleSphereCanvas');
+  if(!container)return;
+  try{
+    const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
+    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.1,100);
+    camera.position.z=3.35;
+    const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    renderer.setClearColor(0x000000,0);
+    container.innerHTML='';
+    container.appendChild(renderer.domElement);
+    const count=innerWidth<760?4200:7600,positions=new Float32Array(count*3),gold=Math.PI*(3-Math.sqrt(5));
+    for(let i=0;i<count;i++){
+      const y=1-(i/(count-1))*2,r=Math.sqrt(Math.max(0,1-y*y)),th=gold*i;
+      positions[i*3]=Math.cos(th)*r;
+      positions[i*3+1]=y;
+      positions[i*3+2]=Math.sin(th)*r;
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    const mat=new THREE.PointsMaterial({size:innerWidth<760?.0125:.0105,color:0xffffff,transparent:true,opacity:.96,depthWrite:false,blending:THREE.AdditiveBlending});
+    const points=new THREE.Points(geo,mat),group=new THREE.Group();
+    group.add(points);scene.add(group);
+    const ambient=new THREE.AmbientLight(0xffffff,1);scene.add(ambient);
+    const resize=()=>{const w=Math.max(1,container.clientWidth),h=Math.max(1,container.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
+    new ResizeObserver(resize).observe(container);resize();
+    state.idle={...state.idle,initialized:true,renderer,scene,camera,group,points};
+    const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;const t=performance.now();group.rotation.y+=.0014;group.rotation.x=.12+Math.sin(t*.0002)*.028;group.rotation.z=Math.sin(t*.00011)*.06;group.scale.setScalar(1+Math.sin(t*.00072)*.007);points.material.opacity=.82+Math.sin(t*.0013)*.12;renderer.render(scene,camera)};
+    animate();
+  }catch(e){console.warn('Idle sphere:',e)}
+}
+function updateIdleSphereTheme(){if(!state.idle.points)return;state.idle.points.material.color.setHex(0xffffff)}
+function resetIdleTimer(){clearTimeout(state.idle.timer);if(state.idle.active)return;state.idle.timer=setTimeout(()=>enterIdleMode(false),state.idle.timeout)}
+async function enterIdleMode(manual=false){
+  ensureIdleOverlay();
+  if(state.idle.active)return;
+  if(!state.idle.initialized)await initIdleSphere();
+  if(!state.idle.initialized)return;
+  closeDetail(false);
+  await closeMajorPanels();
+  if(document.body.classList.contains('passport-mode'))closePassportMode(false);
+  populateIdleStars();
+  state.idle.active=true;
+  state.idle.manualGraceUntil=manual?Date.now()+650:0;
+  document.body.classList.add('idle-mode');
+  $('#idleSphereOverlay')?.setAttribute('aria-hidden','false');
+  state.map?.resize();
+  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:0,scale:.24,rotate:'-8deg',filter:'blur(22px)'},{opacity:1,scale:1,rotate:'0deg',filter:'blur(0px)'}],{duration:1050,easing:easeOut()});
+}
+function exitIdleMode(){
+  if(!state.idle.active)return;
+  state.idle.active=false;
+  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:1,scale:1,filter:'blur(0px)'},{opacity:0,scale:.34,filter:'blur(18px)'}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)'});
+  document.body.classList.remove('idle-mode');
+  $('#idleSphereOverlay')?.setAttribute('aria-hidden','true');
+  setTimeout(()=>{state.map?.resize();if(!motionDisabled())$('#map')?.animate([{scale:.82,opacity:.12,filter:'blur(12px)'},{scale:1,opacity:1,filter:'blur(0px)'}],{duration:820,easing:easeOut()})},420);
+}
+function setupIdleDetection(){
+  let last=0;
+  const onActivity=(ev)=>{
+    const now=Date.now();
+    if(state.idle.active)return;
+    if(ev==='pointermove'&&now-last<380)return;
+    last=now;
+    resetIdleTimer();
+  };
+  ['pointerdown','pointermove','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>onActivity(ev),{passive:true}));
+  window.addEventListener('resize',populateIdleStars,{passive:true});
+  resetIdleTimer();
+}
 
 function ensureSphereTestButton(){
+  ensureIdleOverlay();
   if($('#sphereTestBtn'))return;
   const button=document.createElement('button');
   button.id='sphereTestBtn';
@@ -267,12 +364,12 @@ function ensureSphereTestButton(){
   button.addEventListener('click',async e=>{
     e.stopPropagation();
     liquidPress(button);
+    if(state.idle.active)return;
     clearTimeout(state.idle.timer);
-    if(state.idle.active)exitIdleMode();else await enterIdleMode(true);
+    await enterIdleMode(true);
   });
   document.body.appendChild(button);
 }
-
 function toast(title,body=''){const host=$('#toastHost');if(!host)return;const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${body?`<small>${esc(body)}</small>`:''}`;host.appendChild(el);setTimeout(()=>el.remove(),3200)}
 function renderAllTextual(){renderCategories();renderProducts();renderDistrictMetrics();renderAISuggestions()}
 
@@ -285,7 +382,7 @@ function setupEvents(){
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
   $('#aiClose')?.addEventListener('click',()=>{hideSmooth('#aiPanel',{duration:260});setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
   $('#languageBtn')?.addEventListener('click',()=>openSheet('languageSheet'));$('#accessibilityBtn')?.addEventListener('click',()=>openSheet('accessibilitySheet'));$$('[data-sheet-close]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.sheetClose)));$$('.sheet-backdrop').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)s.classList.add('hidden')}));['lightModeToggle','reduceMotionToggle','reduceTransparencyToggle','highContrastToggle'].forEach(id=>$('#'+id)?.addEventListener('change',savePrefs));$$('[data-font]').forEach(btn=>btn.addEventListener('click',()=>setFont(btn.dataset.font)));
-  $('#presentationBtn')?.addEventListener('click',openPresentation);$('#presentationExit')?.addEventListener('click',closePresentation);$('#scenePrev')?.addEventListener('click',()=>sceneStep(-1));$('#sceneNext')?.addEventListener('click',()=>sceneStep(1));$('#scenePlay')?.addEventListener('click',togglePresentationPlay);
+  $('#presentationBtn')?.addEventListener('click',openPresentation);$('#presentationExit')?.addEventListener('click',closePresentation);$('#scenePrev')?.addEventListener('click',()=>sceneStep(-1));$('#sceneNext')?.addEventListener('click',()=>sceneStep(1));$('#scenePlay')?.addEventListener('click',togglePresentationPlay);$('#idleSphereClose')?.addEventListener('click',()=>{exitIdleMode();resetIdleTimer()});
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}if(e.key==='Escape'){if(state.selected){closeDetail();return}if(document.body.classList.contains('passport-mode')){closePassportMode();return}$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden');if(!$('#presentationOverlay')?.classList.contains('hidden'))closePresentation()}if(!$('#presentationOverlay')?.classList.contains('hidden')){if(e.key==='ArrowRight')sceneStep(1);if(e.key==='ArrowLeft')sceneStep(-1)}});window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize()});
 }
 
