@@ -5,18 +5,14 @@
   "type": "module",
   "description": "Uchko‘prik Digital District — multilingual interactive map, official data platform and AI guide.",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "cf:login": "wrangler login",
-    "d1:create": "wrangler d1 create uchkoprik-district",
-    "d1:migrate:local": "wrangler d1 migrations apply uchkoprik-district --local",
-    "d1:migrate": "wrangler d1 migrations apply uchkoprik-district --remote",
-    "d1:seed:local": "wrangler d1 execute uchkoprik-district --local --file=./scripts/seed.sql",
-    "d1:seed": "wrangler d1 execute uchkoprik-district --remote --file=./scripts/seed.sql",
-    "r2:create": "wrangler r2 bucket create uchkoprik-media",
-    "check": "node --check src/worker.js && node --check public/assets/js/app.js && node --check public/assets/js/admin.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check public/assets/js/app.js && node --check public/assets/js/admin.js"
   },
-  "devDependencies": {
-    "wrangler": "^4.33.1"
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }
