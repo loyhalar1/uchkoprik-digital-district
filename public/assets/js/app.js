@@ -202,12 +202,12 @@ function glassConfig(el){
   const isButton=el.matches('button,.dock-item,.ux-top-button,.language-btn,.icon-btn,.sphere-test-button,.filter-specialization,.category-chip');
   const isLarge=el.matches('.explore-panel,.detail-card,.mode-panel,.search-dialog,.ai-panel,.sheet,.passport-card');
   return {
-    depth:isButton?6:(isLarge?12:9),
-    strength:isButton?16:(isLarge?34:26),
-    chromaticAberration:isButton?.75:1.35,
-    blur:isButton?1.5:(isLarge?3.5:2.5),
-    brightness:isButton?1.12:1.06,
-    saturate:isButton?1.35:1.55
+    depth:isButton?4:(isLarge?8:6),
+    strength:isButton?8:(isLarge?18:12),
+    chromaticAberration:isButton?.35:.65,
+    blur:isButton?1:(isLarge?2.2:1.6),
+    brightness:isButton?1.08:1.04,
+    saturate:isButton?1.20:1.32
   };
 }
 
@@ -254,17 +254,6 @@ function initLiquidGlassElement(el){
   liquidGlassState.elements.add(el);
   el.classList.add('liquid-refraction');
   liquidGlassState.observer?.observe(el);
-  const updatePointer=e=>{
-    const r=el.getBoundingClientRect();
-    if(!r.width||!r.height)return;
-    el.style.setProperty('--lg-x',`${((e.clientX-r.left)/r.width*100).toFixed(2)}%`);
-    el.style.setProperty('--lg-y',`${((e.clientY-r.top)/r.height*100).toFixed(2)}%`);
-  };
-  el.addEventListener('pointermove',updatePointer,{passive:true});
-  el.addEventListener('pointerleave',()=>{
-    el.style.setProperty('--lg-x','18%');
-    el.style.setProperty('--lg-y','8%');
-  },{passive:true});
   redrawLiquidGlass(el);
 }
 
@@ -275,9 +264,8 @@ function initLiquidGlassSystem(){
     entries.forEach(entry=>scheduleLiquidGlassRedraw(entry.target));
   });
   const selector=[
-    '.glass','.floating','.ux-top-button','.language-btn','.icon-btn',
-    '.category-chip','.filter-specialization','.dock-item','.sphere-test-button',
-    '.search-result','.ai-suggestion','.primary-btn','.secondary-btn'
+    '.topbar','.explore-panel','.dock','.detail-card','.mode-panel',
+    '.search-dialog','.ai-panel','.sheet','.passport-card'
   ].join(',');
   $$(selector).forEach(initLiquidGlassElement);
   const mutationObserver=new MutationObserver(records=>{
