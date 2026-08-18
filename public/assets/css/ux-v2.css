@@ -393,3 +393,201 @@ body.ux-v2.idle-mode .sphere-test-button{
   }
   body.ux-v2 .sphere-test-button .sphere-test-label{display:none!important}
 }
+
+
+/* =========================================================
+   UX V2.4 — STABLE STAR MARKERS + GALAXY SPHERE FIXES
+========================================================= */
+
+/* Xarita detail ochilganda blur bo'lmasin */
+body.ux-v2.detail-focus #map .maplibregl-canvas,
+html[data-theme="light"] body.ux-v2.detail-focus #map .maplibregl-canvas{
+  filter:brightness(.72) saturate(.88) contrast(1.12)!important;
+}
+body.ux-v2.detail-focus .explore-panel{
+  opacity:1!important;
+  filter:none!important;
+  pointer-events:auto!important;
+}
+
+/* Markerlar 3D emas — barqaror yulduzsimon glow */
+body.ux-v2 .mfy-marker,
+body.ux-v2 .place-marker{
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  cursor:pointer!important;
+  transform:none!important;
+}
+body.ux-v2 .mfy-marker:hover,
+body.ux-v2 .place-marker:hover,
+body.ux-v2 .mfy-marker.is-active,
+body.ux-v2 .place-marker.is-active{
+  transform:none!important;
+}
+body.ux-v2 .mfy-dot,
+body.ux-v2 .place-pin{
+  position:relative!important;
+  display:block!important;
+  width:10px!important;
+  height:10px!important;
+  min-width:10px!important;
+  min-height:10px!important;
+  border-radius:50%!important;
+  background:var(--marker)!important;
+  border:none!important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.18),
+    0 0 6px color-mix(in srgb,var(--marker) 92%,white),
+    0 0 14px color-mix(in srgb,var(--marker) 70%,transparent),
+    0 0 24px color-mix(in srgb,var(--marker) 35%,transparent)!important;
+  animation:starPulse 2.35s ease-in-out infinite!important;
+}
+body.ux-v2 .place-pin{
+  width:12px!important;
+  height:12px!important;
+}
+body.ux-v2 .mfy-dot::before,
+body.ux-v2 .place-pin::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:2px;
+  height:16px;
+  transform:translate(-50%,-50%);
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent);
+  opacity:.85;
+  border-radius:99px;
+  pointer-events:none;
+}
+body.ux-v2 .mfy-dot::after,
+body.ux-v2 .place-pin::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:16px;
+  height:2px;
+  transform:translate(-50%,-50%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  opacity:.85;
+  border-radius:99px;
+  pointer-events:none;
+}
+body.ux-v2 .place-pin .icon{display:none!important;}
+body.ux-v2 .mfy-marker.is-active .mfy-dot,
+body.ux-v2 .place-marker.is-active .place-pin{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.28),
+    0 0 8px color-mix(in srgb,var(--marker) 95%,white),
+    0 0 18px color-mix(in srgb,var(--marker) 88%,transparent),
+    0 0 32px color-mix(in srgb,var(--marker) 48%,transparent)!important;
+}
+body.ux-v2 .mfy-marker.is-dim,
+body.ux-v2 .place-marker.is-dim{
+  opacity:.18!important;
+  filter:saturate(.45)!important;
+  transform:none!important;
+}
+@keyframes starPulse{
+  0%,100%{opacity:.55;filter:brightness(.92)}
+  50%{opacity:1;filter:brightness(1.24)}
+}
+
+/* Sphere overlay — faqat qora galaxy background */
+body.ux-v2 #idleSphereOverlay{
+  position:fixed;
+  inset:0;
+  z-index:140;
+  display:block;
+  overflow:hidden;
+  background:#000!important;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .75s cubic-bezier(.16,1,.3,1)!important;
+  backdrop-filter:none!important;
+}
+body.ux-v2 #idleSphereStars{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+body.ux-v2 .idle-star{
+  position:absolute;
+  width:var(--size);
+  height:var(--size);
+  border-radius:50%;
+  background:#fff;
+  opacity:var(--alpha);
+  box-shadow:0 0 6px rgba(255,255,255,.85),0 0 14px rgba(255,255,255,.35);
+  animation:idleTwinkle var(--dur) ease-in-out infinite;
+  animation-delay:var(--delay);
+}
+@keyframes idleTwinkle{
+  0%,100%{opacity:calc(var(--alpha) * .45);transform:scale(.7)}
+  50%{opacity:1;transform:scale(1.15)}
+}
+body.ux-v2 #idleSphereCanvas{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(68vw,760px);
+  height:min(68vw,760px);
+  transform:translate(-50%,-50%) scale(.34)!important;
+  opacity:0;
+  z-index:2;
+  transition:transform 1.15s cubic-bezier(.16,1,.3,1),opacity .7s cubic-bezier(.16,1,.3,1)!important;
+}
+body.ux-v2 #idleSphereLabel{
+  position:absolute;
+  left:50%;
+  bottom:28px;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,.68);
+  font-size:.62rem;
+  letter-spacing:.22em;
+  z-index:3;
+  white-space:nowrap;
+}
+body.ux-v2 #idleSphereClose{
+  position:absolute;
+  top:18px;
+  right:18px;
+  z-index:4;
+  width:44px;
+  height:44px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  box-shadow:0 10px 34px rgba(0,0,0,.36);
+  backdrop-filter:blur(12px);
+  transition:transform .22s ease,background .22s ease,border-color .22s ease;
+}
+body.ux-v2 #idleSphereClose:hover{transform:translateY(-1px);background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22)}
+body.ux-v2 #idleSphereClose:active{transform:scale(.95)}
+body.ux-v2 #idleSphereClose .icon{width:18px;height:18px;display:grid;place-items:center}
+body.ux-v2.idle-mode #idleSphereOverlay{opacity:1;pointer-events:auto}
+body.ux-v2.idle-mode #idleSphereCanvas{opacity:1;transform:translate(-50%,-50%) scale(1)!important}
+body.ux-v2.idle-mode #map{
+  opacity:0!important;
+  transform:scale(.18)!important;
+  filter:blur(18px)!important;
+  border-radius:50%!important;
+}
+@media(max-width:760px){
+  body.ux-v2 #idleSphereCanvas{width:min(92vw,440px);height:min(92vw,440px)}
+  body.ux-v2 #idleSphereClose{top:12px;right:12px;width:42px;height:42px;border-radius:14px}
+}
