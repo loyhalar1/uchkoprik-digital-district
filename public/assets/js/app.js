@@ -1,6 +1,12 @@
 import { LANGUAGES, t, langMeta } from './i18n.js';
 
 /* =========================================================
+   UCHKO‘PRIK DIGITAL DISTRICT
+   APP.JS — UX V2
+========================================================= */
+
+
+/* =========================================================
    ICONS
 ========================================================= */
 
@@ -86,6 +92,15 @@ const ICONS = {
   marker:
     '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>',
 
+  filter:
+    '<path d="M4 6h16M7 12h10M10 18h4"></path>',
+
+  users:
+    '<circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"></path><path d="M16 5c2 .2 3 1.4 3 3s-1 2.8-3 3M17 14c2.6.5 4 2.4 4 6"></path>',
+
+  building:
+    '<path d="M5 21V4h10v17M15 9h4v12M8 8h4M8 12h4M8 16h4M3 21h18"></path>',
+
   info:
     '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path>'
 };
@@ -122,10 +137,39 @@ const iconForCategory = {
 
 
 /* =========================================================
+   SPECIALIZATION COLORS
+
+   Keyinchalik Supabase/admin orqali olinadigan qilamiz.
+========================================================= */
+
+const SPECIALIZATION_COLORS = {
+  'Dehqonchilik': '#37e675',
+  'Chorvachilik': '#ffae2b',
+  'Kichik ishlab chiqarish': '#6f7cff',
+  'Bog‘dorchilik': '#20c7e8',
+  'Hunarmandchilik': '#f05ac9',
+  'Savdo va xizmat ko‘rsatish': '#a96cff'
+};
+
+
+const SPECIALIZATION_FALLBACK = [
+  '#36e878',
+  '#ffad24',
+  '#6578ff',
+  '#20c8e9',
+  '#ee5ac8',
+  '#a965ff',
+  '#62e6ff',
+  '#f77979'
+];
+
+
+/* =========================================================
    STATE
 ========================================================= */
 
 const state = {
+
   lang: 'uz',
 
   data: {
@@ -143,9 +187,22 @@ const state = {
 
   selected: null,
 
-  activeCategories: new Set(['mahalla']),
+  activeCategories:
+    new Set(['mahalla']),
+
+  selectedSpecialization: null,
+
+  selectedOrganizationType: null,
 
   activePanel: 'explore',
+
+  savedCamera: null,
+
+  detailCamera: null,
+
+  passportCamera: null,
+
+  connectorFrame: null,
 
   presentation: {
     map: null,
@@ -154,7 +211,36 @@ const state = {
     playing: true
   },
 
-  voiceRecognition: null
+  voiceRecognition: null,
+
+  idle: {
+    timer: null,
+    timeout: 10 * 60 * 1000,
+    active: false,
+    initialized: false,
+    three: null,
+    animationFrame: null,
+    renderer: null,
+    scene: null,
+    camera: null,
+    group: null,
+    points: null,
+    pointer: {
+      x: 0,
+      y: 0
+    },
+    targetRotation: {
+      x: 0,
+      y: 0
+    },
+    rotation: {
+      x: 0,
+      y: 0
+    },
+    dragging: false,
+    lastX: 0,
+    lastY: 0
+  }
 };
 
 
@@ -162,15 +248,65 @@ const state = {
    HELPERS
 ========================================================= */
 
-const $ = (sel, root = document) =>
-  root.querySelector(sel);
+const $ = (
+  selector,
+  root = document
+) => root.querySelector(selector);
 
-const $$ = (sel, root = document) =>
-  [...root.querySelectorAll(sel)];
+
+const $$ = (
+  selector,
+  root = document
+) => [
+  ...root.querySelectorAll(selector)
+];
 
 
-const fmt = (number) => {
-  const localeMap = {
+function svg(name) {
+
+  return `
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      ${ICONS[name] || ICONS.info}
+    </svg>
+  `;
+}
+
+
+function bindIcons(
+  root = document
+) {
+
+  $$('[data-icon]', root)
+    .forEach((element) => {
+
+      element.innerHTML =
+        svg(element.dataset.icon);
+    });
+}
+
+
+function tr(key) {
+
+  try {
+
+    return t(
+      state.lang,
+      key
+    );
+
+  } catch {
+
+    return key;
+  }
+}
+
+
+function localeCode() {
+
+  const map = {
     uz: 'uz-UZ',
     en: 'en-US',
     ru: 'ru-RU',
@@ -183,66 +319,142 @@ const fmt = (number) => {
     es: 'es-ES'
   };
 
+  return map[state.lang] ||
+    'uz-UZ';
+}
+
+
+function fmt(value) {
+
   return new Intl.NumberFormat(
-    localeMap[state.lang] || 'uz-UZ'
-  ).format(Number(number) || 0);
-};
+    localeCode()
+  ).format(
+    Number(value) || 0
+  );
+}
 
 
-const esc = (value) =>
-  String(value ?? '').replace(
+function esc(value) {
+
+  return String(
+    value ?? ''
+  ).replace(
     /[&<>'"]/g,
-    (c) => ({
+    (char) => ({
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
       "'": '&#39;',
       '"': '&quot;'
-    })[c]
+    })[char]
   );
-
-
-function svg(name) {
-  return `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      ${ICONS[name] || ICONS.info}
-    </svg>
-  `;
-}
-
-
-function bindIcons(root = document) {
-  $$('[data-icon]', root).forEach((el) => {
-    el.innerHTML = svg(el.dataset.icon);
-  });
-}
-
-
-function tr(key) {
-  return t(state.lang, key);
 }
 
 
 function normalize(value) {
-  return String(value || '')
+
+  return String(
+    value || ''
+  )
     .toLowerCase()
     .replace(/[ʻ’'`]/g, '')
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(
+      /[\u0300-\u036f]/g,
+      ''
+    )
     .normalize('NFC');
 }
 
 
 function safeDate(value) {
-  if (!value) return null;
+
+  if (!value) {
+    return null;
+  }
 
   try {
-    return new Date(value).toLocaleDateString(
-      state.lang === 'uz' ? 'uz-UZ' : state.lang
+
+    return new Date(
+      value
+    ).toLocaleDateString(
+      localeCode()
     );
+
   } catch {
+
     return value;
   }
+}
+
+
+function validCoordinates(item) {
+
+  return (
+    Number.isFinite(
+      Number(item?.lng)
+    ) &&
+    Number.isFinite(
+      Number(item?.lat)
+    )
+  );
+}
+
+
+function getCamera() {
+
+  if (!state.map) {
+    return null;
+  }
+
+  const center =
+    state.map.getCenter();
+
+  return {
+    center: [
+      center.lng,
+      center.lat
+    ],
+    zoom:
+      state.map.getZoom(),
+    pitch:
+      state.map.getPitch(),
+    bearing:
+      state.map.getBearing()
+  };
+}
+
+
+function restoreCamera(
+  camera,
+  duration = 700
+) {
+
+  if (
+    !state.map ||
+    !camera
+  ) {
+    return;
+  }
+
+  state.map.easeTo({
+    center:
+      camera.center,
+    zoom:
+      camera.zoom,
+    pitch:
+      camera.pitch,
+    bearing:
+      camera.bearing,
+    duration:
+      document.documentElement
+        .classList
+        .contains(
+          'reduce-motion'
+        )
+        ? 0
+        : duration
+  });
 }
 
 
@@ -251,60 +463,121 @@ function safeDate(value) {
 ========================================================= */
 
 function detectLanguage() {
-  const segment = location.pathname
-    .split('/')
-    .filter(Boolean)[0];
 
-  if (LANGUAGES.some((l) => l.code === segment)) {
-    state.lang = segment;
-  } else {
+  const segment =
+    location.pathname
+      .split('/')
+      .filter(Boolean)[0];
+
+  if (
+    LANGUAGES.some(
+      (language) =>
+        language.code === segment
+    )
+  ) {
+
     state.lang =
-      localStorage.getItem('uchkoprik-lang') ||
-      'uz';
+      segment;
+
+    return;
   }
+
+  state.lang =
+    localStorage.getItem(
+      'uchkoprik-lang'
+    ) ||
+    'uz';
 }
 
 
 function applyLanguage() {
-  const meta = langMeta(state.lang);
 
-  document.documentElement.lang = meta.code;
-  document.documentElement.dir = meta.dir;
+  const meta =
+    langMeta(
+      state.lang
+    );
 
-  const langShort = $('#langShort');
+  document.documentElement.lang =
+    meta.code;
 
-  if (langShort) {
-    langShort.textContent = meta.short;
+  document.documentElement.dir =
+    meta.dir;
+
+  if ($('#langShort')) {
+
+    $('#langShort').textContent =
+      meta.short;
   }
 
-  $$('[data-i18n]').forEach((el) => {
-    el.textContent = tr(el.dataset.i18n);
-  });
 
-  $$('[data-i18n-placeholder]').forEach((el) => {
-    el.placeholder = tr(
-      el.dataset.i18nPlaceholder
-    );
-  });
+  $$('[data-i18n]')
+    .forEach((element) => {
 
-  $$('[data-i18n-aria]').forEach((el) => {
-    el.setAttribute(
-      'aria-label',
-      tr(el.dataset.i18nAria)
-    );
-  });
+      const value =
+        tr(
+          element.dataset.i18n
+        );
+
+      if (
+        value &&
+        value !==
+          element.dataset.i18n
+      ) {
+
+        element.textContent =
+          value;
+      }
+    });
+
+
+  $$('[data-i18n-placeholder]')
+    .forEach((element) => {
+
+      const value =
+        tr(
+          element.dataset
+            .i18nPlaceholder
+        );
+
+      if (value) {
+
+        element.placeholder =
+          value;
+      }
+    });
+
+
+  $$('[data-i18n-aria]')
+    .forEach((element) => {
+
+      element.setAttribute(
+        'aria-label',
+        tr(
+          element.dataset
+            .i18nAria
+        )
+      );
+    });
+
 
   localStorage.setItem(
     'uchkoprik-lang',
     state.lang
   );
 
+
   renderAllTextual();
 }
 
 
 function setLanguage(code) {
-  if (!LANGUAGES.some((l) => l.code === code)) {
+
+  if (
+    !LANGUAGES.some(
+      (language) =>
+        language.code === code
+    )
+  ) {
     return;
   }
 
@@ -312,375 +585,458 @@ function setLanguage(code) {
 
   applyLanguage();
 
-  closeSheet('languageSheet');
-
   renderLanguages();
+
+  closeSheet(
+    'languageSheet'
+  );
 }
 
 
 /* =========================================================
-   SUPABASE DATA
+   SUPABASE
 ========================================================= */
 
 async function loadData() {
 
   if (!window.sb) {
+
     throw new Error(
-      'Supabase client topilmadi. supabase.js tekshirilsin.'
+      'Supabase client topilmadi'
     );
   }
 
 
-  /* -------------------------
-     MFY
-  ------------------------- */
+  const [
+    mahallasResult,
+    categoriesResult,
+    districtResult,
+    organizationsResult
+  ] = await Promise.all([
 
-  const {
-    data: mahallasRaw,
-    error: mahallasError
-  } = await window.sb
-    .from('mahallas')
-    .select('*')
-    .eq('status', 'active')
-    .order('legacy_id', {
-      ascending: true
-    });
+    window.sb
+      .from('mahallas')
+      .select('*')
+      .eq('status', 'active')
+      .order(
+        'legacy_id',
+        {
+          ascending: true
+        }
+      ),
 
+    window.sb
+      .from('categories')
+      .select('*')
+      .eq('active', true)
+      .order(
+        'sort_order',
+        {
+          ascending: true
+        }
+      ),
 
-  if (mahallasError) {
-    throw new Error(
-      `MFY yuklash xatosi: ${mahallasError.message}`
-    );
-  }
+    window.sb
+      .from('district')
+      .select('*')
+      .eq(
+        'slug',
+        'uchkoprik'
+      )
+      .single(),
 
-
-  /* -------------------------
-     CATEGORIES
-  ------------------------- */
-
-  const {
-    data: categoriesRaw,
-    error: categoriesError
-  } = await window.sb
-    .from('categories')
-    .select('*')
-    .eq('active', true)
-    .order('sort_order', {
-      ascending: true
-    });
-
-
-  if (categoriesError) {
-    throw new Error(
-      `Kategoriyalar xatosi: ${categoriesError.message}`
-    );
-  }
-
-
-  /* -------------------------
-     DISTRICT
-  ------------------------- */
-
-  const {
-    data: districtRaw,
-    error: districtError
-  } = await window.sb
-    .from('district')
-    .select('*')
-    .eq('slug', 'uchkoprik')
-    .single();
-
-
-  if (districtError) {
-    throw new Error(
-      `Tuman ma'lumotlari xatosi: ${districtError.message}`
-    );
-  }
-
-
-  /* -------------------------
-     ORGANIZATIONS
-  ------------------------- */
-
-  const {
-    data: organizationsRaw,
-    error: organizationsError
-  } = await window.sb
-    .from('organizations')
-    .select(`
-      id,
-      slug,
-      name,
-      inn,
-      organization_type,
-      sector,
-      activity,
-      mahalla_id,
-      address,
-      latitude,
-      longitude,
-      website,
-      image_url,
-      status,
-      verified,
-      category_id,
-      source,
-      created_at,
-      updated_at,
-      category:categories (
+    window.sb
+      .from('organizations')
+      .select(`
         id,
         slug,
         name,
-        icon,
-        color
+        inn,
+        organization_type,
+        sector,
+        activity,
+        mahalla_id,
+        address,
+        latitude,
+        longitude,
+        website,
+        image_url,
+        status,
+        verified,
+        category_id,
+        source,
+        created_at,
+        updated_at,
+        category:categories(
+          id,
+          slug,
+          name,
+          icon,
+          color
+        )
+      `)
+      .eq(
+        'status',
+        'active'
       )
-    `)
-    .eq('status', 'active');
+  ]);
 
 
-  if (organizationsError) {
-    console.warn(
-      'Organizations:',
-      organizationsError.message
+  if (
+    mahallasResult.error
+  ) {
+
+    throw new Error(
+      `MFY: ${mahallasResult.error.message}`
     );
   }
 
 
-  /* =====================================================
-     MFY FORMAT
-  ===================================================== */
+  if (
+    categoriesResult.error
+  ) {
 
-  const mahallas = (mahallasRaw || []).map(
-    (m) => ({
-      id: m.legacy_id ?? m.id,
+    throw new Error(
+      `Categories: ${categoriesResult.error.message}`
+    );
+  }
 
-      uuid: m.id,
 
-      legacyId: m.legacy_id,
+  if (
+    districtResult.error
+  ) {
 
-      slug: m.slug,
+    throw new Error(
+      `District: ${districtResult.error.message}`
+    );
+  }
+
+
+  if (
+    organizationsResult.error
+  ) {
+
+    console.warn(
+      'Organizations:',
+      organizationsResult
+        .error
+        .message
+    );
+  }
+
+
+  const mahallas =
+    (
+      mahallasResult.data ||
+      []
+    ).map((row) => ({
+
+      id:
+        row.legacy_id ??
+        row.id,
+
+      uuid:
+        row.id,
+
+      legacyId:
+        row.legacy_id,
+
+      slug:
+        row.slug,
 
       name:
-        m.name ||
-        m.official_name ||
+        row.name ||
+        row.official_name ||
         'Noma’lum MFY',
 
       officialName:
-        m.official_name ||
-        m.name,
+        row.official_name ||
+        row.name,
 
       head:
-        m.chairman || null,
+        row.chairman ||
+        null,
 
       phone:
-        m.phone || null,
+        row.phone ||
+        null,
 
       specialization:
-        m.specialization || null,
+        row.specialization ||
+        'Belgilanmagan',
 
       population:
-        Number(m.population || 0),
+        Number(
+          row.population ||
+          0
+        ),
 
       households:
-        Number(m.households || 0),
+        Number(
+          row.households ||
+          0
+        ),
 
       families:
-        Number(m.families || 0),
+        Number(
+          row.families ||
+          0
+        ),
 
       schools:
-        Number(m.schools || 0),
+        Number(
+          row.schools ||
+          0
+        ),
 
       kindergartens:
-        Number(m.kindergartens || 0),
+        Number(
+          row.kindergartens ||
+          0
+        ),
 
       clinics:
-        Number(m.clinics || 0),
+        Number(
+          row.clinics ||
+          0
+        ),
 
       mosques:
-        Number(m.mosques || 0),
+        Number(
+          row.mosques ||
+          0
+        ),
 
       shops:
-        Number(m.shops || 0),
+        Number(
+          row.shops ||
+          0
+        ),
 
       lat:
-        Number(m.latitude),
+        Number(
+          row.latitude
+        ),
 
       lng:
-        Number(m.longitude),
+        Number(
+          row.longitude
+        ),
 
       imageUrl:
-        m.image_url || null,
-
-      color:
-        m.color || null,
+        row.image_url ||
+        null,
 
       verified:
-        m.verified !== false,
+        row.verified !==
+        false,
 
       source:
-        m.source || null,
+        row.source ||
+        null,
 
       updatedAt:
-        safeDate(m.updated_at),
+        safeDate(
+          row.updated_at
+        ),
 
       type:
         'mahalla',
 
       category:
         'mahalla'
-    })
-  );
+    }));
 
 
-  /* =====================================================
-     CATEGORY FORMAT
-  ===================================================== */
+  let categories =
+    (
+      categoriesResult.data ||
+      []
+    ).map((row) => ({
 
-  const categories = (categoriesRaw || [])
-    .map((c) => {
+      id:
+        row.slug ===
+        'mahallas'
+          ? 'mahalla'
+          : row.slug,
 
-      let frontendId = c.slug;
+      dbId:
+        row.id,
 
-      if (c.slug === 'mahallas') {
-        frontendId = 'mahalla';
-      }
+      slug:
+        row.slug,
+
+      name:
+        row.name,
+
+      icon:
+        row.icon ||
+        'marker',
+
+      color:
+        row.color ||
+        '#62e6ff',
+
+      markerShape:
+        row.marker_shape ||
+        'circle',
+
+      geometryType:
+        row.geometry_type ||
+        'point',
+
+      sourceType:
+        row.source_type,
+
+      sortOrder:
+        Number(
+          row.sort_order ||
+          0
+        ),
+
+      active:
+        row.active !==
+        false
+    }));
+
+
+  const businesses =
+    (
+      organizationsResult.data ||
+      []
+    ).map((row) => {
+
+      const categorySlug =
+        row.category?.slug ||
+        'business';
 
       return {
-        id: frontendId,
 
-        dbId: c.id,
+        id:
+          row.id,
 
-        slug: c.slug,
+        slug:
+          row.slug,
 
-        name: c.name,
+        name:
+          row.name,
 
-        icon: c.icon || 'marker',
+        inn:
+          row.inn ||
+          null,
 
-        color:
-          c.color ||
-          '#65e5ff',
+        organizationType:
+          row.organization_type ||
+          'Tashkilot',
 
-        markerShape:
-          c.marker_shape ||
-          'circle',
+        sector:
+          row.sector ||
+          null,
 
-        geometryType:
-          c.geometry_type ||
-          'point',
+        industry:
+          row.activity ||
+          null,
 
-        sourceType:
-          c.source_type,
+        description:
+          row.activity ||
+          row.sector ||
+          '',
 
-        sortOrder:
-          Number(c.sort_order || 0),
+        mahallaId:
+          row.mahalla_id ||
+          null,
 
-        active:
-          c.active !== false
+        address:
+          row.address ||
+          null,
+
+        lat:
+          Number(
+            row.latitude
+          ),
+
+        lng:
+          Number(
+            row.longitude
+          ),
+
+        website:
+          row.website ||
+          null,
+
+        imageUrl:
+          row.image_url ||
+          null,
+
+        verified:
+          row.verified ===
+          true,
+
+        source:
+          row.source ||
+          null,
+
+        updatedAt:
+          safeDate(
+            row.updated_at
+          ),
+
+        type:
+          'business',
+
+        category:
+          categorySlug ===
+          'mahallas'
+            ? 'business'
+            : categorySlug,
+
+        categoryName:
+          row.category?.name ||
+          'Tashkilot',
+
+        categoryColor:
+          row.category?.color ||
+          '#8b7cff',
+
+        categoryIcon:
+          row.category?.icon ||
+          'briefcase'
       };
     });
 
 
-  /* =====================================================
-     ORGANIZATIONS FORMAT
-  ===================================================== */
+  /*
+    Organizations mavjud bo‘lsa,
+    frontendda generic business
+    filter ham bo‘ladi.
+  */
 
-  const businesses = (
-    organizationsRaw || []
-  ).map((o) => {
+  if (
+    businesses.length &&
+    !categories.some(
+      (category) =>
+        category.id ===
+        'business'
+    )
+  ) {
 
-    const categorySlug =
-      o.category?.slug ||
-      'business';
+    categories.push({
+      id: 'business',
+      slug: 'business',
+      name: 'Tashkilotlar',
+      icon: 'briefcase',
+      color: '#8b7cff',
+      active: true,
+      sortOrder: 20
+    });
+  }
 
-    const categoryId =
-      categorySlug === 'mahallas'
-        ? 'mahalla'
-        : categorySlug;
-
-    return {
-      id:
-        o.id,
-
-      slug:
-        o.slug,
-
-      name:
-        o.name,
-
-      inn:
-        o.inn || null,
-
-      organizationType:
-        o.organization_type || null,
-
-      sector:
-        o.sector || null,
-
-      industry:
-        o.activity || null,
-
-      description:
-        o.activity ||
-        o.sector ||
-        '',
-
-      mahallaId:
-        o.mahalla_id || null,
-
-      address:
-        o.address || null,
-
-      lat:
-        Number(o.latitude),
-
-      lng:
-        Number(o.longitude),
-
-      website:
-        o.website || null,
-
-      imageUrl:
-        o.image_url || null,
-
-      verified:
-        o.verified === true,
-
-      source:
-        o.source || null,
-
-      updatedAt:
-        safeDate(o.updated_at),
-
-      type:
-        'business',
-
-      category:
-        categoryId,
-
-      categoryName:
-        o.category?.name ||
-        null,
-
-      categoryColor:
-        o.category?.color ||
-        null,
-
-      categoryIcon:
-        o.category?.icon ||
-        null
-    };
-  });
-
-
-  /* =====================================================
-     STATISTICS
-  ===================================================== */
 
   const totalPopulation =
     mahallas.reduce(
       (sum, item) =>
         sum +
-        Number(item.population || 0),
+        item.population,
       0
     );
 
@@ -689,7 +1045,7 @@ async function loadData() {
     mahallas.reduce(
       (sum, item) =>
         sum +
-        Number(item.households || 0),
+        item.households,
       0
     );
 
@@ -698,28 +1054,28 @@ async function loadData() {
     mahallas.reduce(
       (sum, item) =>
         sum +
-        Number(item.families || 0),
+        item.families,
       0
     );
 
 
-  /* =====================================================
-     DISTRICT FORMAT
-  ===================================================== */
+  const row =
+    districtResult.data;
+
 
   const district = {
 
-    ...districtRaw,
+    ...row,
 
     mahallas:
       Number(
-        districtRaw.mahalla_count
+        row.mahalla_count
       ) ||
       mahallas.length,
 
     population:
       Number(
-        districtRaw.population
+        row.population
       ) ||
       totalPopulation,
 
@@ -731,78 +1087,450 @@ async function loadData() {
 
     areaKm2:
       Number(
-        districtRaw.area_km2 || 0
+        row.area_km2 ||
+        0
       ),
 
     governor:
-      districtRaw.governor ||
+      row.governor ||
       null,
 
     founded:
-      districtRaw.founded ||
+      row.founded ||
       null,
 
     industryVolume:
-      districtRaw.industry_volume ||
+      row.industry_volume ||
       null,
 
     agricultureVolume:
-      districtRaw.agriculture_volume ||
+      row.agriculture_volume ||
       null,
 
     servicesVolume:
-      districtRaw.services_volume ||
+      row.services_volume ||
       null,
 
     unemploymentRate:
-      districtRaw.unemployment_rate,
+      Number(
+        row.unemployment_rate ||
+        0
+      ),
 
     povertyRate:
-      districtRaw.poverty_rate,
+      Number(
+        row.poverty_rate ||
+        0
+      ),
 
     borderLengthKm:
-      districtRaw.border_length_km,
+      Number(
+        row.border_length_km ||
+        0
+      ),
 
     healthcareCount:
-      districtRaw.healthcare_count,
+      Number(
+        row.healthcare_count ||
+        0
+      ),
 
     updatedAt:
       safeDate(
-        districtRaw.updated_at
+        row.updated_at
       )
   };
 
 
-  /* =====================================================
-     FINAL DATA
-  ===================================================== */
-
   state.data = {
-
     mahallas,
-
     categories,
-
     businesses,
-
     places: [],
-
     products: [],
-
     district
   };
 
 
   console.log(
-    `Supabase: ${mahallas.length} ta MFY yuklandi`
+    `Supabase: ${mahallas.length} ta MFY`
   );
 
   console.log(
-    `Supabase: ${categories.length} ta kategoriya yuklandi`
+    `Supabase: ${categories.length} ta kategoriya`
   );
 
   console.log(
-    `Supabase: ${businesses.length} ta tashkilot yuklandi`
+    `Supabase: ${businesses.length} ta tashkilot`
+  );
+}
+
+
+/* =========================================================
+   SPECIALIZATIONS
+========================================================= */
+
+function getSpecializationColor(
+  specialization
+) {
+
+  if (
+    SPECIALIZATION_COLORS[
+      specialization
+    ]
+  ) {
+
+    return SPECIALIZATION_COLORS[
+      specialization
+    ];
+  }
+
+
+  const unique =
+    [
+      ...new Set(
+        state.data.mahallas
+          .map(
+            (item) =>
+              item.specialization
+          )
+          .filter(Boolean)
+      )
+    ];
+
+
+  const index =
+    Math.max(
+      0,
+      unique.indexOf(
+        specialization
+      )
+    );
+
+
+  return SPECIALIZATION_FALLBACK[
+    index %
+    SPECIALIZATION_FALLBACK.length
+  ];
+}
+
+
+function getSpecializationStats() {
+
+  const map =
+    new Map();
+
+
+  state.data.mahallas
+    .forEach((item) => {
+
+      const name =
+        item.specialization ||
+        'Belgilanmagan';
+
+
+      map.set(
+        name,
+        (
+          map.get(name) ||
+          0
+        ) + 1
+      );
+    });
+
+
+  return [
+    ...map.entries()
+  ]
+    .map(
+      ([name, count]) => ({
+        name,
+        count,
+        color:
+          getSpecializationColor(
+            name
+          )
+      })
+    )
+    .sort(
+      (a, b) =>
+        b.count -
+        a.count
+    );
+}
+
+
+function renderSpecializationFilters() {
+
+  const section =
+    $('#specializationFilters');
+
+  const host =
+    $('#specializationList');
+
+
+  if (
+    !section ||
+    !host
+  ) {
+    return;
+  }
+
+
+  if (
+    !state.activeCategories
+      .has('mahalla')
+  ) {
+
+    section.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+
+  const items =
+    getSpecializationStats();
+
+
+  if (!items.length) {
+
+    section.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+
+  section.classList.remove(
+    'hidden'
+  );
+
+
+  host.innerHTML =
+    items.map(
+      (item) => `
+
+        <button
+          class="filter-specialization ${
+            state.selectedSpecialization ===
+            item.name
+              ? 'active'
+              : ''
+          }"
+          type="button"
+          data-specialization="${esc(item.name)}"
+          style="--spec-color:${item.color}"
+        >
+
+          <span
+            class="color"
+          ></span>
+
+          <span
+            class="name"
+          >
+            ${esc(item.name)}
+          </span>
+
+          <span
+            class="count"
+          >
+            ${item.count}
+          </span>
+
+        </button>
+
+      `
+    ).join('');
+
+
+  $$('.filter-specialization', host)
+    .forEach((button) => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          const value =
+            button.dataset
+              .specialization;
+
+
+          state.selectedSpecialization =
+            state.selectedSpecialization ===
+            value
+              ? null
+              : value;
+
+
+          renderSpecializationFilters();
+
+          applyMarkerFilters();
+        }
+      );
+    });
+}
+
+
+function getOrganizationTypes() {
+
+  const map =
+    new Map();
+
+
+  state.data.businesses
+    .forEach((business) => {
+
+      const type =
+        business.organizationType ||
+        business.categoryName ||
+        'Tashkilot';
+
+
+      map.set(
+        type,
+        (
+          map.get(type) ||
+          0
+        ) + 1
+      );
+    });
+
+
+  return [
+    ...map.entries()
+  ]
+    .map(
+      ([name, count]) => ({
+        name,
+        count
+      })
+    )
+    .sort(
+      (a, b) =>
+        b.count -
+        a.count
+    );
+}
+
+
+function renderOrganizationFilters() {
+
+  const section =
+    $('#organizationFilters');
+
+  const host =
+    $('#organizationFilterList');
+
+
+  if (
+    !section ||
+    !host
+  ) {
+    return;
+  }
+
+
+  const businessLayerActive =
+    state.activeCategories
+      .has('business') ||
+    state.data.categories
+      .some(
+        (category) =>
+          category.id !==
+            'mahalla' &&
+          state.activeCategories
+            .has(
+              category.id
+            )
+      );
+
+
+  if (
+    !businessLayerActive ||
+    !state.data.businesses.length
+  ) {
+
+    section.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+
+  const items =
+    getOrganizationTypes();
+
+
+  section.classList.remove(
+    'hidden'
+  );
+
+
+  host.innerHTML =
+    items.map(
+      (item) => `
+
+        <button
+          type="button"
+          class="filter-specialization ${
+            state.selectedOrganizationType ===
+            item.name
+              ? 'active'
+              : ''
+          }"
+          data-organization-type="${esc(item.name)}"
+          style="--spec-color:#8b7cff"
+        >
+
+          <span class="color"></span>
+
+          <span class="name">
+            ${esc(item.name)}
+          </span>
+
+          <span class="count">
+            ${item.count}
+          </span>
+
+        </button>
+
+      `
+    ).join('');
+
+
+  $$(
+    '[data-organization-type]',
+    host
+  ).forEach(
+    (button) => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          const value =
+            button.dataset
+              .organizationType;
+
+
+          state.selectedOrganizationType =
+            state.selectedOrganizationType ===
+            value
+              ? null
+              : value;
+
+
+          renderOrganizationFilters();
+
+          applyMarkerFilters();
+        }
+      );
+    }
   );
 }
 
@@ -814,41 +1542,55 @@ async function loadData() {
 function initMap() {
 
   const reduced =
-    document.documentElement.classList.contains(
-      'reduce-motion'
-    );
+    document.documentElement
+      .classList
+      .contains(
+        'reduce-motion'
+      );
 
 
-  state.map = new maplibregl.Map({
+  state.map =
+    new maplibregl.Map({
 
-    container: 'map',
+      container:
+        'map',
 
-    style:
-      'https://tiles.openfreemap.org/styles/liberty',
+      style:
+        'https://tiles.openfreemap.org/styles/liberty',
 
-    center: [
-      71.045,
-      40.54
-    ],
+      center:
+        [
+          71.045,
+          40.54
+        ],
 
-    zoom: 10.2,
+      zoom:
+        10.2,
 
-    pitch:
-      reduced ? 0 : 15,
+      pitch:
+        reduced
+          ? 0
+          : 10,
 
-    bearing: 0,
+      bearing:
+        0,
 
-    attributionControl: true,
+      attributionControl:
+        true,
 
-    cooperativeGestures: false
-  });
+      cooperativeGestures:
+        false
+    });
 
 
   state.map.addControl(
-    new maplibregl.NavigationControl({
-      showCompass: true,
-      visualizePitch: true
-    }),
+
+    new maplibregl
+      .NavigationControl({
+        showCompass: true,
+        visualizePitch: true
+      }),
+
     'top-right'
   );
 
@@ -856,10 +1598,296 @@ function initMap() {
   state.map.on(
     'load',
     () => {
+
       renderMarkers();
-      fitDistrict(false);
+
+      fitDistrict(
+        false
+      );
     }
   );
+
+
+  state.map.on(
+    'move',
+    scheduleConnectorUpdate
+  );
+
+
+  state.map.on(
+    'zoom',
+    scheduleConnectorUpdate
+  );
+
+
+  state.map.on(
+    'resize',
+    scheduleConnectorUpdate
+  );
+
+
+  state.map.on(
+    'click',
+    (event) => {
+
+      if (
+        event.originalEvent
+          ?.target
+          ?.closest?.(
+            '.mfy-marker,.place-marker'
+          )
+      ) {
+        return;
+      }
+
+      if (state.selected) {
+
+        closeDetail();
+      }
+    }
+  );
+}
+
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
+function getCategory(
+  categoryId
+) {
+
+  return state.data.categories
+    .find(
+      (category) =>
+        category.id ===
+          categoryId ||
+        category.slug ===
+          categoryId
+    );
+}
+
+
+function getCategoryColor(
+  categoryId
+) {
+
+  return (
+    getCategory(
+      categoryId
+    )?.color ||
+    '#62e6ff'
+  );
+}
+
+
+function getCategoryIcon(
+  categoryId
+) {
+
+  const category =
+    getCategory(
+      categoryId
+    );
+
+
+  if (
+    category?.icon &&
+    ICONS[
+      category.icon
+    ]
+  ) {
+
+    return category.icon;
+  }
+
+
+  return (
+    iconForCategory[
+      categoryId
+    ] ||
+    'marker'
+  );
+}
+
+
+function categoryLabel(
+  category
+) {
+
+  if (!category) {
+    return '';
+  }
+
+
+  const labels = {
+    mahalla: 'mahallas',
+    business: 'businesses',
+    education: 'education',
+    health: 'health',
+    culture: 'culture',
+    service: 'services',
+    investment: 'investment'
+  };
+
+
+  if (
+    labels[
+      category.id
+    ]
+  ) {
+
+    const translated =
+      tr(
+        labels[
+          category.id
+        ]
+      );
+
+    if (
+      translated !==
+      labels[
+        category.id
+      ]
+    ) {
+
+      return translated;
+    }
+  }
+
+
+  return (
+    category.name ||
+    category.slug ||
+    category.id
+  );
+}
+
+
+function renderCategories() {
+
+  const host =
+    $('#categoryChips');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  host.innerHTML =
+    state.data.categories
+      .filter(
+        (category) =>
+          category.active !==
+          false
+      )
+      .map(
+        (category) => `
+
+          <button
+            class="category-chip ${
+              state.activeCategories
+                .has(
+                  category.id
+                )
+                ? 'active'
+                : ''
+            }"
+            type="button"
+            data-category="${esc(category.id)}"
+            style="--chip:${category.color}"
+          >
+
+            <span
+              class="dot"
+              style="
+                color:${category.color};
+                background:${category.color};
+              "
+            ></span>
+
+            <span>
+              ${esc(
+                categoryLabel(
+                  category
+                )
+              )}
+            </span>
+
+          </button>
+
+        `
+      ).join('');
+
+
+  $$('.category-chip', host)
+    .forEach((button) => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          toggleCategory(
+            button.dataset
+              .category
+          );
+        }
+      );
+    });
+
+
+  renderSpecializationFilters();
+
+  renderOrganizationFilters();
+}
+
+
+function toggleCategory(
+  id,
+  force
+) {
+
+  const active =
+    force === undefined
+      ? !state.activeCategories
+          .has(id)
+      : force;
+
+
+  if (active) {
+
+    state.activeCategories
+      .add(id);
+
+  } else {
+
+    state.activeCategories
+      .delete(id);
+
+
+    if (
+      id === 'mahalla'
+    ) {
+
+      state.selectedSpecialization =
+        null;
+    }
+
+
+    if (
+      id === 'business'
+    ) {
+
+      state.selectedOrganizationType =
+        null;
+    }
+  }
+
+
+  renderCategories();
+
+  renderMarkers();
 }
 
 
@@ -869,110 +1897,83 @@ function initMap() {
 
 function clearMarkers() {
 
-  state.markers.forEach(
-    (item) =>
-      item.marker.remove()
-  );
+  state.markers
+    .forEach(
+      ({ marker }) =>
+        marker.remove()
+    );
+
 
   state.markers = [];
 }
 
 
-function getCategory(categoryId) {
-
-  return state.data.categories.find(
-    (c) =>
-      c.id === categoryId ||
-      c.slug === categoryId
-  );
-}
-
-
-function getCategoryIcon(categoryId) {
-
-  const category =
-    getCategory(categoryId);
-
-  const requestedIcon =
-    category?.icon;
-
-  if (
-    requestedIcon &&
-    ICONS[requestedIcon]
-  ) {
-    return requestedIcon;
-  }
-
-  return (
-    iconForCategory[categoryId] ||
-    'marker'
-  );
-}
-
-
-function getCategoryColor(categoryId) {
-
-  return (
-    getCategory(categoryId)?.color ||
-    '#65e5ff'
-  );
-}
-
-
 function markerElement(
   item,
-  color,
-  kind
+  kind,
+  color
 ) {
 
-  const el =
+  const element =
     document.createElement(
       'button'
     );
 
-  el.type = 'button';
 
-  el.className =
+  element.type =
+    'button';
+
+
+  element.className =
     kind === 'mahalla'
       ? 'mfy-marker'
       : 'place-marker';
 
-  el.setAttribute(
+
+  element.setAttribute(
     'aria-label',
-    item.name || ''
+    item.name ||
+    ''
   );
 
 
-  if (kind === 'mahalla') {
+  if (
+    kind === 'mahalla'
+  ) {
 
-    el.innerHTML = `
+    element.innerHTML = `
+
       <span
         class="mfy-dot"
         style="--marker:${color}"
       ></span>
+
     `;
 
   } else {
 
-    const icon =
-      getCategoryIcon(
-        item.category
-      );
+    element.innerHTML = `
 
-    el.innerHTML = `
       <span
         class="place-pin"
         style="--marker:${color}"
       >
+
         <span class="icon">
-          ${svg(icon)}
+          ${svg(
+            getCategoryIcon(
+              item.category
+            )
+          )}
         </span>
+
       </span>
+
     `;
   }
 
 
-  el.addEventListener(
+  element.addEventListener(
     'click',
     (event) => {
 
@@ -986,7 +1987,7 @@ function markerElement(
   );
 
 
-  return el;
+  return element;
 }
 
 
@@ -996,37 +1997,31 @@ function addMarker(
   color
 ) {
 
-  const lng =
-    Number(item.lng);
-
-  const lat =
-    Number(item.lat);
-
-
   if (
-    !Number.isFinite(lng) ||
-    !Number.isFinite(lat)
+    !validCoordinates(
+      item
+    )
   ) {
     return;
   }
 
 
-  const el =
+  const element =
     markerElement(
       item,
-      color,
-      kind
+      kind,
+      color
     );
 
 
   const marker =
     new maplibregl.Marker({
-      element: el,
+      element,
       anchor: 'center'
     })
       .setLngLat([
-        lng,
-        lat
+        Number(item.lng),
+        Number(item.lat)
       ])
       .addTo(
         state.map
@@ -1037,60 +2032,51 @@ function addMarker(
     item,
     kind,
     marker,
-    el
+    el:
+      element
   });
 }
 
 
 function renderMarkers() {
 
-  if (!state.map) return;
+  if (!state.map) {
+    return;
+  }
 
 
   clearMarkers();
 
 
-  /* MFY */
-
   if (
-    state.activeCategories.has(
-      'mahalla'
-    )
+    state.activeCategories
+      .has('mahalla')
   ) {
 
-    (
-      state.data.mahallas || []
-    ).forEach(
-      (m, index) => {
+    state.data.mahallas
+      .forEach(
+        (mahalla) => {
 
-        const color =
-          getCategoryColor(
-            'mahalla'
-          ) ||
-          `hsl(${(index * 37) % 360} 75% 65%)`;
-
-
-        addMarker(
-          m,
-          'mahalla',
-          color
-        );
-      }
-    );
+          addMarker(
+            mahalla,
+            'mahalla',
+            getSpecializationColor(
+              mahalla.specialization
+            )
+          );
+        }
+      );
   }
 
 
-  /* Places */
-
-  (
-    state.data.places || []
-  ).forEach(
-    (place) => {
+  state.data.places
+    .forEach((place) => {
 
       if (
-        state.activeCategories.has(
-          place.category
-        )
+        state.activeCategories
+          .has(
+            place.category
+          )
       ) {
 
         addMarker(
@@ -1101,41 +2087,92 @@ function renderMarkers() {
           )
         );
       }
-    }
-  );
+    });
 
 
-  /* Organizations */
+  state.data.businesses
+    .forEach(
+      (business) => {
 
-  (
-    state.data.businesses || []
-  ).forEach(
-    (business) => {
-
-      const show =
-        state.activeCategories.has(
-          business.category
-        ) ||
-        state.activeCategories.has(
-          'business'
-        );
+        const visible =
+          state.activeCategories
+            .has('business') ||
+          state.activeCategories
+            .has(
+              business.category
+            );
 
 
-      if (!show) return;
+        if (!visible) {
+          return;
+        }
 
 
-      addMarker(
-        business,
-        'business',
-        business.categoryColor ||
+        addMarker(
+          business,
+          'business',
+          business.categoryColor ||
           getCategoryColor(
             business.category
           )
-      );
-    }
-  );
+        );
+      }
+    );
+
+
+  applyMarkerFilters();
 }
 
+
+function applyMarkerFilters() {
+
+  state.markers
+    .forEach(
+      (marker) => {
+
+        let dim = false;
+
+
+        if (
+          marker.kind ===
+            'mahalla' &&
+          state.selectedSpecialization
+        ) {
+
+          dim =
+            marker.item
+              .specialization !==
+            state.selectedSpecialization;
+        }
+
+
+        if (
+          marker.kind ===
+            'business' &&
+          state.selectedOrganizationType
+        ) {
+
+          dim =
+            marker.item
+              .organizationType !==
+            state.selectedOrganizationType;
+        }
+
+
+        marker.el
+          .classList
+          .toggle(
+            'is-dim',
+            dim
+          );
+      }
+    );
+}
+
+
+/* =========================================================
+   MAP CAMERA
+========================================================= */
 
 function fitDistrict(
   animate = true
@@ -1143,432 +2180,127 @@ function fitDistrict(
 
   if (
     !state.map ||
-    !state.data.mahallas?.length
+    !state.data.mahallas.length
   ) {
     return;
   }
 
 
   const bounds =
-    new maplibregl.LngLatBounds();
+    new maplibregl
+      .LngLatBounds();
 
 
-  state.data.mahallas.forEach(
-    (m) => {
+  state.data.mahallas
+    .forEach(
+      (mahalla) => {
 
-      const lng =
-        Number(m.lng);
+        if (
+          validCoordinates(
+            mahalla
+          )
+        ) {
 
-      const lat =
-        Number(m.lat);
-
-
-      if (
-        Number.isFinite(lng) &&
-        Number.isFinite(lat)
-      ) {
-        bounds.extend([
-          lng,
-          lat
-        ]);
+          bounds.extend([
+            mahalla.lng,
+            mahalla.lat
+          ]);
+        }
       }
-    }
-  );
+    );
+
+
+  const filterClosed =
+    document.body
+      .classList
+      .contains(
+        'filter-closed'
+      );
 
 
   state.map.fitBounds(
     bounds,
     {
-
       padding: {
-        top: 110,
-        bottom: 100,
+        top: 100,
+        bottom: 92,
 
         left:
-          window.innerWidth > 760
-            ? 390
-            : 40,
+          window.innerWidth >
+            760 &&
+          !filterClosed
+            ? 350
+            : 70,
 
-        right: 40
+        right: 70
       },
 
       duration:
         animate &&
-        !document.documentElement.classList.contains(
-          'reduce-motion'
-        )
+        !document.documentElement
+          .classList
+          .contains(
+            'reduce-motion'
+          )
           ? 900
           : 0,
 
-      maxZoom: 11.4
+      maxZoom:
+        11.4
     }
   );
 }
 
 
-function flyTo(
-  item,
-  pitch = 25
-) {
-
-  if (!state.map) {
-    return;
-  }
-
-
-  const lng =
-    Number(item.lng);
-
-  const lat =
-    Number(item.lat);
-
+function flyToItem(item) {
 
   if (
-    !Number.isFinite(lng) ||
-    !Number.isFinite(lat)
+    !state.map ||
+    !validCoordinates(
+      item
+    )
   ) {
     return;
   }
 
 
-  const reduced =
-    document.documentElement.classList.contains(
-      'reduce-motion'
-    );
+  const desktop =
+    window.innerWidth >
+    760;
 
 
-  state.map.flyTo({
+  state.map.easeTo({
 
-    center: [
-      lng,
-      lat
-    ],
+    center:
+      desktop
+        ? [
+            Number(item.lng) -
+              0.012,
+            Number(item.lat)
+          ]
+        : [
+            Number(item.lng),
+            Number(item.lat)
+          ],
 
-    zoom: 13.2,
+    zoom:
+      13.15,
 
     pitch:
-      reduced
-        ? 0
-        : pitch,
+      15,
+
+    bearing:
+      0,
 
     duration:
-      reduced
-        ? 0
-        : 850,
-
-    essential: true
-  });
-}
-
-
-/* =========================================================
-   QUICK STATS
-========================================================= */
-
-function renderQuickStats() {
-
-  const host =
-    $('#quickStats');
-
-  if (!host) return;
-
-
-  const d =
-    state.data.district || {};
-
-
-  const items = [
-
-    [
-      d.mahallas ||
-        state.data.mahallas.length,
-      tr('mahallas')
-    ],
-
-    [
-      d.population,
-      tr('population')
-    ],
-
-    [
-      d.households,
-      tr('households')
-    ],
-
-    [
-      d.families,
-      tr('families')
-    ]
-  ];
-
-
-  host.innerHTML =
-    items
-      .map(
-        ([value, label]) => `
-          <div class="stat-chip">
-            <strong>
-              ${fmt(value)}
-            </strong>
-
-            <span>
-              ${esc(label)}
-            </span>
-          </div>
-        `
-      )
-      .join('');
-}
-
-
-/* =========================================================
-   CATEGORIES
-========================================================= */
-
-function categoryLabel(c) {
-
-  if (!c) {
-    return '';
-  }
-
-
-  const map = {
-
-    mahalla: 'mahallas',
-
-    business: 'businesses',
-
-    education: 'education',
-
-    health: 'health',
-
-    culture: 'culture',
-
-    service: 'services',
-
-    investment: 'investment'
-  };
-
-
-  if (map[c.id]) {
-    return tr(map[c.id]);
-  }
-
-
-  return (
-    c.name ||
-    c.slug ||
-    ''
-  );
-}
-
-
-function renderCategories() {
-
-  const el =
-    $('#categoryChips');
-
-  if (!el) return;
-
-
-  el.innerHTML =
-    (
-      state.data.categories || []
-    )
-      .filter(
-        (c) =>
-          c.active !== false &&
-          c.active !== 0
-      )
-      .map(
-        (c) => `
-          <button
-            class="category-chip ${
-              state.activeCategories.has(
-                c.id
-              )
-                ? 'active'
-                : ''
-            }"
-
-            style="--chip:${
-              c.color ||
-              '#65e5ff'
-            }"
-
-            data-category="${esc(
-              c.id
-            )}"
-          >
-
-            <span
-              class="dot"
-              style="
-                color:${
-                  c.color ||
-                  '#65e5ff'
-                };
-                background:${
-                  c.color ||
-                  '#65e5ff'
-                };
-              "
-            ></span>
-
-            <span>
-              ${esc(
-                categoryLabel(c)
-              )}
-            </span>
-
-          </button>
-        `
-      )
-      .join('');
-
-
-  $$('.category-chip', el)
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          'click',
-          () =>
-            toggleCategory(
-              button.dataset.category
-            )
-        );
-      }
-    );
-}
-
-
-function toggleCategory(
-  id,
-  force
-) {
-
-  const on =
-    force === undefined
-      ? !state.activeCategories.has(
-          id
+      document.documentElement
+        .classList
+        .contains(
+          'reduce-motion'
         )
-      : force;
-
-
-  if (on) {
-    state.activeCategories.add(
-      id
-    );
-  } else {
-    state.activeCategories.delete(
-      id
-    );
-  }
-
-
-  renderCategories();
-
-  renderMarkers();
-}
-
-
-/* =========================================================
-   PRODUCTS
-========================================================= */
-
-function renderProducts() {
-
-  const host =
-    $('#productGrid');
-
-  if (!host) return;
-
-
-  const products =
-    state.data.products || [];
-
-
-  if (!products.length) {
-
-    host.innerHTML = `
-      <div class="search-empty">
-        Hozircha mahsulotlar kiritilmagan.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  host.innerHTML =
-    products
-      .map(
-        (p) => `
-          <button
-            class="product-card"
-            data-product="${esc(
-              p.id
-            )}"
-          >
-
-            <div class="product-visual">
-
-              <span class="icon">
-                ${svg('package')}
-              </span>
-
-            </div>
-
-            <div class="product-info">
-
-              <small>
-                ${esc(
-                  p.category || ''
-                )}
-              </small>
-
-              <strong>
-                ${esc(p.name)}
-              </strong>
-
-              <p>
-                ${esc(
-                  p.description || ''
-                )}
-              </p>
-
-            </div>
-
-          </button>
-        `
-      )
-      .join('');
-
-
-  $$('.product-card').forEach(
-    (item) => {
-
-      item.addEventListener(
-        'click',
-        () => {
-
-          const product =
-            state.data.products.find(
-              (p) =>
-                String(p.id) ===
-                item.dataset.product
-            );
-
-
-          openDetail(
-            product,
-            'product'
-          );
-        }
-      );
-    }
-  );
+        ? 0
+        : 850
+  });
 }
 
 
@@ -1578,214 +2310,567 @@ function renderProducts() {
 
 function renderDistrictMetrics() {
 
-  const d =
-    state.data.district || {};
+  const district =
+    state.data.district;
 
 
-  const districtHost =
+  const host =
     $('#districtMetrics');
 
 
-  if (districtHost) {
+  if (host) {
 
-    const items = [
-
+    const values = [
       [
-        d.mahallas || 0,
-        tr('mahallas')
+        district.population,
+        'Umumiy aholi'
       ],
-
       [
-        d.population || 0,
-        tr('totalPopulation')
+        district.households,
+        'Umumiy xonadon'
       ],
-
       [
-        d.households || 0,
-        tr('totalHouseholds')
+        district.families,
+        'Umumiy oila'
       ],
-
       [
-        d.families || 0,
-        tr('totalFamilies')
+        district.mahallas,
+        'MFY soni'
       ]
     ];
 
 
-    districtHost.innerHTML =
-      items
-        .map(
-          ([value, label]) => `
-            <div class="metric-card">
+    host.innerHTML =
+      values.map(
+        ([value, label]) => `
 
-              <strong>
-                ${fmt(value)}
-              </strong>
+          <div class="metric-card">
 
-              <span>
-                ${esc(label)}
-              </span>
+            <strong>
+              ${fmt(value)}
+            </strong>
 
-              <small>
-                ${esc(
-                  tr('sourceOfficial')
-                )}
-              </small>
+            <span>
+              ${esc(label)}
+            </span>
 
-            </div>
-          `
-        )
-        .join('');
+            <small>
+              ${esc(
+                tr(
+                  'sourceOfficial'
+                )
+              )}
+            </small>
+
+          </div>
+
+        `
+      ).join('');
   }
 
 
-  const updated =
-    $('#districtUpdated');
+  if (
+    $('#districtUpdated')
+  ) {
 
-
-  if (updated) {
-    updated.textContent =
-      d.updatedAt || '—';
+    $('#districtUpdated')
+      .textContent =
+      district.updatedAt ||
+      '—';
   }
 
 
-  const investorHost =
+  renderPassportAnalytics();
+
+  renderInvestorMetrics();
+}
+
+
+function renderInvestorMetrics() {
+
+  const host =
     $('#investorMetrics');
 
 
-  if (investorHost) {
-
-    const items = [
-
-      [
-        d.population || 0,
-        tr('population')
-      ],
-
-      [
-        state.data.businesses.length,
-        tr('businesses')
-      ],
-
-      [
-        d.mahallas || 0,
-        tr('mahallas')
-      ],
-
-      [
-        d.areaKm2 || 0,
-        'km²'
-      ]
-    ];
+  if (!host) {
+    return;
+  }
 
 
-    investorHost.innerHTML =
-      items
-        .map(
-          ([value, label]) => `
-            <div class="metric-card">
+  const district =
+    state.data.district;
 
-              <strong>
-                ${fmt(value)}
-              </strong>
 
-              <span>
-                ${esc(label)}
-              </span>
+  const values = [
+    [
+      district.population,
+      'Aholi'
+    ],
+    [
+      district.areaKm2,
+      'km²'
+    ],
+    [
+      district.mahallas,
+      'MFY'
+    ],
+    [
+      state.data.businesses.length,
+      'Tashkilot'
+    ]
+  ];
 
-              <small>
-                ${esc(
-                  tr('sourceOfficial')
-                )}
-              </small>
 
-            </div>
-          `
-        )
-        .join('');
+  host.innerHTML =
+    values.map(
+      ([value, label]) => `
+
+        <div class="metric-card">
+
+          <strong>
+            ${fmt(value)}
+          </strong>
+
+          <span>
+            ${esc(label)}
+          </span>
+
+          <small>
+            Tasdiqlangan ma’lumot
+          </small>
+
+        </div>
+
+      `
+    ).join('');
+}
+
+
+/* =========================================================
+   PASSPORT ANALYTICS
+========================================================= */
+
+function renderPassportAnalytics() {
+
+  const district =
+    state.data.district;
+
+
+  setText(
+    '#passportIndustry',
+    district.industryVolume ||
+      '—'
+  );
+
+
+  setText(
+    '#passportAgriculture',
+    district.agricultureVolume ||
+      '—'
+  );
+
+
+  setText(
+    '#passportServices',
+    district.servicesVolume ||
+      '—'
+  );
+
+
+  setText(
+    '#passportUnemployment',
+    district.unemploymentRate
+      ? `${district.unemploymentRate} %`
+      : '—'
+  );
+
+
+  setText(
+    '#passportPoverty',
+    district.povertyRate
+      ? `${district.povertyRate} %`
+      : '—'
+  );
+
+
+  setText(
+    '#passportHealthcare',
+    district.healthcareCount
+      ? `${fmt(
+          district.healthcareCount
+        )} ta muassasa`
+      : '—'
+  );
+
+
+  setText(
+    '#passportFounded',
+    district.founded ||
+      '—'
+  );
+
+
+  setText(
+    '#passportArea',
+    district.areaKm2
+      ? `${fmt(
+          district.areaKm2
+        )} km²`
+      : '—'
+  );
+
+
+  setText(
+    '#passportBorder',
+    district.borderLengthKm
+      ? `${district.borderLengthKm} km`
+      : '—'
+  );
+
+
+  renderDistrictSpecializationStats();
+
+  renderDistrictTopMahallas();
+}
+
+
+function setText(
+  selector,
+  value
+) {
+
+  const element =
+    $(selector);
+
+
+  if (element) {
+
+    element.textContent =
+      value;
   }
 }
 
 
-/* =========================================================
-   LANGUAGES
-========================================================= */
-
-function renderLanguages() {
+function renderDistrictSpecializationStats() {
 
   const host =
-    $('#languageGrid');
+    $('#districtSpecializationStats');
 
-  if (!host) return;
+
+  if (!host) {
+    return;
+  }
+
+
+  const stats =
+    getSpecializationStats();
+
+
+  const maximum =
+    Math.max(
+      1,
+      ...stats.map(
+        (item) =>
+          item.count
+      )
+    );
 
 
   host.innerHTML =
-    LANGUAGES
-      .map(
-        (l) => `
-          <button
-            class="language-option ${
-              l.code === state.lang
-                ? 'active'
-                : ''
-            }"
-            data-lang="${l.code}"
+    stats.map(
+      (item) => `
+
+        <div
+          class="passport-bar-row"
+        >
+
+          <span
+            class="label"
+            title="${esc(item.name)}"
+          >
+            ${esc(item.name)}
+          </span>
+
+          <span
+            class="passport-bar"
           >
 
-            <span class="language-code">
-              ${l.short}
-            </span>
+            <i
+              style="
+                width:${
+                  (
+                    item.count /
+                    maximum
+                  ) * 100
+                }%;
+                --bar-color:${item.color};
+              "
+            ></i>
 
-            <span>
+          </span>
 
-              <strong>
-                ${esc(l.native)}
-              </strong>
+          <b>
+            ${item.count}
+          </b>
 
-              <small>
-                ${esc(l.name)}
-              </small>
+        </div>
 
-            </span>
-
-          </button>
-        `
-      )
-      .join('');
-
-
-  $$('.language-option')
-    .forEach(
-      (item) => {
-
-        item.addEventListener(
-          'click',
-          () =>
-            setLanguage(
-              item.dataset.lang
-            )
-        );
-      }
-    );
+      `
+    ).join('');
 }
 
 
-function renderAllTextual() {
+function renderDistrictTopMahallas() {
 
-  renderQuickStats();
+  const host =
+    $('#districtTopMahallas');
 
-  renderCategories();
 
-  renderProducts();
+  if (!host) {
+    return;
+  }
 
-  renderDistrictMetrics();
 
-  renderAISuggestions();
+  const top =
+    [
+      ...state.data.mahallas
+    ]
+      .sort(
+        (a, b) =>
+          b.population -
+          a.population
+      )
+      .slice(
+        0,
+        5
+      );
+
+
+  host.innerHTML =
+    top.map(
+      (
+        mahalla,
+        index
+      ) => `
+
+        <button
+          type="button"
+          class="search-result"
+          data-top-mahalla="${mahalla.id}"
+        >
+
+          <span
+            class="result-icon"
+          >
+            ${index + 1}
+          </span>
+
+          <span
+            class="result-copy"
+          >
+
+            <strong>
+              ${esc(
+                mahalla.name
+              )}
+            </strong>
+
+            <small>
+              ${esc(
+                mahalla.specialization
+              )}
+            </small>
+
+          </span>
+
+          <span
+            class="result-type"
+          >
+            ${fmt(
+              mahalla.population
+            )}
+          </span>
+
+        </button>
+
+      `
+    ).join('');
+
+
+  $$(
+    '[data-top-mahalla]',
+    host
+  ).forEach(
+    (button) => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          const item =
+            state.data.mahallas
+              .find(
+                (mahalla) =>
+                  String(
+                    mahalla.id
+                  ) ===
+                  button.dataset
+                    .topMahalla
+              );
+
+
+          closePassportMode(
+            false
+          );
+
+
+          setTimeout(
+            () => {
+
+              openDetail(
+                item,
+                'mahalla'
+              );
+
+            },
+            550
+          );
+        }
+      );
+    }
+  );
 }
 
 
 /* =========================================================
-   DETAIL
+   PASSPORT MODE
+========================================================= */
+
+function openPassportMode() {
+
+  closeDetail(
+    false
+  );
+
+  closeMajorPanels();
+
+
+  if (
+    !document.body
+      .classList
+      .contains(
+        'passport-mode'
+      )
+  ) {
+
+    state.passportCamera =
+      getCamera();
+  }
+
+
+  document.body
+    .classList
+    .add(
+      'passport-mode'
+    );
+
+
+  $('#districtPanel')
+    ?.classList
+    .remove(
+      'hidden'
+    );
+
+
+  state.activePanel =
+    'district';
+
+
+  setTimeout(
+    () => {
+
+      state.map
+        ?.resize();
+
+      fitDistrict(
+        true
+      );
+
+    },
+    480
+  );
+}
+
+
+function closePassportMode(
+  restore = true
+) {
+
+  if (
+    !document.body
+      .classList
+      .contains(
+        'passport-mode'
+      )
+  ) {
+    return;
+  }
+
+
+  document.body
+    .classList
+    .remove(
+      'passport-mode'
+    );
+
+
+  $('#districtPanel')
+    ?.classList
+    .add(
+      'hidden'
+    );
+
+
+  state.activePanel =
+    'explore';
+
+
+  setTimeout(
+    () => {
+
+      state.map
+        ?.resize();
+
+
+      if (
+        restore &&
+        state.passportCamera
+      ) {
+
+        restoreCamera(
+          state.passportCamera,
+          850
+        );
+
+      } else {
+
+        fitDistrict(
+          true
+        );
+      }
+
+
+      state.passportCamera =
+        null;
+
+    },
+    430
+  );
+}
+
+
+/* =========================================================
+   DETAIL CARD
 ========================================================= */
 
 function openDetail(
@@ -1793,7 +2878,35 @@ function openDetail(
   kind
 ) {
 
-  if (!item) return;
+  if (!item) {
+    return;
+  }
+
+
+  if (
+    document.body
+      .classList
+      .contains(
+        'passport-mode'
+      )
+  ) {
+
+    closePassportMode(
+      false
+    );
+  }
+
+
+  closeMajorPanels();
+
+
+  if (
+    !state.selected
+  ) {
+
+    state.detailCamera =
+      getCamera();
+  }
 
 
   state.selected = {
@@ -1802,28 +2915,40 @@ function openDetail(
   };
 
 
-  let kicker = '';
+  document.body
+    .classList
+    .add(
+      'detail-focus'
+    );
 
 
-  if (kind === 'mahalla') {
+  let kicker;
+
+
+  if (
+    kind ===
+    'mahalla'
+  ) {
 
     kicker =
-      tr('mahallas');
+      'Mahalla fuqarolar yig‘ini';
 
   } else if (
-    kind === 'business'
+    kind ===
+    'business'
   ) {
 
     kicker =
       item.categoryName ||
-      tr('businesses');
+      'Tashkilot';
 
   } else if (
-    kind === 'product'
+    kind ===
+    'product'
   ) {
 
     kicker =
-      tr('products');
+      'Mahsulot';
 
   } else {
 
@@ -1832,144 +2957,159 @@ function openDetail(
         getCategory(
           item.category
         )
-      ) ||
-      tr('places');
+      );
   }
 
 
-  $('#detailKicker').textContent =
-    kicker;
+  setText(
+    '#detailKicker',
+    kicker
+  );
 
 
-  $('#detailTitle').textContent =
+  setText(
+    '#detailTitle',
     item.name ||
-    item.officialName ||
-    '—';
+      item.officialName ||
+      '—'
+  );
 
 
-  if (kind === 'mahalla') {
+  if (
+    $('#detailDescription')
+  ) {
 
-    $('#detailDescription').textContent =
-      item.specialization
-        ? `${tr('specialization')}: ${item.specialization}`
-        : tr('unknown');
-
-  } else {
-
-    $('#detailDescription').textContent =
-      item.description ||
-      item.address ||
-      tr('unknown');
+    $('#detailDescription')
+      .textContent =
+      kind === 'mahalla'
+        ? (
+            item.specialization
+              ? `Ixtisoslashuv: ${item.specialization}`
+              : 'Ma’lumot mavjud emas'
+          )
+        : (
+            item.description ||
+            item.address ||
+            'Ma’lumot mavjud emas'
+          );
   }
 
 
-  $('#detailVerification').innerHTML = `
-    <span
-      class="badge ${
-        item.verified
-          ? 'verified'
-          : 'demo'
-      }"
-    >
+  const verification =
+    $('#detailVerification');
 
-      <span class="icon">
-        ${svg(
+
+  if (verification) {
+
+    verification.innerHTML = `
+
+      <span
+        class="badge ${
           item.verified
-            ? 'shield'
-            : 'info'
-        )}
+            ? 'verified'
+            : 'demo'
+        }"
+      >
+
+        <span class="icon">
+          ${svg(
+            item.verified
+              ? 'shield'
+              : 'info'
+          )}
+        </span>
+
+        ${
+          item.verified
+            ? 'Tasdiqlangan'
+            : 'Tasdiqlanmagan'
+        }
+
       </span>
 
       ${
-        item.verified
-          ? esc(tr('verified'))
-          : esc(tr('demo'))
+        item.updatedAt
+          ? `
+            <span class="badge">
+              ${esc(item.updatedAt)}
+            </span>
+          `
+          : ''
       }
 
-    </span>
-
-    ${
-      item.updatedAt
-        ? `
-          <span class="badge">
-            ${esc(
-              tr('lastUpdated')
-            )}:
-            ${esc(item.updatedAt)}
-          </span>
-        `
-        : ''
-    }
-  `;
+    `;
+  }
 
 
   const stats = [];
 
 
-  if (kind === 'mahalla') {
+  if (
+    kind ===
+    'mahalla'
+  ) {
 
     stats.push(
       [
         item.population,
-        tr('population')
+        'Aholi'
       ],
-
       [
         item.households,
-        tr('households')
+        'Xonadon'
       ],
-
       [
         item.families,
-        tr('families')
+        'Oila'
       ]
     );
   }
 
 
   if (
-    kind === 'business'
+    kind ===
+    'business'
   ) {
 
-    if (item.sector) {
-
-      stats.push([
-        item.sector,
-        tr('specialization')
-      ]);
-    }
-
-    if (item.organizationType) {
+    if (
+      item.organizationType
+    ) {
 
       stats.push([
         item.organizationType,
-        'Turi'
+        'Tashkilot turi'
+      ]);
+    }
+
+
+    if (
+      item.sector
+    ) {
+
+      stats.push([
+        item.sector,
+        'Sektor'
       ]);
     }
   }
 
 
-  if (
-    kind === 'product' &&
-    item.producer
-  ) {
-
-    stats.push([
-      item.producer,
-      tr('businesses')
-    ]);
-  }
+  const detailStats =
+    $('#detailStats');
 
 
-  $('#detailStats').innerHTML =
-    stats
-      .map(
+  if (detailStats) {
+
+    detailStats.innerHTML =
+      stats.map(
         ([value, label]) => `
+
           <div class="detail-stat">
 
             <strong>
               ${
-                typeof value === 'number'
+                typeof value ===
+                  'number'
                   ? fmt(value)
                   : esc(value)
               }
@@ -1980,244 +3120,775 @@ function openDetail(
             </span>
 
           </div>
+
         `
-      )
-      .join('');
+      ).join('');
+  }
 
 
-  let detailIcon =
+  renderDetailExtra(
+    item,
+    kind
+  );
+
+
+  let icon =
     'marker';
 
 
-  if (kind === 'product') {
+  if (
+    kind ===
+    'mahalla'
+  ) {
 
-    detailIcon =
+    icon = 'home';
+
+  } else if (
+    kind ===
+    'business'
+  ) {
+
+    icon =
+      getCategoryIcon(
+        item.category
+      );
+
+  } else if (
+    kind ===
+    'product'
+  ) {
+
+    icon =
       'package';
-
-  } else if (
-    kind === 'business'
-  ) {
-
-    detailIcon =
-      getCategoryIcon(
-        item.category
-      );
-
-  } else if (
-    kind === 'mahalla'
-  ) {
-
-    detailIcon =
-      'home';
-
-  } else {
-
-    detailIcon =
-      getCategoryIcon(
-        item.category
-      );
   }
-
-
-  $('#detailSymbol').innerHTML = `
-    <span class="icon">
-      ${svg(detailIcon)}
-    </span>
-  `;
-
-
-  $('#detailCard')
-    .classList
-    .remove('hidden');
 
 
   if (
-    Number.isFinite(
-      Number(item.lat)
-    ) &&
-    Number.isFinite(
-      Number(item.lng)
-    )
+    $('#detailSymbol')
   ) {
 
-    flyTo(item);
+    $('#detailSymbol')
+      .innerHTML = `
+
+        <span class="icon">
+          ${svg(icon)}
+        </span>
+
+      `;
   }
 
-
-  state.markers.forEach(
-    (marker) => {
-
-      marker.el.classList.toggle(
-        'is-active',
-        String(marker.item.id) ===
-          String(item.id)
-      );
-    }
-  );
-}
-
-
-function closeDetail() {
 
   $('#detailCard')
-    .classList
-    .add('hidden');
-
-
-  state.selected = null;
-
-
-  state.markers.forEach(
-    (x) =>
-      x.el.classList.remove(
-        'is-active'
-      )
-  );
-}
-
-
-/* =========================================================
-   PANELS
-========================================================= */
-
-function openPanel(name) {
-
-  [
-    'investorPanel',
-    'productsPanel',
-    'districtPanel'
-  ].forEach(
-    (id) =>
-      $('#' + id)
-        ?.classList
-        .add('hidden')
-  );
-
-
-  if (name === 'explore') {
-
-    $('#explorePanel')
-      ?.classList
-      .remove('hidden');
-
-    state.activePanel =
-      'explore';
-
-  } else {
-
-    $('#explorePanel')
-      ?.classList
-      .add('hidden');
-
-
-    const id = {
-
-      invest:
-        'investorPanel',
-
-      products:
-        'productsPanel',
-
-      district:
-        'districtPanel'
-
-    }[name];
-
-
-    if (id) {
-
-      $('#' + id)
-        ?.classList
-        .remove('hidden');
-    }
-
-
-    state.activePanel =
-      name;
-  }
-
-
-  $$('.dock-item').forEach(
-    (item) => {
-
-      item.classList.toggle(
-        'active',
-        item.dataset.nav ===
-          name
-      );
-    }
-  );
-}
-
-
-/* =========================================================
-   SHEETS
-========================================================= */
-
-function openSheet(id) {
-
-  $('#' + id)
     ?.classList
-    .remove('hidden');
-}
-
-
-function closeSheet(id) {
-
-  $('#' + id)
-    ?.classList
-    .add('hidden');
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function toast(
-  title,
-  body = ''
-) {
-
-  const host =
-    $('#toastHost');
-
-  if (!host) return;
-
-
-  const el =
-    document.createElement(
-      'div'
+    .remove(
+      'hidden'
     );
 
 
-  el.className =
-    'toast';
+  state.markers
+    .forEach(
+      (marker) => {
+
+        marker.el
+          .classList
+          .toggle(
+            'is-active',
+            String(
+              marker.item.id
+            ) ===
+            String(
+              item.id
+            )
+          );
+      }
+    );
 
 
-  el.innerHTML = `
-    <strong>
-      ${esc(title)}
-    </strong>
-
-    ${
-      body
-        ? `
-          <small>
-            ${esc(body)}
-          </small>
-        `
-        : ''
-    }
-  `;
-
-
-  host.appendChild(el);
+  flyToItem(
+    item
+  );
 
 
   setTimeout(
-    () => el.remove(),
-    3200
+    () => {
+
+      showConnector();
+
+    },
+    480
+  );
+}
+
+
+function renderDetailExtra(
+  item,
+  kind
+) {
+
+  const host =
+    $('#detailExtra');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  const rows = [];
+
+
+  if (
+    kind ===
+    'mahalla'
+  ) {
+
+    if (
+      item.schools
+    ) {
+
+      rows.push([
+        'Maktablar',
+        item.schools
+      ]);
+    }
+
+
+    if (
+      item.kindergartens
+    ) {
+
+      rows.push([
+        'Bog‘chalar',
+        item.kindergartens
+      ]);
+    }
+
+
+    if (
+      item.clinics
+    ) {
+
+      rows.push([
+        'Tibbiyot',
+        item.clinics
+      ]);
+    }
+
+
+    if (
+      item.mosques
+    ) {
+
+      rows.push([
+        'Masjidlar',
+        item.mosques
+      ]);
+    }
+
+
+    if (
+      item.shops
+    ) {
+
+      rows.push([
+        'Savdo nuqtalari',
+        item.shops
+      ]);
+    }
+
+
+    if (
+      item.head
+    ) {
+
+      rows.push([
+        'MFY raisi',
+        item.head
+      ]);
+    }
+  }
+
+
+  if (
+    kind ===
+    'business'
+  ) {
+
+    if (
+      item.address
+    ) {
+
+      rows.push([
+        'Manzil',
+        item.address
+      ]);
+    }
+
+
+    if (
+      item.website
+    ) {
+
+      rows.push([
+        'Veb-sayt',
+        item.website
+      ]);
+    }
+  }
+
+
+  if (
+    !rows.length
+  ) {
+
+    host.innerHTML =
+      '';
+
+    return;
+  }
+
+
+  host.innerHTML = `
+
+    <div
+      style="
+        display:grid;
+        gap:7px;
+        margin-top:14px;
+      "
+    >
+
+      ${rows.map(
+        ([label, value]) => `
+
+          <div
+            class="passport-row"
+          >
+
+            <span>
+              ${esc(label)}
+            </span>
+
+            <strong>
+              ${
+                typeof value ===
+                'number'
+                ? fmt(value)
+                : esc(value)
+              }
+            </strong>
+
+          </div>
+
+        `
+      ).join('')}
+
+    </div>
+
+  `;
+}
+
+
+function closeDetail(
+  restore = true
+) {
+
+  const hadSelection =
+    !!state.selected;
+
+
+  $('#detailCard')
+    ?.classList
+    .add(
+      'hidden'
+    );
+
+
+  document.body
+    .classList
+    .remove(
+      'detail-focus'
+    );
+
+
+  hideConnector();
+
+
+  state.markers
+    .forEach(
+      (marker) => {
+
+        marker.el
+          .classList
+          .remove(
+            'is-active'
+          );
+      }
+    );
+
+
+  state.selected =
+    null;
+
+
+  if (
+    restore &&
+    hadSelection &&
+    state.detailCamera
+  ) {
+
+    restoreCamera(
+      state.detailCamera,
+      760
+    );
+  }
+
+
+  state.detailCamera =
+    null;
+}
+
+
+/* =========================================================
+   CONNECTOR
+========================================================= */
+
+function showConnector() {
+
+  if (
+    !state.selected ||
+    window.innerWidth <=
+      760
+  ) {
+
+    hideConnector();
+
+    return;
+  }
+
+
+  const connector =
+    $('#uxConnector');
+
+
+  if (!connector) {
+    return;
+  }
+
+
+  connector.classList
+    .remove(
+      'hidden'
+    );
+
+
+  updateConnector();
+}
+
+
+function hideConnector() {
+
+  const connector =
+    $('#uxConnector');
+
+
+  if (connector) {
+
+    connector.classList
+      .add(
+        'hidden'
+      );
+  }
+
+
+  if (
+    state.connectorFrame
+  ) {
+
+    cancelAnimationFrame(
+      state.connectorFrame
+    );
+
+    state.connectorFrame =
+      null;
+  }
+}
+
+
+function scheduleConnectorUpdate() {
+
+  if (
+    !state.selected
+  ) {
+    return;
+  }
+
+
+  if (
+    state.connectorFrame
+  ) {
+    return;
+  }
+
+
+  state.connectorFrame =
+    requestAnimationFrame(
+      () => {
+
+        state.connectorFrame =
+          null;
+
+        updateConnector();
+      }
+    );
+}
+
+
+function updateConnector() {
+
+  if (
+    !state.selected ||
+    !state.map ||
+    window.innerWidth <=
+      760
+  ) {
+    return;
+  }
+
+
+  const marker =
+    state.markers.find(
+      (entry) =>
+        String(
+          entry.item.id
+        ) ===
+        String(
+          state.selected.item.id
+        )
+    );
+
+
+  const card =
+    $('#detailCard');
+
+
+  const svgElement =
+    $('#uxConnector');
+
+
+  if (
+    !marker ||
+    !card ||
+    !svgElement ||
+    card.classList
+      .contains(
+        'hidden'
+      )
+  ) {
+    return;
+  }
+
+
+  const markerRect =
+    marker.el
+      .getBoundingClientRect();
+
+
+  const cardRect =
+    card
+      .getBoundingClientRect();
+
+
+  const width =
+    window.innerWidth;
+
+  const height =
+    window.innerHeight;
+
+
+  svgElement.setAttribute(
+    'viewBox',
+    `0 0 ${width} ${height}`
+  );
+
+
+  const x1 =
+    markerRect.left +
+    markerRect.width /
+      2;
+
+  const y1 =
+    markerRect.top +
+    markerRect.height /
+      2;
+
+
+  const x2 =
+    cardRect.left;
+
+  const y2 =
+    cardRect.top +
+    Math.min(
+      cardRect.height *
+        .42,
+      190
+    );
+
+
+  const distance =
+    Math.max(
+      90,
+      Math.abs(
+        x2 -
+        x1
+      ) * .43
+    );
+
+
+  const c1x =
+    x1 +
+    distance;
+
+  const c1y =
+    y1;
+
+
+  const c2x =
+    x2 -
+    distance *
+      .65;
+
+  const c2y =
+    y2;
+
+
+  const path =
+    `M ${x1} ${y1}
+     C ${c1x} ${c1y},
+       ${c2x} ${c2y},
+       ${x2} ${y2}`;
+
+
+  $$(
+    'path',
+    svgElement
+  ).forEach(
+    (element) => {
+
+      element.setAttribute(
+        'd',
+        path
+      );
+    }
+  );
+}
+
+
+/* =========================================================
+   FILTER PANEL
+========================================================= */
+
+function openFilterPanel() {
+
+  closeMajorPanels();
+
+
+  document.body
+    .classList
+    .remove(
+      'filter-closed'
+    );
+
+
+  $('#explorePanel')
+    ?.classList
+    .remove(
+      'hidden'
+    );
+
+
+  state.activePanel =
+    'explore';
+
+
+  setDockActive(
+    'explore'
+  );
+
+
+  setTimeout(
+    () => {
+
+      state.map
+        ?.resize();
+
+    },
+    250
+  );
+}
+
+
+function closeFilterPanel() {
+
+  document.body
+    .classList
+    .add(
+      'filter-closed'
+    );
+
+
+  state.activePanel =
+    'map';
+
+
+  setDockActive(
+    'map'
+  );
+
+
+  setTimeout(
+    () => {
+
+      state.map
+        ?.resize();
+
+    },
+    250
+  );
+}
+
+
+/* =========================================================
+   PANEL MANAGER
+========================================================= */
+
+function closeMajorPanels(
+  except = null
+) {
+
+  const panels = [
+    'investorPanel',
+    'productsPanel'
+  ];
+
+
+  panels.forEach(
+    (id) => {
+
+      if (
+        id !== except
+      ) {
+
+        $('#' + id)
+          ?.classList
+          .add(
+            'hidden'
+          );
+      }
+    }
+  );
+
+
+  $('#searchDialog')
+    ?.classList
+    .add(
+      'hidden'
+    );
+
+
+  $('#aiPanel')
+    ?.classList
+    .add(
+      'hidden'
+    );
+}
+
+
+function setDockActive(name) {
+
+  $$('.dock-item')
+    .forEach(
+      (item) => {
+
+        item.classList
+          .toggle(
+            'active',
+            item.dataset.nav ===
+              name
+          );
+      }
+    );
+}
+
+
+function openPanel(name) {
+
+  if (
+    name ===
+    'explore'
+  ) {
+
+    openFilterPanel();
+
+    return;
+  }
+
+
+  closeDetail();
+
+
+  if (
+    document.body
+      .classList
+      .contains(
+        'passport-mode'
+      )
+  ) {
+
+    closePassportMode();
+  }
+
+
+  closeMajorPanels();
+
+
+  document.body
+    .classList
+    .add(
+      'filter-closed'
+    );
+
+
+  if (
+    name ===
+    'invest'
+  ) {
+
+    $('#investorPanel')
+      ?.classList
+      .remove(
+        'hidden'
+      );
+
+  } else if (
+    name ===
+    'products'
+  ) {
+
+    $('#productsPanel')
+      ?.classList
+      .remove(
+        'hidden'
+      );
+  }
+
+
+  state.activePanel =
+    name;
+
+
+  setDockActive(
+    name
   );
 }
 
@@ -2230,131 +3901,156 @@ function allSearchItems() {
 
   return [
 
-    ...(
-      state.data.mahallas || []
-    ).map(
-      (x) => ({
-        ...x,
-        _kind: 'mahalla',
-        _type: tr('mahallas')
-      })
-    ),
+    ...state.data.mahallas
+      .map(
+        (item) => ({
+          ...item,
+          _kind:
+            'mahalla',
+          _type:
+            'MFY'
+        })
+      ),
 
-    ...(
-      state.data.businesses || []
-    ).map(
-      (x) => ({
-        ...x,
-        _kind: 'business',
-        _type:
-          x.categoryName ||
-          tr('businesses')
-      })
-    ),
+    ...state.data.businesses
+      .map(
+        (item) => ({
+          ...item,
+          _kind:
+            'business',
+          _type:
+            item.categoryName ||
+            'Tashkilot'
+        })
+      ),
 
-    ...(
-      state.data.places || []
-    ).map(
-      (x) => ({
-        ...x,
-        _kind: 'place',
-        _type:
-          categoryLabel(
-            getCategory(
-              x.category
+    ...state.data.places
+      .map(
+        (item) => ({
+          ...item,
+          _kind:
+            'place',
+          _type:
+            categoryLabel(
+              getCategory(
+                item.category
+              )
             )
-          )
-      })
-    ),
+        })
+      ),
 
-    ...(
-      state.data.products || []
-    ).map(
-      (x) => ({
-        ...x,
-        _kind: 'product',
-        _type: tr('products')
-      })
-    )
+    ...state.data.products
+      .map(
+        (item) => ({
+          ...item,
+          _kind:
+            'product',
+          _type:
+            'Mahsulot'
+        })
+      )
   ];
 }
 
 
 function searchLocal(query) {
 
-  const q =
-    normalize(query)
-      .trim();
+  const value =
+    normalize(
+      query
+    ).trim();
 
 
-  if (!q) {
+  const all =
+    allSearchItems();
 
-    return allSearchItems()
-      .slice(0, 10);
+
+  if (!value) {
+
+    return all.slice(
+      0,
+      12
+    );
   }
 
 
   const terms =
-    q.split(/\s+/);
+    value.split(
+      /\s+/
+    );
 
 
-  return allSearchItems()
-    .map(
-      (item) => {
+  return all
+    .map((item) => {
 
-        const hay =
-          normalize(
-            [
-              item.name,
-              item.officialName,
-              item.specialization,
-              item.description,
-              item.industry,
-              item.sector,
-              item.address,
-              item.categoryName,
-              item.producer,
-              item._type
-            ]
-              .filter(Boolean)
-              .join(' ')
-          );
-
-
-        const score =
-          terms.reduce(
-            (sum, term) =>
-              sum +
-              (
-                hay.includes(term)
-                  ? 1
-                  : 0
-              ),
-            0
-          ) +
-          (
-            hay.startsWith(q)
-              ? 2
-              : 0
-          );
+      const haystack =
+        normalize(
+          [
+            item.name,
+            item.officialName,
+            item.specialization,
+            item.description,
+            item.industry,
+            item.sector,
+            item.address,
+            item.categoryName,
+            item.organizationType,
+            item._type
+          ]
+            .filter(Boolean)
+            .join(' ')
+        );
 
 
-        return {
-          item,
-          score
-        };
+      let score = 0;
+
+
+      terms.forEach(
+        (term) => {
+
+          if (
+            haystack.includes(
+              term
+            )
+          ) {
+
+            score += 2;
+          }
+        }
+      );
+
+
+      if (
+        haystack.startsWith(
+          value
+        )
+      ) {
+
+        score += 4;
       }
-    )
+
+
+      return {
+        item,
+        score
+      };
+    })
     .filter(
-      (x) => x.score > 0
+      ({ score }) =>
+        score > 0
     )
     .sort(
       (a, b) =>
-        b.score - a.score
+        b.score -
+        a.score
     )
-    .slice(0, 30)
+    .slice(
+      0,
+      30
+    )
     .map(
-      (x) => x.item
+      ({ item }) =>
+        item
     );
 }
 
@@ -2363,25 +4059,31 @@ function renderSearchResults(
   query = ''
 ) {
 
-  const rows =
-    searchLocal(query);
-
-
   const host =
     $('#searchResults');
 
 
-  if (!host) return;
+  if (!host) {
+    return;
+  }
+
+
+  const rows =
+    searchLocal(
+      query
+    );
 
 
   if (!rows.length) {
 
     host.innerHTML = `
-      <div class="search-empty">
-        ${esc(
-          tr('noResults')
-        )}
+
+      <div
+        class="search-empty"
+      >
+        Natija topilmadi
       </div>
+
     `;
 
     return;
@@ -2389,102 +4091,247 @@ function renderSearchResults(
 
 
   host.innerHTML =
-    rows
+    rows.map(
+      (item) => `
+
+        <button
+          type="button"
+          class="search-result"
+          data-search-id="${esc(item.id)}"
+          data-search-kind="${esc(item._kind)}"
+        >
+
+          <span
+            class="result-icon"
+          >
+            <span class="icon">
+              ${svg(
+                item._kind ===
+                  'mahalla'
+                  ? 'home'
+                  : item._kind ===
+                    'business'
+                    ? 'briefcase'
+                    : 'marker'
+              )}
+            </span>
+          </span>
+
+          <span
+            class="result-copy"
+          >
+
+            <strong>
+              ${esc(item.name)}
+            </strong>
+
+            <small>
+              ${esc(
+                item.specialization ||
+                item.organizationType ||
+                item.address ||
+                item.description ||
+                ''
+              )}
+            </small>
+
+          </span>
+
+          <span
+            class="result-type"
+          >
+            ${esc(item._type)}
+          </span>
+
+        </button>
+
+      `
+    ).join('');
+
+
+  $$(
+    '[data-search-id]',
+    host
+  ).forEach(
+    (button) => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          const item =
+            allSearchItems()
+              .find(
+                (entry) =>
+                  String(
+                    entry.id
+                  ) ===
+                    button.dataset
+                      .searchId &&
+                  entry._kind ===
+                    button.dataset
+                      .searchKind
+              );
+
+
+          $('#searchDialog')
+            ?.classList
+            .add(
+              'hidden'
+            );
+
+
+          openDetail(
+            item,
+            item._kind
+          );
+        }
+      );
+    }
+  );
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+function renderProducts() {
+
+  const host =
+    $('#productGrid');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  if (
+    !state.data.products.length
+  ) {
+
+    host.innerHTML = `
+
+      <div class="search-empty">
+        Hozircha mahsulotlar kiritilmagan.
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  host.innerHTML =
+    state.data.products
       .map(
-        (item) => {
+        (product) => `
 
-          let icon =
-            'marker';
+          <button
+            class="product-card"
+            type="button"
+            data-product="${esc(product.id)}"
+          >
 
-
-          if (
-            item._kind ===
-            'mahalla'
-          ) {
-
-            icon =
-              'home';
-
-          } else if (
-            item._kind ===
-            'business'
-          ) {
-
-            icon =
-              getCategoryIcon(
-                item.category
-              );
-
-          } else if (
-            item._kind ===
-            'product'
-          ) {
-
-            icon =
-              'package';
-
-          } else {
-
-            icon =
-              getCategoryIcon(
-                item.category
-              );
-          }
-
-
-          return `
-            <button
-              class="search-result"
-
-              data-kind="${item._kind}"
-
-              data-id="${esc(
-                String(item.id)
-              )}"
+            <div
+              class="product-visual"
             >
 
-              <span class="result-icon">
-
-                <span class="icon">
-                  ${svg(icon)}
-                </span>
-
+              <span class="icon">
+                ${svg('package')}
               </span>
 
+            </div>
 
-              <span class="result-copy">
+            <div
+              class="product-info"
+            >
 
-                <strong>
-                  ${esc(item.name)}
-                </strong>
+              <small>
+                ${esc(
+                  product.category ||
+                  ''
+                )}
+              </small>
 
-                <small>
-                  ${esc(
-                    item.specialization ||
-                    item.industry ||
-                    item.sector ||
-                    item.address ||
-                    item.description ||
-                    item.producer ||
-                    ''
-                  )}
-                </small>
+              <strong>
+                ${esc(
+                  product.name
+                )}
+              </strong>
 
-              </span>
+              <p>
+                ${esc(
+                  product.description ||
+                  ''
+                )}
+              </p>
 
+            </div>
 
-              <span class="result-type">
-                ${esc(item._type)}
-              </span>
+          </button>
 
-            </button>
-          `;
-        }
-      )
-      .join('');
+        `
+      ).join('');
+}
 
 
-  $$('.search-result', host)
+/* =========================================================
+   LANGUAGES
+========================================================= */
+
+function renderLanguages() {
+
+  const host =
+    $('#languageGrid');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  host.innerHTML =
+    LANGUAGES.map(
+      (language) => `
+
+        <button
+          type="button"
+          class="language-option ${
+            language.code ===
+            state.lang
+              ? 'active'
+              : ''
+          }"
+          data-lang="${language.code}"
+        >
+
+          <span
+            class="language-code"
+          >
+            ${esc(language.short)}
+          </span>
+
+          <span>
+
+            <strong>
+              ${esc(language.native)}
+            </strong>
+
+            <small>
+              ${esc(language.name)}
+            </small>
+
+          </span>
+
+        </button>
+
+      `
+    ).join('');
+
+
+  $$('.language-option', host)
     .forEach(
       (button) => {
 
@@ -2492,25 +4339,8 @@ function renderSearchResults(
           'click',
           () => {
 
-            const item =
-              allSearchItems()
-                .find(
-                  (x) =>
-                    String(x.id) ===
-                      button.dataset.id &&
-                    x._kind ===
-                      button.dataset.kind
-                );
-
-
-            $('#searchDialog')
-              .classList
-              .add('hidden');
-
-
-            openDetail(
-              item,
-              item._kind
+            setLanguage(
+              button.dataset.lang
             );
           }
         );
@@ -2525,114 +4355,67 @@ function renderSearchResults(
 
 function renderAISuggestions() {
 
-  const byLang = {
+  const host =
+    $('#aiSuggestions');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  const suggestions = {
 
     uz: [
       'Eng ko‘p aholili MFY qaysi?',
       'Tumanda nechta MFY bor?',
-      'Korxonalarni xaritada ko‘rsat',
+      'Dehqonchilikka ixtisoslashgan MFYlarni ko‘rsat',
       'Investor uchun umumiy ma’lumot'
     ],
 
     en: [
       'Which mahalla has the largest population?',
       'How many mahallas are there?',
-      'Show businesses on the map',
+      'Show agricultural mahallas',
       'Give me an investor overview'
-    ],
-
-    ru: [
-      'Какая махалля самая населённая?',
-      'Сколько махаллей в районе?',
-      'Покажи предприятия',
-      'Информация для инвестора'
-    ],
-
-    zh: [
-      '哪个社区人口最多？',
-      '该地区有多少个社区？',
-      '在地图上显示企业',
-      '给我投资者概览'
-    ],
-
-    ar: [
-      'ما الحي الأكثر سكاناً؟',
-      'كم عدد الأحياء في المنطقة؟',
-      'اعرض الشركات على الخريطة',
-      'أعطني نظرة عامة للمستثمر'
-    ],
-
-    tr: [
-      'En kalabalık mahalle hangisi?',
-      'İlçede kaç mahalle var?',
-      'İşletmeleri haritada göster',
-      'Yatırımcı özeti ver'
-    ],
-
-    ko: [
-      '인구가 가장 많은 마할라는 어디인가요?',
-      '지구에 마할라가 몇 개 있나요?',
-      '지도에 기업을 표시해 주세요',
-      '투자자 개요를 알려 주세요'
-    ],
-
-    de: [
-      'Welche Mahalla hat die größte Bevölkerung?',
-      'Wie viele Mahallas gibt es?',
-      'Unternehmen auf der Karte anzeigen',
-      'Gib mir einen Investorenüberblick'
-    ],
-
-    fr: [
-      'Quelle mahalla a la plus grande population ?',
-      'Combien de mahallas y a-t-il ?',
-      'Afficher les entreprises sur la carte',
-      'Donnez-moi un aperçu pour investisseur'
-    ],
-
-    es: [
-      '¿Qué mahalla tiene más población?',
-      '¿Cuántas mahallas hay?',
-      'Mostrar empresas en el mapa',
-      'Dame un resumen para inversores'
     ]
-  };
 
+  }[state.lang] || [
 
-  const suggestions =
-    byLang[state.lang] ||
-    byLang.en;
-
-
-  const host =
-    $('#aiSuggestions');
-
-
-  if (!host) return;
+    'Which mahalla has the largest population?',
+    'How many mahallas are there?',
+    'Show businesses',
+    'Give me an investor overview'
+  ];
 
 
   host.innerHTML =
-    suggestions
-      .map(
-        (text) => `
-          <button class="ai-suggestion">
-            ${esc(text)}
-          </button>
-        `
-      )
-      .join('');
+    suggestions.map(
+      (text) => `
+
+        <button
+          type="button"
+          class="ai-suggestion"
+        >
+          ${esc(text)}
+        </button>
+
+      `
+    ).join('');
 
 
-  $$('.ai-suggestion')
+  $$('.ai-suggestion', host)
     .forEach(
-      (item) => {
+      (button) => {
 
-        item.addEventListener(
+        button.addEventListener(
           'click',
-          () =>
+          () => {
+
             askAI(
-              item.textContent
-            )
+              button.textContent
+            );
+          }
         );
       }
     );
@@ -2646,15 +4429,17 @@ function ensureAIWelcome() {
 
 
   if (
-    host &&
-    !host.children.length
+    !host ||
+    host.children.length
   ) {
-
-    addMessage(
-      'assistant',
-      tr('aiWelcome')
-    );
+    return;
   }
+
+
+  addMessage(
+    'assistant',
+    'Uchko‘prik tumani bo‘yicha tasdiqlangan ma’lumotlardan foydalanib yordam beraman.'
+  );
 }
 
 
@@ -2668,32 +4453,36 @@ function addMessage(
     $('#aiMessages');
 
 
-  if (!host) return;
+  if (!host) {
+    return;
+  }
 
 
-  const el =
+  const message =
     document.createElement(
       'div'
     );
 
 
-  el.className =
+  message.className =
     `message ${role}`;
 
 
-  el.textContent =
+  message.textContent =
     text;
 
 
-  if (sources.length) {
+  if (
+    sources.length
+  ) {
 
-    const row =
+    const sourceRow =
       document.createElement(
         'div'
       );
 
 
-    row.className =
+    sourceRow.className =
       'source-row';
 
 
@@ -2714,18 +4503,23 @@ function addMessage(
           source;
 
 
-        row.appendChild(
+        sourceRow.appendChild(
           badge
         );
       }
     );
 
 
-    el.appendChild(row);
+    message.appendChild(
+      sourceRow
+    );
   }
 
 
-  host.appendChild(el);
+  host.appendChild(
+    message
+  );
+
 
   host.scrollTop =
     host.scrollHeight;
@@ -2735,73 +4529,17 @@ function addMessage(
 function localAI(question) {
 
   const q =
-    normalize(question);
+    normalize(
+      question
+    );
 
 
-  const d =
-    state.data.district || {};
+  const district =
+    state.data.district;
 
 
   const mahallas =
-    state.data.mahallas || [];
-
-
-  const functions = {
-
-    uz: {
-
-      count: (n) =>
-        `Uchko‘prik tumanidagi tasdiqlangan bazada ${n} ta MFY mavjud.`,
-
-      population: (n) =>
-        `Uchko‘prik tumani aholisi ${n} nafar.`,
-
-      top: (name, n) =>
-        `Tasdiqlangan ma’lumotlar bo‘yicha eng ko‘p aholi ${name} MFYda: ${n} nafar.`,
-
-      business:
-        'Xaritada tashkilot va korxonalar qatlamini yoqdim.',
-
-      investor:
-        'Investor rejimida Uchko‘prik tumani aholisi, hududi, mahallalari, tashkilotlari va iqtisodiy ko‘rsatkichlari jamlanadi.',
-
-      found: (name) =>
-        `${name} topildi. Uni xaritada ko‘rsatishim mumkin.`,
-
-      unknown:
-        'Bu ma’lumot tasdiqlangan bazada hozircha mavjud emas.'
-    },
-
-
-    en: {
-
-      count: (n) =>
-        `The verified Uchko‘prik dataset contains ${n} mahallas.`,
-
-      population: (n) =>
-        `The district population is ${n}.`,
-
-      top: (name, n) =>
-        `${name} has the largest population: ${n} people.`,
-
-      business:
-        'I enabled the organizations and businesses layer.',
-
-      investor:
-        'Investor Mode combines district population, territory, mahallas, organizations and economic indicators.',
-
-      found: (name) =>
-        `I found ${name}. I can show it on the map.`,
-
-      unknown:
-        'This information is not currently available in the verified dataset.'
-    }
-  };
-
-
-  const f =
-    functions[state.lang] ||
-    functions.en;
+    state.data.mahallas;
 
 
   if (
@@ -2811,102 +4549,71 @@ function localAI(question) {
   ) {
 
     return {
-
       text:
-        f.count(
-          fmt(
-            d.mahallas ||
-            mahallas.length
-          )
-        ),
-
+        `Uchko‘prik tumanida ${fmt(
+          district.mahallas
+        )} ta MFY mavjud.`,
       sources: [
-        tr('sourceOfficial')
+        'Tasdiqlangan tuman ma’lumoti'
       ]
     };
   }
 
 
   if (
-    /eng.*(kop|ko‘p).*aholi|largest.*population|most populous/.test(
+    /eng.*kop.*aholi|largest.*population|most populous/.test(
       q
     )
   ) {
 
     const top =
-      [...mahallas]
-        .sort(
-          (a, b) =>
-            Number(
-              b.population || 0
-            ) -
-            Number(
-              a.population || 0
-            )
-        )[0];
+      [
+        ...mahallas
+      ].sort(
+        (a, b) =>
+          b.population -
+          a.population
+      )[0];
 
-
-    if (top) {
-
-      return {
-
-        text:
-          f.top(
-            top.name,
-            fmt(
-              top.population
-            )
-          ),
-
-        sources: [
-          tr('sourceOfficial')
-        ],
-
-        focus:
-          top
-      };
-    }
-  }
-
-
-  if (
-    /aholi|population/.test(
-      q
-    )
-  ) {
 
     return {
-
       text:
-        f.population(
-          fmt(
-            d.population
-          )
-        ),
-
+        `${top.name} eng ko‘p aholili MFYlardan biri: ${fmt(
+          top.population
+        )} nafar.`,
       sources: [
-        tr('sourceOfficial')
-      ]
+        'Tasdiqlangan MFY ma’lumoti'
+      ],
+      focus: top
     };
   }
 
 
+  const specialization =
+    getSpecializationStats()
+      .find(
+        (entry) =>
+          q.includes(
+            normalize(
+              entry.name
+            )
+          )
+      );
+
+
   if (
-    /korxona|tashkilot|business|enterprise|organization/.test(
-      q
-    )
+    specialization
   ) {
 
     return {
-
       text:
-        f.business,
-
+        `${specialization.name} bo‘yicha ${specialization.count} ta MFY topildi.`,
       action:
-        'business',
-
+        'specialization',
+      specialization:
+        specialization.name,
       sources: [
-        tr('sourceOfficial')
+        'Tasdiqlangan MFY ma’lumoti'
       ]
     };
   }
@@ -2917,51 +4624,38 @@ function localAI(question) {
   ) {
 
     return {
-
       text:
-        f.investor,
-
+        `Uchko‘prik tumani aholisi ${fmt(
+          district.population
+        )} nafar, maydoni ${fmt(
+          district.areaKm2
+        )} km². Investor rejimida iqtisodiy va hududiy ko‘rsatkichlarni ko‘rishingiz mumkin.`,
       action:
-        'invest',
-
-      sources: [
-        tr('sourceOfficial')
-      ]
+        'invest'
     };
   }
 
 
   const hit =
-    searchLocal(question)[0];
+    searchLocal(
+      question
+    )[0];
 
 
   if (hit) {
 
     return {
-
       text:
-        f.found(
-          hit.name
-        ),
-
+        `${hit.name} topildi.`,
       focus:
-        hit,
-
-      sources: [
-        hit.verified
-          ? tr('sourceOfficial')
-          : tr('sourceDemo')
-      ]
+        hit
     };
   }
 
 
   return {
-
     text:
-      f.unknown,
-
-    sources: []
+      'Bu ma’lumot hozircha tasdiqlangan bazada mavjud emas.'
   };
 }
 
@@ -2969,11 +4663,15 @@ function localAI(question) {
 async function askAI(question) {
 
   question =
-    String(question || '')
-      .trim();
+    String(
+      question ||
+      ''
+    ).trim();
 
 
-  if (!question) return;
+  if (!question) {
+    return;
+  }
 
 
   openAI();
@@ -2985,24 +4683,24 @@ async function askAI(question) {
   );
 
 
-  $('#aiInput').value = '';
+  if (
+    $('#aiInput')
+  ) {
+
+    $('#aiInput').value =
+      '';
+  }
 
 
   addMessage(
     'system',
-    state.lang === 'uz'
-      ? 'Tahlil qilinmoqda…'
-      : 'Analyzing…'
+    'Tahlil qilinmoqda…'
   );
 
 
-  let answer = null;
+  let answer =
+    null;
 
-
-  /*
-    Render AI backend keyingi bosqichda
-    shu yerga ulanadi.
-  */
 
   try {
 
@@ -3010,8 +4708,8 @@ async function askAI(question) {
       await fetch(
         '/api/ai',
         {
-
-          method: 'POST',
+          method:
+            'POST',
 
           headers: {
             'content-type':
@@ -3022,7 +4720,6 @@ async function askAI(question) {
             JSON.stringify({
               message:
                 question,
-
               lang:
                 state.lang
             })
@@ -3030,13 +4727,17 @@ async function askAI(question) {
       );
 
 
-    if (response.ok) {
+    if (
+      response.ok
+    ) {
 
       const json =
         await response.json();
 
 
-      if (json?.ok) {
+      if (
+        json?.ok
+      ) {
 
         answer =
           json;
@@ -3044,17 +4745,12 @@ async function askAI(question) {
     }
 
   } catch {
-    // Local AI ishlaydi
+    // Local fallback
   }
 
 
-  const systemMessage =
-    $('#aiMessages .message.system:last-child');
-
-
-  if (systemMessage) {
-    systemMessage.remove();
-  }
+  $('#aiMessages .message.system:last-child')
+    ?.remove();
 
 
   if (!answer) {
@@ -3069,28 +4765,32 @@ async function askAI(question) {
   addMessage(
     'assistant',
     answer.text ||
-      tr('unknown'),
-
-    answer.sources || []
+      '—',
+    answer.sources ||
+      []
   );
 
 
   if (
     answer.action ===
-    'business'
+    'specialization'
   ) {
 
-    state.activeCategories.add(
-      'business'
-    );
+    state.activeCategories
+      .add(
+        'mahalla'
+      );
+
+
+    state.selectedSpecialization =
+      answer.specialization;
+
 
     renderCategories();
 
     renderMarkers();
 
-    openPanel('map');
-
-    fitDistrict();
+    openFilterPanel();
   }
 
 
@@ -3107,48 +4807,18 @@ async function askAI(question) {
     answer.focus
   ) {
 
-    const hit =
-      allSearchItems()
-        .find(
-          (x) =>
-            String(x.id) ===
-            String(
-              answer.focus.id
-            )
-        ) ||
-      answer.focus;
+    setTimeout(
+      () => {
 
+        openDetail(
+          answer.focus,
+          answer.focus._kind ||
+          answer.focus.type ||
+          'mahalla'
+        );
 
-    if (
-      Number.isFinite(
-        Number(hit.lat)
-      ) &&
-      Number.isFinite(
-        Number(hit.lng)
-      )
-    ) {
-
-      setTimeout(
-        () =>
-          openDetail(
-            hit,
-            hit._kind ||
-              hit.type ||
-              'mahalla'
-          ),
-        250
-      );
-    }
-  }
-
-
-  if (
-    answer.speak &&
-    'speechSynthesis' in window
-  ) {
-
-    speak(
-      answer.text
+      },
+      250
     );
   }
 }
@@ -3156,68 +4826,47 @@ async function askAI(question) {
 
 function openAI() {
 
+  closeMajorPanels(
+    'aiPanel'
+  );
+
+
   $('#aiPanel')
     ?.classList
-    .remove('hidden');
-
-  ensureAIWelcome();
-}
-
-
-function speak(text) {
-
-  speechSynthesis.cancel();
-
-
-  const utterance =
-    new SpeechSynthesisUtterance(
-      text
+    .remove(
+      'hidden'
     );
 
 
-  utterance.lang = {
-
-    uz: 'uz-UZ',
-
-    en: 'en-US',
-
-    ru: 'ru-RU',
-
-    zh: 'zh-CN',
-
-    ar: 'ar-SA',
-
-    tr: 'tr-TR',
-
-    ko: 'ko-KR',
-
-    de: 'de-DE',
-
-    fr: 'fr-FR',
-
-    es: 'es-ES'
-
-  }[state.lang] || 'en-US';
+  ensureAIWelcome();
 
 
-  speechSynthesis.speak(
-    utterance
+  setDockActive(
+    'ai'
   );
 }
 
 
+/* =========================================================
+   VOICE
+========================================================= */
+
 function setupVoice() {
 
-  const SR =
+  const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
 
-  if (!SR) return;
+  if (
+    !SpeechRecognition
+  ) {
+    return;
+  }
 
 
   const recognition =
-    new SR();
+    new SpeechRecognition();
 
 
   recognition.interimResults =
@@ -3232,14 +4881,9 @@ function setupVoice() {
 
       $('#voiceBtn')
         ?.classList
-        .add('listening');
-
-
-      if ($('#aiInput')) {
-
-        $('#aiInput').placeholder =
-          tr('listening');
-      }
+        .add(
+          'listening'
+        );
     };
 
 
@@ -3248,35 +4892,32 @@ function setupVoice() {
 
       $('#voiceBtn')
         ?.classList
-        .remove('listening');
-
-
-      if ($('#aiInput')) {
-
-        $('#aiInput').placeholder =
-          tr('askPlaceholder');
-      }
+        .remove(
+          'listening'
+        );
     };
-
-
-  recognition.onerror =
-    () =>
-      recognition.onend();
 
 
   recognition.onresult =
     (event) => {
 
-      const question =
+      const text =
         event.results[0][0]
           .transcript;
 
 
-      $('#aiInput').value =
-        question;
+      if (
+        $('#aiInput')
+      ) {
+
+        $('#aiInput').value =
+          text;
+      }
 
 
-      askAI(question);
+      askAI(
+        text
+      );
     };
 
 
@@ -3292,36 +4933,16 @@ function startVoice() {
   ) {
 
     toast(
-      tr('voiceUnsupported')
+      'Ovozli qidiruv',
+      'Brauzer qo‘llab-quvvatlamaydi'
     );
 
     return;
   }
 
 
-  state.voiceRecognition.lang = {
-
-    uz: 'uz-UZ',
-
-    en: 'en-US',
-
-    ru: 'ru-RU',
-
-    zh: 'zh-CN',
-
-    ar: 'ar-SA',
-
-    tr: 'tr-TR',
-
-    ko: 'ko-KR',
-
-    de: 'de-DE',
-
-    fr: 'fr-FR',
-
-    es: 'es-ES'
-
-  }[state.lang] || 'en-US';
+  state.voiceRecognition.lang =
+    localeCode();
 
 
   state.voiceRecognition.start();
@@ -3329,17 +4950,20 @@ function startVoice() {
 
 
 /* =========================================================
-   INVESTOR
+   INVESTOR MODE
 ========================================================= */
 
 function openInvestorMode() {
 
-  openPanel('invest');
-
-
-  state.activeCategories.add(
-    'business'
+  openPanel(
+    'invest'
   );
+
+
+  state.activeCategories
+    .add(
+      'business'
+    );
 
 
   renderCategories();
@@ -3348,19 +4972,13 @@ function openInvestorMode() {
 
 
   if (
-    state.map &&
-    !document.documentElement.classList.contains(
-      'reduce-motion'
-    )
+    state.map
   ) {
 
     state.map.easeTo({
-
-      pitch: 48,
-
-      bearing: -7,
-
-      duration: 900
+      pitch: 38,
+      bearing: -6,
+      duration: 850
     });
   }
 }
@@ -3368,20 +4986,50 @@ function openInvestorMode() {
 
 function closeInvestorMode() {
 
-  openPanel('explore');
+  $('#investorPanel')
+    ?.classList
+    .add(
+      'hidden'
+    );
 
 
-  if (state.map) {
+  openFilterPanel();
+
+
+  if (
+    state.map
+  ) {
 
     state.map.easeTo({
-
-      pitch: 15,
-
+      pitch: 10,
       bearing: 0,
-
-      duration: 600
+      duration: 650
     });
   }
+}
+
+
+/* =========================================================
+   SHEETS
+========================================================= */
+
+function openSheet(id) {
+
+  $('#' + id)
+    ?.classList
+    .remove(
+      'hidden'
+    );
+}
+
+
+function closeSheet(id) {
+
+  $('#' + id)
+    ?.classList
+    .add(
+      'hidden'
+    );
 }
 
 
@@ -3392,150 +5040,105 @@ function closeInvestorMode() {
 const scenes = () => [
 
   {
-
     eyebrow:
       'DIGITAL DISTRICT',
-
     title:
-      tr('presentationTitle'),
-
+      'Uchko‘prik tumani',
     text:
-      tr('presentationIntro'),
-
+      'Raqamli hudud, xarita va tasdiqlangan ma’lumotlar.',
     center:
       [71.045, 40.54],
-
     zoom:
       9.7,
-
     pitch:
-      25,
-
+      20,
     bearing:
       0
   },
 
-
   {
-
     eyebrow:
-      tr('mahallas'),
-
+      '51 MFY',
     title:
-      tr('presentationMahallas'),
-
+      'Mahallalar',
     text:
-      tr('presentationMahallasText'),
-
+      '51 ta mahalla yagona interaktiv xaritada.',
     center:
       [71.045, 40.54],
-
     zoom:
       10.4,
-
     pitch:
-      42,
-
+      38,
     bearing:
-      -8
+      -7
   },
 
-
   {
-
     eyebrow:
-      tr('officialData'),
-
+      'AHOLI',
     title:
-      tr('presentationPopulation'),
-
+      fmt(
+        state.data.district.population
+      ),
     text:
-      tr('presentationPopulationText'),
-
+      'Tasdiqlangan tuman statistikasi.',
     center:
       [71.03, 40.54],
-
     zoom:
-      10.8,
-
+      10.7,
     pitch:
-      50,
-
+      44,
     bearing:
-      9
+      8
   },
 
-
   {
-
     eyebrow:
-      tr('investorMode'),
-
+      'IQTISODIYOT',
     title:
-      tr('presentationEconomy'),
-
+      'Investor Mode',
     text:
-      tr('presentationEconomyText'),
-
+      'Sanoat, qishloq xo‘jaligi va xizmatlar.',
     center:
       [71.07, 40.53],
-
-    zoom:
-      11.2,
-
-    pitch:
-      55,
-
-    bearing:
-      -12
-  },
-
-
-  {
-
-    eyebrow:
-      tr('madeIn'),
-
-    title:
-      tr('presentationProducts'),
-
-    text:
-      tr('presentationProductsText'),
-
-    center:
-      [71.01, 40.50],
-
     zoom:
       11,
-
     pitch:
-      48,
-
+      50,
     bearing:
-      13
+      -10
   },
 
+  {
+    eyebrow:
+      'MADE IN UCHKO‘PRIK',
+    title:
+      'Mahalliy mahsulotlar',
+    text:
+      'Mahalliy ishlab chiqaruvchilar va mahsulotlar.',
+    center:
+      [71.01, 40.50],
+    zoom:
+      10.8,
+    pitch:
+      42,
+    bearing:
+      10
+  },
 
   {
-
     eyebrow:
       'AI · MAP · DATA',
-
     title:
-      tr('presentationFuture'),
-
+      'Digital District',
     text:
-      tr('presentationFutureText'),
-
+      'Raqamli boshqaruv va zamonaviy hududiy ma’lumotlar.',
     center:
       [71.045, 40.54],
-
     zoom:
-      9.9,
-
+      9.8,
     pitch:
-      58,
-
+      50,
     bearing:
       0
   }
@@ -3546,21 +5149,17 @@ function openPresentation() {
 
   $('#presentationOverlay')
     ?.classList
-    .remove('hidden');
+    .remove(
+      'hidden'
+    );
 
 
   state.presentation.index =
     0;
 
+
   state.presentation.playing =
     true;
-
-
-  $('#scenePlay').innerHTML = `
-    <span class="icon">
-      ${svg('pause')}
-    </span>
-  `;
 
 
   if (
@@ -3583,7 +5182,7 @@ function openPresentation() {
           9.7,
 
         pitch:
-          25,
+          20,
 
         interactive:
           false,
@@ -3604,7 +5203,9 @@ function closePresentation() {
 
   $('#presentationOverlay')
     ?.classList
-    .add('hidden');
+    .add(
+      'hidden'
+    );
 
 
   clearTimeout(
@@ -3625,30 +5226,43 @@ function renderScene() {
     ];
 
 
-  $('#sceneEyebrow').textContent =
-    scene.eyebrow;
+  setText(
+    '#sceneEyebrow',
+    scene.eyebrow
+  );
+
+  setText(
+    '#sceneTitle',
+    scene.title
+  );
+
+  setText(
+    '#sceneText',
+    scene.text
+  );
+
+  setText(
+    '#sceneCounter',
+    `${state.presentation.index + 1} / ${all.length}`
+  );
 
 
-  $('#sceneTitle').textContent =
-    scene.title;
+  $('#scenePlay')
+    .innerHTML = `
+
+      <span class="icon">
+        ${svg(
+          state.presentation.playing
+            ? 'pause'
+            : 'play'
+        )}
+      </span>
+
+    `;
 
 
-  $('#sceneText').textContent =
-    scene.text;
-
-
-  $('#sceneCounter').textContent =
-    `${
-      state.presentation.index +
-      1
-    } / ${all.length}`;
-
-
-  if (
-    state.presentation.map
-  ) {
-
-    state.presentation.map.flyTo({
+  state.presentation.map
+    ?.flyTo({
 
       center:
         scene.center,
@@ -3663,16 +5277,14 @@ function renderScene() {
         scene.bearing,
 
       duration:
-        document.documentElement.classList.contains(
-          'reduce-motion'
-        )
+        document.documentElement
+          .classList
+          .contains(
+            'reduce-motion'
+          )
           ? 0
-          : 1800,
-
-      essential:
-        true
+          : 1700
     });
-  }
 }
 
 
@@ -3684,29 +5296,31 @@ function scheduleScene() {
 
 
   if (
-    state.presentation.playing
+    !state.presentation.playing
   ) {
-
-    state.presentation.timer =
-      setTimeout(
-        () => {
-
-          state.presentation.index =
-            (
-              state.presentation.index +
-              1
-            ) %
-            scenes().length;
-
-
-          renderScene();
-
-          scheduleScene();
-
-        },
-        6500
-      );
+    return;
   }
+
+
+  state.presentation.timer =
+    setTimeout(
+      () => {
+
+        state.presentation.index =
+          (
+            state.presentation.index +
+            1
+          ) %
+          scenes().length;
+
+
+        renderScene();
+
+        scheduleScene();
+
+      },
+      6500
+    );
 }
 
 
@@ -3737,16 +5351,7 @@ function togglePresentationPlay() {
     !state.presentation.playing;
 
 
-  $('#scenePlay').innerHTML = `
-    <span class="icon">
-      ${svg(
-        state.presentation.playing
-          ? 'pause'
-          : 'play'
-      )}
-    </span>
-  `;
-
+  renderScene();
 
   scheduleScene();
 }
@@ -3782,54 +5387,75 @@ function loadPrefs() {
       : 'dark';
 
 
-  document.documentElement.classList.toggle(
-    'reduce-motion',
-    !!prefs.reduceMotion
-  );
+  document.documentElement
+    .classList
+    .toggle(
+      'reduce-motion',
+      !!prefs.reduceMotion
+    );
 
 
-  document.documentElement.classList.toggle(
-    'reduce-transparency',
-    !!prefs.reduceTransparency
-  );
+  document.documentElement
+    .classList
+    .toggle(
+      'reduce-transparency',
+      !!prefs.reduceTransparency
+    );
 
 
-  document.documentElement.classList.toggle(
-    'high-contrast',
-    !!prefs.highContrast
-  );
+  document.documentElement
+    .classList
+    .toggle(
+      'high-contrast',
+      !!prefs.highContrast
+    );
 
 
-  document.documentElement.style.setProperty(
-    '--font-scale',
-    prefs.fontScale || 1
-  );
+  document.documentElement
+    .style
+    .setProperty(
+      '--font-scale',
+      prefs.fontScale ||
+      1
+    );
 
 
-  if ($('#lightModeToggle')) {
+  if (
+    $('#lightModeToggle')
+  ) {
 
-    $('#lightModeToggle').checked =
+    $('#lightModeToggle')
+      .checked =
       !!prefs.light;
   }
 
 
-  if ($('#reduceMotionToggle')) {
+  if (
+    $('#reduceMotionToggle')
+  ) {
 
-    $('#reduceMotionToggle').checked =
+    $('#reduceMotionToggle')
+      .checked =
       !!prefs.reduceMotion;
   }
 
 
-  if ($('#reduceTransparencyToggle')) {
+  if (
+    $('#reduceTransparencyToggle')
+  ) {
 
-    $('#reduceTransparencyToggle').checked =
+    $('#reduceTransparencyToggle')
+      .checked =
       !!prefs.reduceTransparency;
   }
 
 
-  if ($('#highContrastToggle')) {
+  if (
+    $('#highContrastToggle')
+  ) {
 
-    $('#highContrastToggle').checked =
+    $('#highContrastToggle')
+      .checked =
       !!prefs.highContrast;
   }
 }
@@ -3840,24 +5466,20 @@ function savePrefs() {
   const prefs = {
 
     light:
-      $('#lightModeToggle')
-        ?.checked ||
-      false,
+      !!$('#lightModeToggle')
+        ?.checked,
 
     reduceMotion:
-      $('#reduceMotionToggle')
-        ?.checked ||
-      false,
+      !!$('#reduceMotionToggle')
+        ?.checked,
 
     reduceTransparency:
-      $('#reduceTransparencyToggle')
-        ?.checked ||
-      false,
+      !!$('#reduceTransparencyToggle')
+        ?.checked,
 
     highContrast:
-      $('#highContrastToggle')
-        ?.checked ||
-      false,
+      !!$('#highContrastToggle')
+        ?.checked,
 
     fontScale:
       Number(
@@ -3866,48 +5488,55 @@ function savePrefs() {
         ).getPropertyValue(
           '--font-scale'
         )
-      ) || 1
+      ) ||
+      1
   };
 
 
   localStorage.setItem(
     'uchkoprik-prefs',
-    JSON.stringify(prefs)
+    JSON.stringify(
+      prefs
+    )
   );
 
 
   loadPrefs();
+
+  updateIdleSphereTheme();
 }
 
 
 function setFont(key) {
 
   const scale = {
-
-    small: 0.92,
-
-    normal: 1,
-
-    large: 1.12
-
+    small:
+      .92,
+    normal:
+      1,
+    large:
+      1.12
   }[key] || 1;
 
 
-  document.documentElement.style.setProperty(
-    '--font-scale',
-    scale
-  );
+  document.documentElement
+    .style
+    .setProperty(
+      '--font-scale',
+      scale
+    );
 
 
   $$('[data-font]')
     .forEach(
-      (item) => {
+      (button) => {
 
-        item.classList.toggle(
-          'active',
-          item.dataset.font ===
-            key
-        );
+        button.classList
+          .toggle(
+            'active',
+            button.dataset.font ===
+              key
+          );
       }
     );
 
@@ -3917,85 +5546,981 @@ function setFont(key) {
 
 
 /* =========================================================
+   IDLE PARTICLE EARTH
+========================================================= */
+
+async function initIdleSphere() {
+
+  if (
+    state.idle.initialized
+  ) {
+    return;
+  }
+
+
+  const container =
+    $('#idleSphereCanvas');
+
+
+  if (!container) {
+    return;
+  }
+
+
+  try {
+
+    const THREE =
+      await import(
+        'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js'
+      );
+
+
+    state.idle.three =
+      THREE;
+
+
+    const scene =
+      new THREE.Scene();
+
+
+    const camera =
+      new THREE.PerspectiveCamera(
+        48,
+        1,
+        .1,
+        100
+      );
+
+
+    camera.position.z =
+      3.25;
+
+
+    const renderer =
+      new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true
+      });
+
+
+    renderer.setPixelRatio(
+      Math.min(
+        window.devicePixelRatio,
+        2
+      )
+    );
+
+
+    renderer.setClearColor(
+      0x000000,
+      0
+    );
+
+
+    container.innerHTML =
+      '';
+
+
+    container.appendChild(
+      renderer.domElement
+    );
+
+
+    const group =
+      new THREE.Group();
+
+
+    scene.add(
+      group
+    );
+
+
+    const count =
+      window.innerWidth <
+        760
+        ? 5000
+        : 8500;
+
+
+    const positions =
+      new Float32Array(
+        count * 3
+      );
+
+
+    const goldenAngle =
+      Math.PI *
+      (
+        3 -
+        Math.sqrt(5)
+      );
+
+
+    for (
+      let index = 0;
+      index < count;
+      index++
+    ) {
+
+      const y =
+        1 -
+        (
+          index /
+          (
+            count -
+            1
+          )
+        ) *
+        2;
+
+
+      const radius =
+        Math.sqrt(
+          Math.max(
+            0,
+            1 -
+            y * y
+          )
+        );
+
+
+      const theta =
+        goldenAngle *
+        index;
+
+
+      const x =
+        Math.cos(theta) *
+        radius;
+
+
+      const z =
+        Math.sin(theta) *
+        radius;
+
+
+      positions[
+        index * 3
+      ] =
+        x;
+
+
+      positions[
+        index * 3 + 1
+      ] =
+        y;
+
+
+      positions[
+        index * 3 + 2
+      ] =
+        z;
+    }
+
+
+    const geometry =
+      new THREE.BufferGeometry();
+
+
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(
+        positions,
+        3
+      )
+    );
+
+
+    const lightTheme =
+      document.documentElement
+        .dataset.theme ===
+      'light';
+
+
+    const material =
+      new THREE.PointsMaterial({
+
+        size:
+          window.innerWidth <
+            760
+            ? .013
+            : .0105,
+
+        color:
+          lightTheme
+            ? 0x0b202c
+            : 0xffffff,
+
+        transparent:
+          true,
+
+        opacity:
+          .92,
+
+        depthWrite:
+          false,
+
+        blending:
+          THREE.AdditiveBlending
+      });
+
+
+    const points =
+      new THREE.Points(
+        geometry,
+        material
+      );
+
+
+    group.add(
+      points
+    );
+
+
+    /*
+      Yumshoq ichki ikkinchi sfera.
+    */
+
+    const secondary =
+      new THREE.Points(
+        geometry.clone(),
+        material.clone()
+      );
+
+
+    secondary.scale
+      .setScalar(
+        .985
+      );
+
+
+    secondary.material.opacity =
+      .17;
+
+
+    secondary.material.size =
+      material.size *
+      .64;
+
+
+    group.add(
+      secondary
+    );
+
+
+    state.idle.scene =
+      scene;
+
+    state.idle.camera =
+      camera;
+
+    state.idle.renderer =
+      renderer;
+
+    state.idle.group =
+      group;
+
+    state.idle.points =
+      points;
+
+
+    function resize() {
+
+      const width =
+        Math.max(
+          1,
+          container.clientWidth
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          container.clientHeight
+        );
+
+
+      renderer.setSize(
+        width,
+        height,
+        false
+      );
+
+
+      camera.aspect =
+        width /
+        height;
+
+
+      camera.updateProjectionMatrix();
+    }
+
+
+    const resizeObserver =
+      new ResizeObserver(
+        resize
+      );
+
+
+    resizeObserver.observe(
+      container
+    );
+
+
+    resize();
+
+
+    /*
+      Drag xuddi yuborilgan
+      Originkit g‘oyasi kabi.
+    */
+
+    renderer.domElement
+      .addEventListener(
+        'pointerdown',
+        (event) => {
+
+          state.idle.dragging =
+            true;
+
+          state.idle.lastX =
+            event.clientX;
+
+          state.idle.lastY =
+            event.clientY;
+
+
+          renderer.domElement
+            .setPointerCapture?.(
+              event.pointerId
+            );
+        }
+      );
+
+
+    renderer.domElement
+      .addEventListener(
+        'pointermove',
+        (event) => {
+
+          const rect =
+            renderer.domElement
+              .getBoundingClientRect();
+
+
+          state.idle.pointer.x =
+            (
+              (
+                event.clientX -
+                rect.left
+              ) /
+              rect.width
+            ) *
+            2 -
+            1;
+
+
+          state.idle.pointer.y =
+            -(
+              (
+                event.clientY -
+                rect.top
+              ) /
+              rect.height
+            ) *
+            2 +
+            1;
+
+
+          if (
+            !state.idle.dragging
+          ) {
+            return;
+          }
+
+
+          const dx =
+            event.clientX -
+            state.idle.lastX;
+
+
+          const dy =
+            event.clientY -
+            state.idle.lastY;
+
+
+          state.idle.targetRotation.y +=
+            dx *
+            .005;
+
+
+          state.idle.targetRotation.x +=
+            dy *
+            .004;
+
+
+          state.idle.targetRotation.x =
+            Math.max(
+              -.8,
+              Math.min(
+                .8,
+                state.idle
+                  .targetRotation
+                  .x
+              )
+            );
+
+
+          state.idle.lastX =
+            event.clientX;
+
+          state.idle.lastY =
+            event.clientY;
+        }
+      );
+
+
+    window.addEventListener(
+      'pointerup',
+      () => {
+
+        state.idle.dragging =
+          false;
+      }
+    );
+
+
+    state.idle.initialized =
+      true;
+
+
+    function animate() {
+
+      state.idle.animationFrame =
+        requestAnimationFrame(
+          animate
+        );
+
+
+      if (
+        !state.idle.active
+      ) {
+        return;
+      }
+
+
+      if (
+        !state.idle.dragging
+      ) {
+
+        state.idle.targetRotation.y +=
+          .0015;
+      }
+
+
+      /*
+        Cursor maydoniga qarab
+        sfera ozgina egiladi.
+        Bu Originkit cursor
+        interaction hissini beradi.
+      */
+
+      state.idle.targetRotation.y +=
+        state.idle.pointer.x *
+        .00008;
+
+
+      state.idle.targetRotation.x +=
+        state.idle.pointer.y *
+        .000045;
+
+
+      state.idle.rotation.x +=
+        (
+          state.idle.targetRotation.x -
+          state.idle.rotation.x
+        ) *
+        .055;
+
+
+      state.idle.rotation.y +=
+        (
+          state.idle.targetRotation.y -
+          state.idle.rotation.y
+        ) *
+        .055;
+
+
+      group.rotation.x =
+        state.idle.rotation.x;
+
+
+      group.rotation.y =
+        state.idle.rotation.y;
+
+
+      /*
+        Nafas olayotgandek
+        juda kichik scale.
+      */
+
+      const pulse =
+        1 +
+        Math.sin(
+          performance.now() *
+          .00065
+        ) *
+        .008;
+
+
+      group.scale
+        .setScalar(
+          pulse
+        );
+
+
+      renderer.render(
+        scene,
+        camera
+      );
+    }
+
+
+    animate();
+
+  } catch (error) {
+
+    console.warn(
+      'Idle sphere:',
+      error
+    );
+  }
+}
+
+
+function updateIdleSphereTheme() {
+
+  if (
+    !state.idle.points
+  ) {
+    return;
+  }
+
+
+  const light =
+    document.documentElement
+      .dataset.theme ===
+    'light';
+
+
+  state.idle.points
+    .material
+    .color
+    .setHex(
+      light
+        ? 0x0b202c
+        : 0xffffff
+    );
+}
+
+
+function resetIdleTimer() {
+
+  clearTimeout(
+    state.idle.timer
+  );
+
+
+  if (
+    state.idle.active
+  ) {
+
+    exitIdleMode();
+  }
+
+
+  state.idle.timer =
+    setTimeout(
+      () => {
+
+        enterIdleMode();
+
+      },
+      state.idle.timeout
+    );
+}
+
+
+async function enterIdleMode() {
+
+  if (
+    state.idle.active
+  ) {
+    return;
+  }
+
+
+  if (
+    !state.idle.initialized
+  ) {
+
+    await initIdleSphere();
+  }
+
+
+  if (
+    !state.idle.initialized
+  ) {
+    return;
+  }
+
+
+  closeDetail(
+    false
+  );
+
+
+  closeMajorPanels();
+
+
+  if (
+    document.body
+      .classList
+      .contains(
+        'passport-mode'
+      )
+  ) {
+
+    closePassportMode(
+      false
+    );
+  }
+
+
+  state.idle.active =
+    true;
+
+
+  document.body
+    .classList
+    .add(
+      'idle-mode'
+    );
+
+
+  $('#idleSphereOverlay')
+    ?.setAttribute(
+      'aria-hidden',
+      'false'
+    );
+}
+
+
+function exitIdleMode() {
+
+  if (
+    !state.idle.active
+  ) {
+    return;
+  }
+
+
+  state.idle.active =
+    false;
+
+
+  document.body
+    .classList
+    .remove(
+      'idle-mode'
+    );
+
+
+  $('#idleSphereOverlay')
+    ?.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+
+  /*
+    Sphere → xarita qaytish
+    CSS zoom transition orqali.
+  */
+
+  setTimeout(
+    () => {
+
+      state.map
+        ?.resize();
+
+    },
+    650
+  );
+}
+
+
+function setupIdleDetection() {
+
+  const events = [
+    'pointerdown',
+    'pointermove',
+    'keydown',
+    'wheel',
+    'touchstart'
+  ];
+
+
+  let lastReset =
+    0;
+
+
+  events.forEach(
+    (eventName) => {
+
+      window.addEventListener(
+        eventName,
+        () => {
+
+          const now =
+            Date.now();
+
+
+          /*
+            pointermove har millisekund
+            timer yaratib yubormasin.
+          */
+
+          if (
+            eventName ===
+              'pointermove' &&
+            now -
+              lastReset <
+              500
+          ) {
+            return;
+          }
+
+
+          lastReset =
+            now;
+
+
+          resetIdleTimer();
+
+        },
+        {
+          passive: true
+        }
+      );
+    }
+  );
+
+
+  resetIdleTimer();
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function toast(
+  title,
+  body = ''
+) {
+
+  const host =
+    $('#toastHost');
+
+
+  if (!host) {
+    return;
+  }
+
+
+  const element =
+    document.createElement(
+      'div'
+    );
+
+
+  element.className =
+    'toast';
+
+
+  element.innerHTML = `
+
+    <strong>
+      ${esc(title)}
+    </strong>
+
+    ${
+      body
+        ? `
+          <small>
+            ${esc(body)}
+          </small>
+        `
+        : ''
+    }
+
+  `;
+
+
+  host.appendChild(
+    element
+  );
+
+
+  setTimeout(
+    () => {
+
+      element.remove();
+
+    },
+    3200
+  );
+}
+
+
+/* =========================================================
+   TEXT RENDER
+========================================================= */
+
+function renderAllTextual() {
+
+  renderCategories();
+
+  renderSpecializationFilters();
+
+  renderOrganizationFilters();
+
+  renderProducts();
+
+  renderDistrictMetrics();
+
+  renderAISuggestions();
+}
+
+
+/* =========================================================
    EVENTS
 ========================================================= */
 
 function setupEvents() {
 
-  $('#languageBtn')
+  /* FILTER */
+
+  $('#exploreClose')
     ?.addEventListener(
       'click',
-      () =>
-        openSheet(
-          'languageSheet'
-        )
+      closeFilterPanel
     );
 
 
-  $('#accessibilityBtn')
+  $('#filterToggle')
     ?.addEventListener(
       'click',
-      () =>
-        openSheet(
-          'accessibilitySheet'
-        )
+      openFilterPanel
     );
 
 
-  $$('[data-sheet-close]')
-    .forEach(
-      (item) => {
+  $('#fitDistrict')
+    ?.addEventListener(
+      'click',
+      () => {
 
-        item.addEventListener(
-          'click',
-          () =>
-            closeSheet(
-              item.dataset.sheetClose
-            )
-        );
+        state.selectedSpecialization =
+          null;
+
+        state.selectedOrganizationType =
+          null;
+
+        renderSpecializationFilters();
+
+        renderOrganizationFilters();
+
+        applyMarkerFilters();
+
+        fitDistrict();
       }
     );
 
 
-  $$('.sheet-backdrop')
-    .forEach(
-      (item) => {
+  $('#specializationReset')
+    ?.addEventListener(
+      'click',
+      () => {
 
-        item.addEventListener(
-          'click',
-          (event) => {
+        state.selectedSpecialization =
+          null;
 
-            if (
-              event.target === item
-            ) {
+        renderSpecializationFilters();
 
-              item.classList.add(
-                'hidden'
-              );
-            }
-          }
-        );
+        applyMarkerFilters();
       }
     );
 
+
+  $('#organizationFilterReset')
+    ?.addEventListener(
+      'click',
+      () => {
+
+        state.selectedOrganizationType =
+          null;
+
+        renderOrganizationFilters();
+
+        applyMarkerFilters();
+      }
+    );
+
+
+  /* PASSPORT */
+
+  $('#districtPassportBtn')
+    ?.addEventListener(
+      'click',
+      openPassportMode
+    );
+
+
+  $('#districtClose')
+    ?.addEventListener(
+      'click',
+      () => {
+
+        closePassportMode();
+      }
+    );
+
+
+  /* SEARCH */
 
   $('#searchOpen')
     ?.addEventListener(
       'click',
       () => {
 
+        closeMajorPanels();
+
         $('#searchDialog')
           ?.classList
-          .remove('hidden');
-
+          .remove(
+            'hidden'
+          );
 
         renderSearchResults();
 
-
         setTimeout(
-          () =>
+          () => {
+
             $('#globalSearch')
-              ?.focus(),
+              ?.focus();
+
+          },
           50
         );
       }
@@ -4005,60 +6530,112 @@ function setupEvents() {
   $('#searchClose')
     ?.addEventListener(
       'click',
-      () =>
+      () => {
+
         $('#searchDialog')
           ?.classList
-          .add('hidden')
+          .add(
+            'hidden'
+          );
+      }
     );
 
 
   $('#globalSearch')
     ?.addEventListener(
       'input',
-      (event) =>
+      (event) => {
+
         renderSearchResults(
           event.target.value
-        )
+        );
+      }
     );
 
 
-  $('#fitDistrict')
-    ?.addEventListener(
-      'click',
-      () =>
-        fitDistrict()
-    );
+  /* DOCK */
 
-
-  $('#exploreClose')
-    ?.addEventListener(
-      'click',
-      () =>
-        $('#explorePanel')
-          ?.classList
-          .add('hidden')
-    );
-
-
-  $$('.highlight-card')
+  $$('.dock-item')
     .forEach(
-      (item) => {
+      (button) => {
 
-        item.addEventListener(
+        button.addEventListener(
           'click',
           () => {
 
+            const nav =
+              button.dataset.nav;
+
+
             if (
-              item.dataset.mode ===
+              nav ===
+              'explore'
+            ) {
+
+              openFilterPanel();
+
+              return;
+            }
+
+
+            if (
+              nav ===
+              'map'
+            ) {
+
+              closeMajorPanels();
+
+              closeDetail();
+
+              if (
+                document.body
+                  .classList
+                  .contains(
+                    'passport-mode'
+                  )
+              ) {
+
+                closePassportMode();
+              }
+
+
+              closeFilterPanel();
+
+              fitDistrict();
+
+              return;
+            }
+
+
+            if (
+              nav ===
+              'ai'
+            ) {
+
+              openAI();
+
+              return;
+            }
+
+
+            if (
+              nav ===
               'invest'
             ) {
 
               openInvestorMode();
 
-            } else {
+              return;
+            }
+
+
+            if (
+              nav ===
+              'products'
+            ) {
 
               openPanel(
-                item.dataset.mode
+                'products'
               );
             }
           }
@@ -4067,53 +6644,7 @@ function setupEvents() {
     );
 
 
-  $$('.dock-item')
-    .forEach(
-      (item) => {
-
-        item.addEventListener(
-          'click',
-          () => {
-
-            const nav =
-              item.dataset.nav;
-
-
-            if (nav === 'ai') {
-
-              openAI();
-
-            } else if (
-              nav === 'invest'
-            ) {
-
-              openInvestorMode();
-
-            } else if (
-              nav === 'map'
-            ) {
-
-              openPanel(
-                'explore'
-              );
-
-
-              $('#explorePanel')
-                ?.classList
-                .add('hidden');
-
-
-              fitDistrict();
-
-            } else {
-
-              openPanel(nav);
-            }
-          }
-        );
-      }
-    );
-
+  /* INVESTOR */
 
   $('#investorClose')
     ?.addEventListener(
@@ -4122,41 +6653,21 @@ function setupEvents() {
     );
 
 
-  $('#productsClose')
-    ?.addEventListener(
-      'click',
-      () =>
-        openPanel(
-          'explore'
-        )
-    );
-
-
-  $('#districtClose')
-    ?.addEventListener(
-      'click',
-      () =>
-        openPanel(
-          'explore'
-        )
-    );
-
-
   $('#showBusinesses')
     ?.addEventListener(
       'click',
       () => {
 
-        state.activeCategories.add(
-          'business'
-        );
-
+        state.activeCategories
+          .add(
+            'business'
+          );
 
         renderCategories();
 
         renderMarkers();
 
-        fitDistrict();
+        closeInvestorMode();
       }
     );
 
@@ -4164,19 +6675,60 @@ function setupEvents() {
   $('#askInvestment')
     ?.addEventListener(
       'click',
-      () =>
+      () => {
+
         askAI(
-          state.lang === 'uz'
-            ? 'Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'
-            : 'Give me an investor overview of Uchko‘prik'
-        )
+          'Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'
+        );
+      }
     );
 
+
+  /* PRODUCTS */
+
+  $('#productsClose')
+    ?.addEventListener(
+      'click',
+      openFilterPanel
+    );
+
+
+  /* DETAIL */
 
   $('#detailClose')
     ?.addEventListener(
       'click',
-      closeDetail
+      () => {
+
+        closeDetail();
+      }
+    );
+
+
+  $('#detailDirections')
+    ?.addEventListener(
+      'click',
+      () => {
+
+        const item =
+          state.selected?.item;
+
+
+        if (
+          validCoordinates(
+            item
+          )
+        ) {
+
+          window.open(
+            `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+              `${item.lat},${item.lng}`
+            )}`,
+            '_blank',
+            'noopener'
+          );
+        }
+      }
     );
 
 
@@ -4197,36 +6749,6 @@ function setupEvents() {
     );
 
 
-  $('#detailDirections')
-    ?.addEventListener(
-      'click',
-      () => {
-
-        const item =
-          state.selected?.item;
-
-
-        if (
-          Number.isFinite(
-            Number(item?.lat)
-          ) &&
-          Number.isFinite(
-            Number(item?.lng)
-          )
-        ) {
-
-          window.open(
-            `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-              `${item.lat},${item.lng}`
-            )}`,
-            '_blank',
-            'noopener'
-          );
-        }
-      }
-    );
-
-
   $('#detailShare')
     ?.addEventListener(
       'click',
@@ -4234,10 +6756,6 @@ function setupEvents() {
 
         const item =
           state.selected?.item;
-
-
-        const url =
-          location.href;
 
 
         try {
@@ -4248,19 +6766,22 @@ function setupEvents() {
 
             await navigator.share({
               title:
-                item?.name,
-              url
+                item?.name ||
+                'Uchko‘prik',
+              url:
+                location.href
             });
 
           } else {
 
-            await navigator.clipboard.writeText(
-              url
-            );
-
+            await navigator
+              .clipboard
+              .writeText(
+                location.href
+              );
 
             toast(
-              tr('copied')
+              'Havola nusxalandi'
             );
           }
 
@@ -4271,20 +6792,26 @@ function setupEvents() {
     );
 
 
-  $('#aiOrb')
-    ?.addEventListener(
-      'click',
-      openAI
-    );
-
+  /* AI */
 
   $('#aiClose')
     ?.addEventListener(
       'click',
-      () =>
+      () => {
+
         $('#aiPanel')
           ?.classList
-          .add('hidden')
+          .add(
+            'hidden'
+          );
+
+        setDockActive(
+          state.activePanel ===
+            'explore'
+            ? 'explore'
+            : 'map'
+        );
+      }
     );
 
 
@@ -4295,9 +6822,9 @@ function setupEvents() {
 
         event.preventDefault();
 
-
         askAI(
-          $('#aiInput').value
+          $('#aiInput')
+            ?.value
         );
       }
     );
@@ -4310,40 +6837,73 @@ function setupEvents() {
     );
 
 
-  $('#presentationBtn')
+  /* LANGUAGE */
+
+  $('#languageBtn')
     ?.addEventListener(
       'click',
-      openPresentation
+      () => {
+
+        openSheet(
+          'languageSheet'
+        );
+      }
     );
 
 
-  $('#presentationExit')
+  /* ACCESSIBILITY */
+
+  $('#accessibilityBtn')
     ?.addEventListener(
       'click',
-      closePresentation
+      () => {
+
+        openSheet(
+          'accessibilitySheet'
+        );
+      }
     );
 
 
-  $('#scenePrev')
-    ?.addEventListener(
-      'click',
-      () =>
-        sceneStep(-1)
+  $$('[data-sheet-close]')
+    .forEach(
+      (button) => {
+
+        button.addEventListener(
+          'click',
+          () => {
+
+            closeSheet(
+              button.dataset
+                .sheetClose
+            );
+          }
+        );
+      }
     );
 
 
-  $('#sceneNext')
-    ?.addEventListener(
-      'click',
-      () =>
-        sceneStep(1)
-    );
+  $$('.sheet-backdrop')
+    .forEach(
+      (sheet) => {
 
+        sheet.addEventListener(
+          'click',
+          (event) => {
 
-  $('#scenePlay')
-    ?.addEventListener(
-      'click',
-      togglePresentationPlay
+            if (
+              event.target ===
+              sheet
+            ) {
+
+              sheet.classList
+                .add(
+                  'hidden'
+                );
+            }
+          }
+        );
+      }
     );
 
 
@@ -4366,18 +6926,69 @@ function setupEvents() {
 
   $$('[data-font]')
     .forEach(
-      (item) => {
+      (button) => {
 
-        item.addEventListener(
+        button.addEventListener(
           'click',
-          () =>
+          () => {
+
             setFont(
-              item.dataset.font
-            )
+              button.dataset.font
+            );
+          }
         );
       }
     );
 
+
+  /* PRESENTATION */
+
+  $('#presentationBtn')
+    ?.addEventListener(
+      'click',
+      openPresentation
+    );
+
+
+  $('#presentationExit')
+    ?.addEventListener(
+      'click',
+      closePresentation
+    );
+
+
+  $('#scenePrev')
+    ?.addEventListener(
+      'click',
+      () => {
+
+        sceneStep(
+          -1
+        );
+      }
+    );
+
+
+  $('#sceneNext')
+    ?.addEventListener(
+      'click',
+      () => {
+
+        sceneStep(
+          1
+        );
+      }
+    );
+
+
+  $('#scenePlay')
+    ?.addEventListener(
+      'click',
+      togglePresentationPlay
+    );
+
+
+  /* GLOBAL KEYBOARD */
 
   document.addEventListener(
     'keydown',
@@ -4388,7 +6999,8 @@ function setupEvents() {
           event.metaKey ||
           event.ctrlKey
         ) &&
-        event.key.toLowerCase() ===
+        event.key
+          .toLowerCase() ===
           'k'
       ) {
 
@@ -4406,21 +7018,48 @@ function setupEvents() {
 
         $('#searchDialog')
           ?.classList
-          .add('hidden');
+          .add(
+            'hidden'
+          );
 
 
         $('#aiPanel')
           ?.classList
-          .add('hidden');
+          .add(
+            'hidden'
+          );
 
 
-        closeDetail();
+        if (
+          state.selected
+        ) {
+
+          closeDetail();
+
+          return;
+        }
+
+
+        if (
+          document.body
+            .classList
+            .contains(
+              'passport-mode'
+            )
+        ) {
+
+          closePassportMode();
+
+          return;
+        }
 
 
         if (
           !$('#presentationOverlay')
             ?.classList
-            .contains('hidden')
+            .contains(
+              'hidden'
+            )
         ) {
 
           closePresentation();
@@ -4431,7 +7070,9 @@ function setupEvents() {
       if (
         !$('#presentationOverlay')
           ?.classList
-          .contains('hidden')
+          .contains(
+            'hidden'
+          )
       ) {
 
         if (
@@ -4439,7 +7080,9 @@ function setupEvents() {
           'ArrowRight'
         ) {
 
-          sceneStep(1);
+          sceneStep(
+            1
+          );
         }
 
 
@@ -4448,19 +7091,23 @@ function setupEvents() {
           'ArrowLeft'
         ) {
 
-          sceneStep(-1);
-        }
-
-
-        if (
-          event.key === ' '
-        ) {
-
-          event.preventDefault();
-
-          togglePresentationPlay();
+          sceneStep(
+            -1
+          );
         }
       }
+    }
+  );
+
+
+  window.addEventListener(
+    'resize',
+    () => {
+
+      scheduleConnectorUpdate();
+
+      state.map
+        ?.resize();
     }
   );
 }
@@ -4480,7 +7127,7 @@ async function boot() {
 
 
   console.log(
-    'Uchko‘prik Digital District ishga tushmoqda...'
+    'Uchko‘prik Digital District UX V2 ishga tushmoqda...'
   );
 
 
@@ -4499,25 +7146,32 @@ async function boot() {
 
   ensureAIWelcome();
 
+  setupIdleDetection();
+
 
   if (
-    'serviceWorker' in navigator
+    'serviceWorker'
+    in navigator
   ) {
 
     navigator.serviceWorker
-      .register('/sw.js')
+      .register(
+        '/sw.js'
+      )
       .catch(
-        (error) =>
+        (error) => {
+
           console.warn(
             'Service Worker:',
             error
-          )
+          );
+        }
       );
   }
 
 
   console.log(
-    'Uchko‘prik Digital District tayyor.'
+    'Uchko‘prik Digital District UX V2 tayyor.'
   );
 }
 
