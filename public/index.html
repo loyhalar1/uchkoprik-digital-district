@@ -1,34 +1,14 @@
-<!doctype html>
-<html lang="%%LANG%%" dir="%%DIR%%" data-theme="dark">
+<!DOCTYPE html>
+
+<html data-theme="dark" dir="%%DIR%%" lang="%%LANG%%">
 <head>
-  <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover"
-  >
-
-  <title>%%TITLE%%</title>
-
-  <meta
-    name="description"
-    content="%%DESCRIPTION%%"
-  >
-
-  <meta
-    name="robots"
-    content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
-  >
-
-  <meta
-    name="theme-color"
-    content="#071017"
-  >
-
-  <link
-    rel="canonical"
-    href="%%CANONICAL%%"
-  >
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>%%TITLE%%</title>
+<meta content="%%DESCRIPTION%%" name="description"/>
+<meta content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" name="robots"/>
+<meta content="#071017" name="theme-color"/>
+<link href="%%CANONICAL%%" rel="canonical"/>
 
   %%HREFLANG%%
 
@@ -36,780 +16,277 @@
   <!-- ======================================================
        OPEN GRAPH
   ======================================================= -->
-
-  <meta
-    property="og:type"
-    content="website"
-  >
-
-  <meta
-    property="og:title"
-    content="%%TITLE%%"
-  >
-
-  <meta
-    property="og:description"
-    content="%%DESCRIPTION%%"
-  >
-
-  <meta
-    property="og:url"
-    content="%%CANONICAL%%"
-  >
-
-  <meta
-    property="og:locale"
-    content="%%OG_LOCALE%%"
-  >
-
-  <meta
-    property="og:image"
-    content="%%OG_IMAGE%%"
-  >
-
-  <meta
-    property="og:image:width"
-    content="1200"
-  >
-
-  <meta
-    property="og:image:height"
-    content="630"
-  >
-
-  <meta
-    property="og:image:alt"
-    content="Uchko‘prik Digital District"
-  >
-
-
-  <!-- Twitter -->
-
-  <meta
-    name="twitter:card"
-    content="summary_large_image"
-  >
-
-  <meta
-    name="twitter:image"
-    content="%%OG_IMAGE%%"
-  >
-
-
-  <!-- Structured data -->
-
-  <script type="application/ld+json">
+<meta content="website" property="og:type"/>
+<meta content="%%TITLE%%" property="og:title"/>
+<meta content="%%DESCRIPTION%%" property="og:description"/>
+<meta content="%%CANONICAL%%" property="og:url"/>
+<meta content="%%OG_LOCALE%%" property="og:locale"/>
+<meta content="%%OG_IMAGE%%" property="og:image"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="Uchko‘prik Digital District" property="og:image:alt"/>
+<!-- Twitter -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="%%OG_IMAGE%%" name="twitter:image"/>
+<!-- Structured data -->
+<script type="application/ld+json">
     %%JSONLD%%
   </script>
-
-
-  <!-- ======================================================
+<!-- ======================================================
        ICONS / PWA
   ======================================================= -->
-
-  <link
-    rel="icon"
-    href="/logo.svg"
-    type="image/svg+xml"
-  >
-
-  <link
-    rel="apple-touch-icon"
-    href="/icon-192.png"
-  >
-
-  <link
-    rel="manifest"
-    href="/manifest.webmanifest"
-  >
-
-
-  <!-- ======================================================
+<link href="/logo.svg" rel="icon" type="image/svg+xml"/>
+<link href="/icon-192.png" rel="apple-touch-icon"/>
+<link href="/manifest.webmanifest" rel="manifest"/>
+<!-- ======================================================
        MAP
   ======================================================= -->
-
-  <link
-    rel="preconnect"
-    href="https://tiles.openfreemap.org"
-    crossorigin
-  >
-
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css"
-  >
-
-
-  <!-- ======================================================
+<link crossorigin="" href="https://tiles.openfreemap.org" rel="preconnect"/>
+<link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet"/>
+<!-- ======================================================
        STYLES
   ======================================================= -->
-
-  <link
-    rel="stylesheet"
-    href="/assets/css/app.css"
-  >
-
-  <link
-    rel="stylesheet"
-    href="/assets/css/ux-v2.css"
-  >
-
+<link href="/assets/css/app.css" rel="stylesheet"/>
+<link href="/assets/css/ux-v2.css" rel="stylesheet"/>
 </head>
-
-
 <!-- ========================================================
      UX V2
 ========================================================= -->
-
 <body class="ux-v2">
-
-
-  <a
-    class="skip-link"
-    href="#mainMap"
-    data-i18n="skip"
-  >
+<a class="skip-link" data-i18n="skip" href="#mainMap">
     Skip to map
   </a>
-
-
-  <div
-    id="app"
-    class="app-shell"
-  >
-
-
-    <!-- ====================================================
+<div class="app-shell" id="app">
+<!-- ====================================================
          TOP NAVIGATION
 
          LEFT   = DISTRICT PASSPORT
          CENTER = DISTRICT NAME
          RIGHT  = SEARCH + SETTINGS
     ===================================================== -->
-
-    <header
-      class="topbar glass floating"
-      role="banner"
-    >
-
-
-      <!-- LEFT -->
-
-      <div class="ux-top-left">
-
-        <button
-          id="districtPassportBtn"
-          class="ux-top-button"
-          type="button"
-          title="Tuman pasporti"
-        >
-
-          <span
-            class="icon"
-            data-icon="landmark"
-          ></span>
-
-          <span data-i18n="districtPassport">
+<header class="topbar glass floating" role="banner">
+<!-- LEFT -->
+<div class="ux-top-left">
+<button class="ux-top-button" id="districtPassportBtn" title="Tuman pasporti" type="button">
+<span class="icon" data-icon="landmark"></span>
+<span data-i18n="districtPassport">
             Tuman pasporti
           </span>
-
-        </button>
-
-      </div>
-
-
-      <!-- CENTER -->
-
-      <div
-        class="ux-district-title"
-        aria-label="Uchko‘prik tumani"
-      >
-
-        <strong>
+</button>
+</div>
+<!-- CENTER -->
+<div aria-label="Uchko‘prik tumani" class="ux-district-title">
+<strong>
           UCHKO‘PRIK TUMANI
         </strong>
-
-        <small>
+<small>
           51 MFY · interaktiv xarita
         </small>
-
-      </div>
-
-
-      <!-- RIGHT -->
-
-      <div class="ux-top-right">
-
-
-        <!-- SEARCH -->
-
-        <button
-          id="searchOpen"
-          class="ux-top-button"
-          type="button"
-          aria-haspopup="dialog"
-          title="Qidiruv"
-        >
-
-          <span
-            class="icon"
-            data-icon="search"
-          ></span>
-
-          <span>
+</div>
+<!-- RIGHT -->
+<div class="ux-top-right">
+<!-- SEARCH -->
+<button aria-haspopup="dialog" class="ux-top-button" id="searchOpen" title="Qidiruv" type="button">
+<span class="icon" data-icon="search"></span>
+<span>
             Qidiruv
           </span>
-
-        </button>
-
-
-        <!-- PRESENTATION -->
-
-        <button
-          id="presentationBtn"
-          class="icon-btn"
-          type="button"
-          title="Presentation"
-          data-i18n-aria="presentation"
-        >
-
-          <span
-            class="icon"
-            data-icon="presentation"
-          ></span>
-
-        </button>
-
-
-        <!-- ACCESSIBILITY -->
-
-        <button
-          id="accessibilityBtn"
-          class="icon-btn"
-          type="button"
-          title="Accessibility"
-          data-i18n-aria="accessibility"
-        >
-
-          <span
-            class="icon"
-            data-icon="accessibility"
-          ></span>
-
-        </button>
-
-
-        <!-- LANGUAGE -->
-
-        <button
-          id="languageBtn"
-          class="language-btn"
-          type="button"
-          aria-haspopup="dialog"
-        >
-
-          <span id="langShort">
+</button>
+<!-- PRESENTATION -->
+<button class="icon-btn" data-i18n-aria="presentation" id="presentationBtn" title="Presentation" type="button">
+<span class="icon" data-icon="presentation"></span>
+</button>
+<!-- ACCESSIBILITY -->
+<button class="icon-btn" data-i18n-aria="accessibility" id="accessibilityBtn" title="Accessibility" type="button">
+<span class="icon" data-icon="accessibility"></span>
+</button>
+<!-- LANGUAGE -->
+<button aria-haspopup="dialog" class="language-btn" id="languageBtn" type="button">
+<span id="langShort">
             UZ
           </span>
-
-          <span
-            class="icon small"
-            data-icon="chevronDown"
-          ></span>
-
-        </button>
-
-      </div>
-
-    </header>
-
-
-    <!-- ====================================================
+<span class="icon small" data-icon="chevronDown"></span>
+</button>
+</div>
+</header>
+<!-- ====================================================
          MAIN MAP
     ===================================================== -->
-
-    <main
-      class="map-stage"
-      id="mainMap"
-    >
-
-
-      <!-- MAP -->
-
-      <div
-        id="map"
-        aria-label="Uchko‘prik district interactive map"
-      ></div>
-
-
-      <!-- MAP VIGNETTE -->
-
-      <div
-        class="map-vignette"
-        aria-hidden="true"
-      ></div>
-
-
-
-      <!-- ==================================================
+<main class="map-stage" id="mainMap">
+<!-- MAP -->
+<div aria-label="Uchko‘prik district interactive map" id="map"></div>
+<!-- MAP VIGNETTE -->
+<div aria-hidden="true" class="map-vignette"></div>
+<!-- ==================================================
            FILTER OPEN BUTTON
 
            Chap filter yopilganda chiqadi.
       =================================================== -->
-
-      <button
-        id="filterToggle"
-        class="ux-filter-toggle glass floating"
-        type="button"
-        title="Xarita filtrlari"
-      >
-
-        <span
-          class="icon"
-          data-icon="map"
-        ></span>
-
-      </button>
-
-
-
-      <!-- ==================================================
+<button class="ux-filter-toggle glass floating" id="filterToggle" title="Xarita filtrlari" type="button">
+<span class="icon" data-icon="map"></span>
+</button>
+<!-- ==================================================
            LEFT FILTER PANEL
 
            FAQAT FILTER.
            STATISTIKA BU YERDA BO‘LMAYDI.
       =================================================== -->
-
-      <aside
-        id="explorePanel"
-        class="explore-panel glass floating"
-        aria-label="Map filters"
-      >
-
-
-        <!-- HEADER -->
-
-        <div class="panel-header">
-
-          <div>
-
-            <span class="eyebrow">
+<aside aria-label="Map filters" class="explore-panel glass floating" id="explorePanel">
+<!-- HEADER -->
+<div class="panel-header">
+<div>
+<span class="eyebrow">
               XARITA
             </span>
-
-            <h1>
+<h1>
               Xarita filtrlari
             </h1>
-
-          </div>
-
-
-          <button
-            id="exploreClose"
-            class="panel-close icon-btn"
-            type="button"
-            title="Yopish"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-
-        <!-- =================================================
+</div>
+<button class="panel-close icon-btn" id="exploreClose" title="Yopish" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<!-- =================================================
              MAIN LAYERS
         ================================================== -->
-
-        <div class="section-title-row">
-
-          <h2 data-i18n="layers">
+<div class="section-title-row">
+<h2 data-i18n="layers">
             Xarita qatlamlari
           </h2>
-
-
-          <button
-            id="fitDistrict"
-            class="text-btn"
-            type="button"
-            data-i18n="showAll"
-          >
+<button class="text-btn" data-i18n="showAll" id="fitDistrict" type="button">
             Barchasini ko‘rsatish
           </button>
-
-        </div>
-
-
-        <div
-          id="categoryChips"
-          class="category-grid"
-        ></div>
-
-
-
-        <!-- =================================================
+</div>
+<div class="category-grid" id="categoryChips"></div>
+<!-- =================================================
              SPECIALIZATION FILTER
 
              JS orqali MFY tanlanganda ochiladi.
         ================================================== -->
-
-        <section
-          id="specializationFilters"
-          class="filter-specializations hidden"
-        >
-
-          <div class="filter-specializations-head">
-
-            <strong>
+<section class="filter-specializations hidden" id="specializationFilters">
+<div class="filter-specializations-head">
+<strong>
               Ixtisoslashuv
             </strong>
-
-
-            <button
-              id="specializationReset"
-              class="filter-reset"
-              type="button"
-            >
+<button class="filter-reset" id="specializationReset" type="button">
               Tozalash
             </button>
-
-          </div>
-
-
-          <div
-            id="specializationList"
-            class="filter-specializations-list"
-          ></div>
-
-        </section>
-
-
-
-        <!-- =================================================
+</div>
+<div class="filter-specializations-list" id="specializationList"></div>
+</section>
+<!-- =================================================
              ORGANIZATION SUB FILTER
 
              Keyinchalik kategoriya → ichki tur
         ================================================== -->
-
-        <section
-          id="organizationFilters"
-          class="filter-specializations hidden"
-        >
-
-          <div class="filter-specializations-head">
-
-            <strong>
+<section class="filter-specializations hidden" id="organizationFilters">
+<div class="filter-specializations-head">
+<strong>
               Tashkilot turlari
             </strong>
-
-
-            <button
-              id="organizationFilterReset"
-              class="filter-reset"
-              type="button"
-            >
+<button class="filter-reset" id="organizationFilterReset" type="button">
               Tozalash
             </button>
-
-          </div>
-
-
-          <div
-            id="organizationFilterList"
-            class="filter-specializations-list"
-          ></div>
-
-        </section>
-
-      </aside>
-
-
-
-      <!-- ==================================================
+</div>
+<div class="filter-specializations-list" id="organizationFilterList"></div>
+</section>
+</aside>
+<!-- ==================================================
            INVESTOR MODE
       =================================================== -->
-
-      <section
-        id="investorPanel"
-        class="mode-panel glass floating hidden"
-        aria-label="Investor Mode"
-      >
-
-        <div class="mode-head">
-
-          <div>
-
-            <span
-              class="eyebrow"
-              data-i18n="investorMode"
-            >
+<section aria-label="Investor Mode" class="mode-panel glass floating hidden" id="investorPanel">
+<div class="mode-head">
+<div>
+<span class="eyebrow" data-i18n="investorMode">
               Investor Mode
             </span>
-
-            <h2 data-i18n="economyTitle">
+<h2 data-i18n="economyTitle">
               Uchko‘prik iqtisodiyoti
             </h2>
-
-          </div>
-
-
-          <button
-            id="investorClose"
-            class="icon-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-        <div
-          id="investorMetrics"
-          class="investor-metrics"
-        ></div>
-
-
-        <div class="mode-actions">
-
-
-          <button
-            id="showBusinesses"
-            class="primary-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="briefcase"
-            ></span>
-
-            <span data-i18n="showBusinesses">
+</div>
+<button class="icon-btn" id="investorClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="investor-metrics" id="investorMetrics"></div>
+<div class="mode-actions">
+<button class="primary-btn" id="showBusinesses" type="button">
+<span class="icon" data-icon="briefcase"></span>
+<span data-i18n="showBusinesses">
               Korxonalarni ko‘rsatish
             </span>
-
-          </button>
-
-
-          <button
-            id="askInvestment"
-            class="secondary-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="sparkles"
-            ></span>
-
-            <span data-i18n="askAI">
+</button>
+<button class="secondary-btn" id="askInvestment" type="button">
+<span class="icon" data-icon="sparkles"></span>
+<span data-i18n="askAI">
               AI dan so‘rash
             </span>
-
-          </button>
-
-        </div>
-
-
-        <div class="data-note">
-
-          <span
-            class="icon"
-            data-icon="shield"
-          ></span>
-
-          <span data-i18n="verifiedNote">
+</button>
+</div>
+<div class="data-note">
+<span class="icon" data-icon="shield"></span>
+<span data-i18n="verifiedNote">
             Faqat tasdiqlangan ma’lumotlar rasmiy sifatida ko‘rsatiladi.
           </span>
-
-        </div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</div>
+</section>
+<!-- ==================================================
            PRODUCTS
       =================================================== -->
-
-      <section
-        id="productsPanel"
-        class="mode-panel wide glass floating hidden"
-        aria-label="Made in Uchko‘prik"
-      >
-
-        <div class="mode-head">
-
-          <div>
-
-            <span
-              class="eyebrow"
-              data-i18n="madeIn"
-            >
+<section aria-label="Made in Uchko‘prik" class="mode-panel wide glass floating hidden" id="productsPanel">
+<div class="mode-head">
+<div>
+<span class="eyebrow" data-i18n="madeIn">
               Made in Uchko‘prik
             </span>
-
-            <h2 data-i18n="productsTitle">
+<h2 data-i18n="productsTitle">
               Mahalliy mahsulotlar
             </h2>
-
-          </div>
-
-
-          <button
-            id="productsClose"
-            class="icon-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-        <div
-          id="productGrid"
-          class="product-grid"
-        ></div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</div>
+<button class="icon-btn" id="productsClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="product-grid" id="productGrid"></div>
+</section>
+<!-- ==================================================
            DISTRICT PASSPORT
 
            Keyinchalik passport-mode paytida
            o‘ng tomondagi katta panelga aylanadi.
       =================================================== -->
-
-      <section
-        id="districtPanel"
-        class="mode-panel glass floating hidden"
-        aria-label="District Passport"
-      >
-
-        <div class="mode-head">
-
-          <div>
-
-            <span
-              class="eyebrow"
-              data-i18n="districtPassport"
-            >
+<section aria-label="District Passport" class="mode-panel glass floating hidden" id="districtPanel">
+<div class="mode-head">
+<div>
+<span class="eyebrow" data-i18n="districtPassport">
               Tuman pasporti
             </span>
-
-            <h2 data-i18n="districtNumbers">
+<h2 data-i18n="districtNumbers">
               Uchko‘prik raqamlarda
             </h2>
-
-          </div>
-
-
-          <button
-            id="districtClose"
-            class="icon-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-
-        <!-- MAIN METRICS -->
-
-        <div
-          id="districtMetrics"
-          class="passport-grid"
-        ></div>
-
-
-
-        <!-- SPECIALIZATION DISTRIBUTION -->
-
-        <section
-          id="districtSpecializationSection"
-          class="passport-section"
-        >
-
-          <div class="section-title-row">
-
-            <h2>
+</div>
+<button class="icon-btn" id="districtClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<!-- MAIN METRICS -->
+<div class="passport-grid" id="districtMetrics"></div>
+<!-- SPECIALIZATION DISTRIBUTION -->
+<section class="passport-section" id="districtSpecializationSection">
+<div class="section-title-row">
+<h2>
               Ixtisoslashuv bo‘yicha taqsimot
             </h2>
+</div>
+<div class="passport-specialization-list" id="districtSpecializationStats"></div>
+</section>
+<!-- TOP MFY -->
 
-          </div>
-
-
-          <div
-            id="districtSpecializationStats"
-            class="passport-specialization-list"
-          ></div>
-
-        </section>
-
-
-
-        <!-- TOP MFY -->
-
-        <section
-          id="districtTopMahallasSection"
-          class="passport-section"
-        >
-
-          <div class="section-title-row">
-
-            <h2>
-              Eng ko‘p aholili MFYlar
-            </h2>
-
-          </div>
-
-
-          <div
-            id="districtTopMahallas"
-            class="passport-ranking"
-          ></div>
-
-        </section>
-
-
-
-        <!-- DATA DATE -->
-
-        <div class="data-note">
-
-          <span
-            class="icon"
-            data-icon="database"
-          ></span>
-
-          <span>
-
-            <span data-i18n="dataUpdated">
+<!-- DATA DATE -->
+<div class="data-note">
+<span class="icon" data-icon="database"></span>
+<span>
+<span data-i18n="dataUpdated">
               Ma’lumot yangilangan
             </span>
 
@@ -818,1194 +295,454 @@
             <b id="districtUpdated">
               —
             </b>
-
-          </span>
-
-        </div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</span>
+</div>
+</section>
+<!-- ==================================================
            PASSPORT DASHBOARD
 
            Tuman pasporti bosilganda:
            - xarita kichrayadi
            - bu bloklar pastda ochiladi
       =================================================== -->
-
-      <section
-        id="passportDashboard"
-        aria-label="District analytics"
-      >
-
-
-        <!-- ECONOMY -->
-
-        <article
-          class="passport-card glass floating"
-        >
-
-          <h3>
+<section aria-label="District analytics" id="passportDashboard">
+<!-- ECONOMY -->
+<article class="passport-card glass floating">
+<h3>
             Iqtisodiyot
           </h3>
-
-          <div id="passportEconomy">
-
-            <div class="passport-row">
-
-              <span>
+<div id="passportEconomy">
+<div class="passport-row">
+<span>
                 Sanoat
               </span>
-
-              <strong id="passportIndustry">
+<strong id="passportIndustry">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div>
+<div class="passport-row">
+<span>
                 Qishloq xo‘jaligi
               </span>
-
-              <strong id="passportAgriculture">
+<strong id="passportAgriculture">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div>
+<div class="passport-row">
+<span>
                 Xizmatlar
               </span>
-
-              <strong id="passportServices">
+<strong id="passportServices">
                 —
               </strong>
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-
-        <!-- SOCIAL -->
-
-        <article
-          class="passport-card glass floating"
-        >
-
-          <h3>
+</div>
+</div>
+</article>
+<!-- SOCIAL -->
+<article class="passport-card glass floating">
+<h3>
             Mehnat va ijtimoiy ko‘rsatkichlar
           </h3>
-
-
-          <div id="passportSocial">
-
-            <div class="passport-row">
-
-              <span>
+<div id="passportSocial">
+<div class="passport-row">
+<span>
                 Ishsizlik
               </span>
-
-              <strong id="passportUnemployment">
+<strong id="passportUnemployment">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div>
+<div class="passport-row">
+<span>
                 Kambag‘allik
               </span>
-
-              <strong id="passportPoverty">
+<strong id="passportPoverty">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div>
+<div class="passport-row">
+<span>
                 Sog‘liqni saqlash
               </span>
-
-              <strong id="passportHealthcare">
+<strong id="passportHealthcare">
                 —
               </strong>
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-
-        <!-- GENERAL -->
-
-        <article
-          class="passport-card glass floating"
-        >
-
-          <h3>
+</div>
+</div>
+</article>
+<!-- GENERAL -->
+<article class="passport-card passport-top-mfy glass floating"><h3>Eng ko‘p aholili MFYlar</h3><div class="passport-ranking" id="passportTopMahallas"></div></article><article class="passport-card glass floating">
+<h3>
             Umumiy ko‘rsatkichlar
           </h3>
-
-
-          <div id="passportGeneral">
-
-            <div class="passport-row">
-
-              <span>
+<div id="passportGeneral">
+<div class="passport-row">
+<span>
                 Tashkil topgan
               </span>
-
-              <strong id="passportFounded">
+<strong id="passportFounded">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div><div class="passport-row"><span>Tuman hokimi</span><strong id="passportGovernor">—</strong></div>
+<div class="passport-row">
+<span>
                 Maydoni
               </span>
-
-              <strong id="passportArea">
+<strong id="passportArea">
                 —
               </strong>
-
-            </div>
-
-
-            <div class="passport-row">
-
-              <span>
+</div>
+<div class="passport-row">
+<span>
                 Chegara uzunligi
               </span>
-
-              <strong id="passportBorder">
+<strong id="passportBorder">
                 —
               </strong>
-
-            </div>
-
-          </div>
-
-        </article>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</div>
+<div class="passport-row"><span>Tashkilotlar</span><strong id="passportOrganizations">—</strong></div><div class="passport-row"><span>Kategoriyalar</span><strong id="passportCategories">—</strong></div></div>
+</article>
+</section>
+<!-- ==================================================
            DETAIL CARD
 
            Marker bosilganda o‘ng tomonda Liquid Glass.
       =================================================== -->
-
-      <section
-        id="detailCard"
-        class="detail-card glass floating hidden"
-        aria-live="polite"
-      >
-
-
-        <button
-          id="detailClose"
-          class="detail-close icon-btn"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="x"
-          ></span>
-
-        </button>
-
-
-
-        <div
-          id="detailHero"
-          class="detail-hero"
-        >
-
-          <div
-            id="detailSymbol"
-            class="detail-symbol"
-          ></div>
-
-        </div>
-
-
-
-        <div class="detail-body">
-
-
-          <div
-            id="detailKicker"
-            class="detail-kicker"
-          ></div>
-
-
-          <h2 id="detailTitle">
-          </h2>
-
-
-          <div
-            id="detailVerification"
-            class="verification-row"
-          ></div>
-
-
-          <p id="detailDescription">
-          </p>
-
-
-          <div
-            id="detailStats"
-            class="detail-stats"
-          ></div>
-
-
-
-          <!-- FUTURE EXTRA DATA -->
-
-          <div
-            id="detailExtra"
-            class="detail-extra"
-          ></div>
-
-
-
-          <div class="detail-actions">
-
-
-            <button
-              id="detailDirections"
-              class="primary-btn"
-              type="button"
-            >
-
-              <span
-                class="icon"
-                data-icon="navigation"
-              ></span>
-
-              <span data-i18n="directions">
+<section aria-live="polite" class="detail-card glass floating hidden" id="detailCard">
+<button class="detail-close icon-btn" id="detailClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+<div class="detail-hero" id="detailHero">
+<div class="detail-symbol" id="detailSymbol"></div>
+</div>
+<div class="detail-body">
+<div class="detail-kicker" id="detailKicker"></div>
+<h2 id="detailTitle">
+</h2>
+<div class="verification-row" id="detailVerification"></div>
+<p id="detailDescription">
+</p>
+<div class="detail-stats" id="detailStats"></div>
+<!-- FUTURE EXTRA DATA -->
+<div class="detail-extra" id="detailExtra"></div>
+<div class="detail-actions">
+<button class="primary-btn" id="detailDirections" type="button">
+<span class="icon" data-icon="navigation"></span>
+<span data-i18n="directions">
                 Yo‘nalish
               </span>
-
-            </button>
-
-
-            <button
-              id="detailAsk"
-              class="secondary-btn"
-              type="button"
-            >
-
-              <span
-                class="icon"
-                data-icon="sparkles"
-              ></span>
-
-              <span data-i18n="askAI">
+</button>
+<button class="secondary-btn" id="detailAsk" type="button">
+<span class="icon" data-icon="sparkles"></span>
+<span data-i18n="askAI">
                 AI
               </span>
-
-            </button>
-
-
-            <button
-              id="detailShare"
-              class="icon-btn"
-              type="button"
-            >
-
-              <span
-                class="icon"
-                data-icon="share"
-              ></span>
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</button>
+<button class="icon-btn" id="detailShare" type="button">
+<span class="icon" data-icon="share"></span>
+</button>
+</div>
+</div>
+</section>
+<!-- ==================================================
            MARKER → DETAIL CONNECTOR
 
            Keyinchalik JS nuqtadan kartagacha
            animatsiyali nurli ip chizadi.
       =================================================== -->
-
-      <svg
-        id="uxConnector"
-        class="hidden"
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-
-        <defs>
-
-          <linearGradient
-            id="uxConnectorGradient"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
-
-            <stop
-              offset="0%"
-              stop-color="#62e6ff"
-              stop-opacity="0.10"
-            ></stop>
-
-            <stop
-              offset="45%"
-              stop-color="#62e6ff"
-              stop-opacity="0.95"
-            ></stop>
-
-            <stop
-              offset="100%"
-              stop-color="#60ebc4"
-              stop-opacity="0.45"
-            ></stop>
-
-          </linearGradient>
-
-        </defs>
-
-
-        <path
-          class="glow"
-          d=""
-        ></path>
-
-
-        <path
-          class="main"
-          d=""
-        ></path>
-
-      </svg>
-
-
-
-      <!-- ==================================================
+<svg aria-hidden="true" class="hidden" height="100%" id="uxConnector" preserveaspectratio="none" viewbox="0 0 100 100" width="100%">
+<defs>
+<lineargradient id="uxConnectorGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#62e6ff" stop-opacity="0.10"></stop>
+<stop offset="45%" stop-color="#62e6ff" stop-opacity="0.95"></stop>
+<stop offset="100%" stop-color="#60ebc4" stop-opacity="0.45"></stop>
+</lineargradient>
+</defs>
+<path class="glow" d=""></path>
+<path class="main" d=""></path>
+</svg>
+<!-- ==================================================
            SEARCH
       =================================================== -->
-
-      <section
-        id="searchDialog"
-        class="search-dialog glass floating hidden"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search"
-      >
-
-
-        <div class="search-box">
-
-          <span
-            class="icon"
-            data-icon="search"
-          ></span>
-
-
-          <input
-            id="globalSearch"
-            type="search"
-            autocomplete="off"
-            data-i18n-placeholder="searchPlaceholder"
-            placeholder="Uchko‘prik bo‘yicha qidirish"
-          >
-
-
-          <button
-            id="searchClose"
-            class="icon-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-        <div class="search-hints">
-
-          <span data-i18n="searchHint">
+<section aria-label="Search" aria-modal="true" class="search-dialog glass floating hidden" id="searchDialog" role="dialog">
+<div class="search-box">
+<span class="icon" data-icon="search"></span>
+<input autocomplete="off" data-i18n-placeholder="searchPlaceholder" id="globalSearch" placeholder="Uchko‘prik bo‘yicha qidirish" type="search"/>
+<button class="icon-btn" id="searchClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="search-hints">
+<span data-i18n="searchHint">
             MFY, tashkilot, kategoriya yoki boshqa ma’lumotni qidiring.
           </span>
-
-        </div>
-
-
-        <div
-          id="searchResults"
-          class="search-results"
-        ></div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</div>
+<div class="search-results" id="searchResults"></div>
+</section>
+<!-- ==================================================
            AI
       =================================================== -->
-
-      <section
-        id="aiPanel"
-        class="ai-panel glass floating hidden"
-        aria-label="Uchko‘prik AI"
-      >
-
-
-        <div class="ai-head">
-
-
-          <div class="ai-brand">
-
-
-            <div class="ai-mini-orb">
-              <span></span>
-            </div>
-
-
-            <div>
-
-              <strong>
+<section aria-label="Uchko‘prik AI" class="ai-panel glass floating hidden" id="aiPanel">
+<div class="ai-head">
+<div class="ai-brand">
+<div class="ai-mini-orb">
+<span></span>
+</div>
+<div>
+<strong>
                 Uchko‘prik AI
               </strong>
-
-              <small data-i18n="officialDataAI">
+<small data-i18n="officialDataAI">
                 Official-data assistant
               </small>
-
-            </div>
-
-          </div>
-
-
-          <button
-            id="aiClose"
-            class="icon-btn"
-            type="button"
-          >
-
-            <span
-              class="icon"
-              data-icon="x"
-            ></span>
-
-          </button>
-
-        </div>
-
-
-
-        <div
-          id="aiMessages"
-          class="ai-messages"
-        ></div>
-
-
-
-        <div
-          id="aiSuggestions"
-          class="ai-suggestions"
-        ></div>
-
-
-
-        <form
-          id="aiForm"
-          class="ai-compose"
-        >
-
-
-          <button
-            id="voiceBtn"
-            class="icon-btn voice-btn"
-            type="button"
-            title="Voice"
-          >
-
-            <span
-              class="icon"
-              data-icon="mic"
-            ></span>
-
-          </button>
-
-
-          <input
-            id="aiInput"
-            autocomplete="off"
-            data-i18n-placeholder="askPlaceholder"
-            placeholder="Uchko‘prik haqida so‘rang…"
-          >
-
-
-          <button
-            class="send-btn"
-            type="submit"
-          >
-
-            <span
-              class="icon"
-              data-icon="arrowUp"
-            ></span>
-
-          </button>
-
-        </form>
-
-
-
-        <div class="ai-foot">
-
-          <span
-            class="icon"
-            data-icon="shield"
-          ></span>
-
-          <span data-i18n="aiDisclaimer">
+</div>
+</div>
+<button class="icon-btn" id="aiClose" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="ai-messages" id="aiMessages"></div>
+<div class="ai-suggestions" id="aiSuggestions"></div>
+<form class="ai-compose" id="aiForm">
+<button class="icon-btn voice-btn" id="voiceBtn" title="Voice" type="button">
+<span class="icon" data-icon="mic"></span>
+</button>
+<input autocomplete="off" data-i18n-placeholder="askPlaceholder" id="aiInput" placeholder="Uchko‘prik haqida so‘rang…"/>
+<button class="send-btn" type="submit">
+<span class="icon" data-icon="arrowUp"></span>
+</button>
+</form>
+<div class="ai-foot">
+<span class="icon" data-icon="shield"></span>
+<span data-i18n="aiDisclaimer">
             Javoblarda tasdiqlangan tuman ma’lumotlariga ustuvorlik beriladi.
           </span>
-
-        </div>
-
-      </section>
-
-
-
-      <!-- ==================================================
+</div>
+</section>
+<!-- ==================================================
            PRIMARY DOCK
 
            Barcha asosiy bo‘limlar shu yerda.
            Ortiqcha AI orb YO‘Q.
       =================================================== -->
-
-      <nav
-        class="dock glass floating"
-        aria-label="Primary navigation"
-      >
-
-
-        <button
-          class="dock-item active"
-          data-nav="explore"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="compass"
-          ></span>
-
-          <span data-i18n="explore">
+<nav aria-label="Primary navigation" class="dock glass floating">
+<button class="dock-item active" data-nav="explore" type="button">
+<span class="icon" data-icon="compass"></span>
+<span data-i18n="explore">
             Filtr
           </span>
-
-        </button>
-
-
-
-        <button
-          class="dock-item"
-          data-nav="map"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="map"
-          ></span>
-
-          <span data-i18n="map">
+</button>
+<button class="dock-item" data-nav="map" type="button">
+<span class="icon" data-icon="map"></span>
+<span data-i18n="map">
             Xarita
           </span>
-
-        </button>
-
-
-
-        <!-- CENTRAL AI -->
-
-        <button
-          class="dock-item center"
-          data-nav="ai"
-          type="button"
-        >
-
-          <span class="dock-ai">
-
-            <span
-              class="icon"
-              data-icon="sparkles"
-            ></span>
-
-          </span>
-
-          <span>
+</button>
+<!-- CENTRAL AI -->
+<button class="dock-item center" data-nav="ai" type="button">
+<span class="dock-ai">
+<span class="icon" data-icon="sparkles"></span>
+</span>
+<span>
             AI
           </span>
-
-        </button>
-
-
-
-        <button
-          class="dock-item"
-          data-nav="invest"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="chart"
-          ></span>
-
-          <span data-i18n="invest">
+</button>
+<button class="dock-item" data-nav="invest" type="button">
+<span class="icon" data-icon="chart"></span>
+<span data-i18n="invest">
             Investitsiya
           </span>
-
-        </button>
-
-
-
-        <button
-          class="dock-item"
-          data-nav="products"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="package"
-          ></span>
-
-          <span data-i18n="products">
+</button>
+<button class="dock-item" data-nav="products" type="button">
+<span class="icon" data-icon="package"></span>
+<span data-i18n="products">
             Mahsulotlar
           </span>
-
-        </button>
-
-      </nav>
-
-    </main>
-
-  </div>
-
-
-
-  <!-- ======================================================
+</button>
+</nav>
+</main>
+</div>
+<!-- ======================================================
        LANGUAGE
   ======================================================= -->
-
-  <section
-    id="languageSheet"
-    class="sheet-backdrop hidden"
-    aria-label="Language selection"
-  >
-
-    <div
-      class="sheet glass floating"
-    >
-
-
-      <div class="sheet-head">
-
-        <div>
-
-          <span class="eyebrow">
+<section aria-label="Language selection" class="sheet-backdrop hidden" id="languageSheet">
+<div class="sheet glass floating">
+<div class="sheet-head">
+<div>
+<span class="eyebrow">
             Language
           </span>
-
-          <h2 data-i18n="chooseLanguage">
+<h2 data-i18n="chooseLanguage">
             Choose language
           </h2>
-
-        </div>
-
-
-        <button
-          class="icon-btn"
-          data-sheet-close="languageSheet"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="x"
-          ></span>
-
-        </button>
-
-      </div>
-
-
-      <div
-        id="languageGrid"
-        class="language-grid"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- ======================================================
+</div>
+<button class="icon-btn" data-sheet-close="languageSheet" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="language-grid" id="languageGrid"></div>
+</div>
+</section>
+<!-- ======================================================
        ACCESSIBILITY
   ======================================================= -->
-
-  <section
-    id="accessibilitySheet"
-    class="sheet-backdrop hidden"
-    aria-label="Accessibility settings"
-  >
-
-    <div
-      class="sheet glass floating"
-    >
-
-
-      <div class="sheet-head">
-
-        <div>
-
-          <span
-            class="eyebrow"
-            data-i18n="accessibility"
-          >
+<section aria-label="Accessibility settings" class="sheet-backdrop hidden" id="accessibilitySheet">
+<div class="sheet glass floating">
+<div class="sheet-head">
+<div>
+<span class="eyebrow" data-i18n="accessibility">
             Accessibility
           </span>
-
-          <h2 data-i18n="accessibilitySettings">
-            Display & motion
+<h2 data-i18n="accessibilitySettings">
+            Display &amp; motion
           </h2>
-
-        </div>
-
-
-        <button
-          class="icon-btn"
-          data-sheet-close="accessibilitySheet"
-          type="button"
-        >
-
-          <span
-            class="icon"
-            data-icon="x"
-          ></span>
-
-        </button>
-
-      </div>
-
-
-
-      <div class="settings-list">
-
-
-        <!-- TEXT -->
-
-        <div class="setting-row">
-
-          <div>
-
-            <strong data-i18n="textSize">
+</div>
+<button class="icon-btn" data-sheet-close="accessibilitySheet" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+<div class="settings-list">
+<!-- TEXT -->
+<div class="setting-row">
+<div>
+<strong data-i18n="textSize">
               Text size
             </strong>
-
-            <small data-i18n="textSizeDesc">
+<small data-i18n="textSizeDesc">
               Adjust interface text size
             </small>
-
-          </div>
-
-
-          <div class="segment">
-
-            <button
-              type="button"
-              data-font="small"
-            >
+</div>
+<div class="segment">
+<button data-font="small" type="button">
               A−
             </button>
-
-            <button
-              type="button"
-              data-font="normal"
-              class="active"
-            >
+<button class="active" data-font="normal" type="button">
               A
             </button>
-
-            <button
-              type="button"
-              data-font="large"
-            >
+<button data-font="large" type="button">
               A+
             </button>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- CONTRAST -->
-
-        <label class="setting-row">
-
-          <div>
-
-            <strong data-i18n="highContrast">
+</div>
+</div>
+<!-- CONTRAST -->
+<label class="setting-row">
+<div>
+<strong data-i18n="highContrast">
               High contrast
             </strong>
-
-            <small data-i18n="highContrastDesc">
+<small data-i18n="highContrastDesc">
               Increase interface contrast
             </small>
-
-          </div>
-
-          <input
-            id="highContrastToggle"
-            type="checkbox"
-            class="switch"
-          >
-
-        </label>
-
-
-
-        <!-- REDUCE MOTION -->
-
-        <label class="setting-row">
-
-          <div>
-
-            <strong data-i18n="reduceMotion">
+</div>
+<input class="switch" id="highContrastToggle" type="checkbox"/>
+</label>
+<!-- REDUCE MOTION -->
+<label class="setting-row">
+<div>
+<strong data-i18n="reduceMotion">
               Reduce motion
             </strong>
-
-            <small data-i18n="reduceMotionDesc">
+<small data-i18n="reduceMotionDesc">
               Use simpler transitions
             </small>
-
-          </div>
-
-          <input
-            id="reduceMotionToggle"
-            type="checkbox"
-            class="switch"
-          >
-
-        </label>
-
-
-
-        <!-- TRANSPARENCY -->
-
-        <label class="setting-row">
-
-          <div>
-
-            <strong data-i18n="reduceTransparency">
+</div>
+<input class="switch" id="reduceMotionToggle" type="checkbox"/>
+</label>
+<!-- TRANSPARENCY -->
+<label class="setting-row">
+<div>
+<strong data-i18n="reduceTransparency">
               Reduce transparency
             </strong>
-
-            <small data-i18n="reduceTransparencyDesc">
+<small data-i18n="reduceTransparencyDesc">
               Use solid surfaces instead of glass
             </small>
-
-          </div>
-
-          <input
-            id="reduceTransparencyToggle"
-            type="checkbox"
-            class="switch"
-          >
-
-        </label>
-
-
-
-        <!-- THEME -->
-
-        <label class="setting-row">
-
-          <div>
-
-            <strong data-i18n="lightMode">
+</div>
+<input class="switch" id="reduceTransparencyToggle" type="checkbox"/>
+</label>
+<!-- THEME -->
+<label class="setting-row">
+<div>
+<strong data-i18n="lightMode">
               Light mode
             </strong>
-
-            <small data-i18n="lightModeDesc">
+<small data-i18n="lightModeDesc">
               Switch between dark and light appearance
             </small>
-
-          </div>
-
-          <input
-            id="lightModeToggle"
-            type="checkbox"
-            class="switch"
-          >
-
-        </label>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- ======================================================
+</div>
+<input class="switch" id="lightModeToggle" type="checkbox"/>
+</label>
+</div>
+</div>
+</section>
+<!-- ======================================================
        PRESENTATION MODE
   ======================================================= -->
-
-  <section
-    id="presentationOverlay"
-    class="presentation hidden"
-    aria-label="Presentation Mode"
-  >
-
-
-    <div
-      id="presentationMap"
-      class="presentation-map"
-    ></div>
-
-
-    <div
-      class="presentation-shade"
-    ></div>
-
-
-
-    <div class="presentation-brand">
-
-      <img
-        src="/logo.svg"
-        alt=""
-      >
-
-      <span>
+<section aria-label="Presentation Mode" class="presentation hidden" id="presentationOverlay">
+<div class="presentation-map" id="presentationMap"></div>
+<div class="presentation-shade"></div>
+<div class="presentation-brand">
+<img alt="" src="/logo.svg"/>
+<span>
         UCHKO‘PRIK
       </span>
-
-    </div>
-
-
-
-    <div class="presentation-copy">
-
-      <span
-        class="eyebrow"
-        id="sceneEyebrow"
-      >
+</div>
+<div class="presentation-copy">
+<span class="eyebrow" id="sceneEyebrow">
         DIGITAL DISTRICT
       </span>
-
-
-      <h2 id="sceneTitle">
+<h2 id="sceneTitle">
         Welcome to Uchko‘prik
       </h2>
-
-
-      <p id="sceneText">
-      </p>
-
-    </div>
-
-
-
-    <div
-      class="presentation-controls glass floating"
-    >
-
-
-      <button
-        id="scenePrev"
-        type="button"
-      >
-
-        <span
-          class="icon"
-          data-icon="arrowLeft"
-        ></span>
-
-      </button>
-
-
-
-      <button
-        id="scenePlay"
-        type="button"
-      >
-
-        <span
-          class="icon"
-          data-icon="pause"
-        ></span>
-
-      </button>
-
-
-
-      <span id="sceneCounter">
+<p id="sceneText">
+</p>
+</div>
+<div class="presentation-controls glass floating">
+<button id="scenePrev" type="button">
+<span class="icon" data-icon="arrowLeft"></span>
+</button>
+<button id="scenePlay" type="button">
+<span class="icon" data-icon="pause"></span>
+</button>
+<span id="sceneCounter">
         1 / 6
       </span>
-
-
-
-      <button
-        id="sceneNext"
-        type="button"
-      >
-
-        <span
-          class="icon"
-          data-icon="arrowRight"
-        ></span>
-
-      </button>
-
-
-
-      <button
-        id="presentationExit"
-        type="button"
-      >
-
-        <span
-          class="icon"
-          data-icon="x"
-        ></span>
-
-      </button>
-
-    </div>
-
-  </section>
-
-  <!-- ======================================================
+<button id="sceneNext" type="button">
+<span class="icon" data-icon="arrowRight"></span>
+</button>
+<button id="presentationExit" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+</div>
+</section>
+<!-- ======================================================
        10 MINUTE IDLE PARTICLE EARTH / MANUAL SPHERE MODE
   ======================================================= -->
-  <section id="idleSphereOverlay" aria-hidden="true">
-    <div id="idleSphereStars" aria-hidden="true"></div>
-
-    <button
-      id="idleSphereClose"
-      type="button"
-      aria-label="Sphere rejimini yopish"
-      title="Yopish"
-    >
-      <span class="icon" data-icon="x"></span>
-    </button>
-
-    <div id="idleSphereCanvas"></div>
-    <div id="idleSphereLabel">UCHKO‘PRIK DIGITAL DISTRICT</div>
-  </section>
-
-  <button
-    id="sphereTestBtn"
-    class="sphere-test-button glass floating"
-    type="button"
-    aria-label="Sphere animatsiyasini sinash"
-    title="Sphere animatsiyasini sinash"
-  >
-    <span class="icon" data-icon="globe"></span>
-    <span class="sphere-test-label">Sphere</span>
-  </button>
-
-
-
-  <!-- ======================================================
+<section aria-hidden="true" id="idleSphereOverlay">
+<div aria-hidden="true" id="idleSphereStars"></div>
+<button aria-label="Sphere rejimini yopish" id="idleSphereClose" title="Yopish" type="button">
+<span class="icon" data-icon="x"></span>
+</button>
+<div id="idleSphereCanvas"></div>
+<div id="idleSphereLabel">UCHKO‘PRIK DIGITAL DISTRICT</div>
+</section>
+<button aria-label="Sphere animatsiyasini sinash" class="sphere-test-button glass floating" id="sphereTestBtn" title="Sphere animatsiyasini sinash" type="button">
+<span class="icon" data-icon="globe"></span>
+<span class="sphere-test-label">Sphere</span>
+</button>
+<!-- ======================================================
        TOAST
   ======================================================= -->
-
-  <div
-    id="toastHost"
-    class="toast-host"
-    aria-live="polite"
-  ></div>
-
-
-
-  <!-- ======================================================
+<div aria-live="polite" class="toast-host" id="toastHost"></div>
+<!-- ======================================================
        JAVASCRIPT
   ======================================================= -->
-
-
-  <!-- MAPLIBRE -->
-
-  <script
-    src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"
-  ></script>
-
-
-
-  <!-- SUPABASE -->
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-
-
-  <script
-    src="/assets/js/supabase.js"
-  ></script>
-
-
-
-  <!-- MAIN APP -->
-
-  <script
-    type="module"
-    src="/assets/js/app.js"
-  ></script>
-
-
+<!-- MAPLIBRE -->
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/js/supabase.js"></script>
+<!-- MAIN APP -->
+<script src="/assets/js/app.js" type="module"></script>
 </body>
 </html>
