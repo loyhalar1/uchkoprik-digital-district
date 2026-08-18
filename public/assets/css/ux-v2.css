@@ -591,3 +591,265 @@ body.ux-v2.idle-mode #map{
   body.ux-v2 #idleSphereCanvas{width:min(92vw,440px);height:min(92vw,440px)}
   body.ux-v2 #idleSphereClose{top:12px;right:12px;width:42px;height:42px;border-radius:14px}
 }
+
+/* =========================================================
+   UX V3 — LIQUID GLASS REFRACTION LAYER
+   Refraction logic is generated in app.js from the supplied
+   MIT-licensed liquid-glass reference implementation.
+========================================================= */
+
+body.ux-v2{
+  --lg-x:18%;
+  --lg-y:8%;
+  --liquid-edge:rgba(255,255,255,.24);
+  --liquid-shadow:rgba(0,0,0,.48);
+}
+
+body.ux-v2 .liquid-refraction{
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(110% 85% at var(--lg-x) var(--lg-y),rgba(255,255,255,.17),transparent 34%),
+    radial-gradient(90% 70% at 108% 112%,rgba(86,226,255,.08),transparent 46%),
+    linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015) 42%,rgba(255,255,255,.035)),
+    var(--glass)!important;
+  border:1px solid color-mix(in srgb,var(--liquid-edge) 58%,var(--line))!important;
+  box-shadow:
+    0 24px 72px var(--liquid-shadow),
+    inset 0 1px 0 rgba(255,255,255,.20),
+    inset 0 -1px 0 rgba(255,255,255,.035),
+    inset 1px 0 0 rgba(126,224,255,.045),
+    inset -1px 0 0 rgba(255,120,210,.035)!important;
+}
+
+body.ux-v2 .liquid-refraction::before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  border-radius:inherit!important;
+  pointer-events:none!important;
+  background:
+    radial-gradient(64% 42% at var(--lg-x) var(--lg-y),rgba(255,255,255,.21),rgba(255,255,255,.055) 35%,transparent 72%),
+    linear-gradient(118deg,rgba(102,225,255,.07),transparent 24%,transparent 72%,rgba(255,98,206,.045))!important;
+  mix-blend-mode:screen;
+  opacity:.92!important;
+}
+
+body.ux-v2 .liquid-refraction::after{
+  content:"";
+  position:absolute;
+  inset:1px;
+  z-index:0;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.045),
+    inset 0 8px 22px rgba(255,255,255,.035);
+  background:linear-gradient(120deg,rgba(92,222,255,.025),transparent 36%,transparent 66%,rgba(255,87,204,.022));
+}
+
+body.ux-v2 .liquid-refraction > *{
+  position:relative;
+  z-index:1;
+}
+
+html[data-theme="light"] body.ux-v2 .liquid-refraction{
+  --liquid-edge:rgba(255,255,255,.74);
+  --liquid-shadow:rgba(35,70,90,.15);
+  background:
+    radial-gradient(110% 85% at var(--lg-x) var(--lg-y),rgba(255,255,255,.92),transparent 34%),
+    radial-gradient(90% 70% at 108% 112%,rgba(89,185,220,.10),transparent 46%),
+    linear-gradient(145deg,rgba(255,255,255,.54),rgba(255,255,255,.16) 48%,rgba(229,242,249,.30)),
+    var(--glass)!important;
+}
+
+html.reduce-transparency body.ux-v2 .liquid-refraction{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:var(--glass-strong)!important;
+}
+
+/* Buttons keep lens movement but never jump away from their layout */
+body.ux-v2 .ux-top-button,
+body.ux-v2 .language-btn,
+body.ux-v2 .icon-btn,
+body.ux-v2 .category-chip,
+body.ux-v2 .filter-specialization,
+body.ux-v2 .dock-item,
+body.ux-v2 .primary-btn,
+body.ux-v2 .secondary-btn,
+body.ux-v2 .ai-suggestion,
+body.ux-v2 .search-result,
+body.ux-v2 .sphere-test-button{
+  will-change:transform,filter;
+}
+
+/* Stable star markers: coordinate anchor never scales or translates */
+body.ux-v2 .mfy-marker,
+body.ux-v2 .place-marker,
+body.ux-v2 .mfy-marker:hover,
+body.ux-v2 .place-marker:hover,
+body.ux-v2 .mfy-marker.is-active,
+body.ux-v2 .place-marker.is-active{
+  transform:none!important;
+  translate:none!important;
+  scale:1!important;
+}
+
+body.ux-v2 .mfy-marker,
+body.ux-v2 .place-marker{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  border:0!important;
+  display:grid!important;
+  place-items:center!important;
+  background:transparent!important;
+  overflow:visible!important;
+  cursor:pointer!important;
+}
+
+body.ux-v2 .mfy-dot,
+body.ux-v2 .place-pin{
+  width:8px!important;
+  height:8px!important;
+  min-width:8px!important;
+  min-height:8px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:var(--marker)!important;
+  box-shadow:
+    0 0 2px #fff,
+    0 0 6px var(--marker),
+    0 0 13px color-mix(in srgb,var(--marker) 78%,transparent),
+    0 0 24px color-mix(in srgb,var(--marker) 34%,transparent)!important;
+  animation:mapStarTwinkle 2.55s ease-in-out infinite!important;
+  transform:none!important;
+}
+
+body.ux-v2 .mfy-dot::before,
+body.ux-v2 .place-pin::before{
+  content:"";
+  position:absolute;
+  left:50%;top:50%;
+  width:1px;height:18px;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent);
+  pointer-events:none;
+}
+
+body.ux-v2 .mfy-dot::after,
+body.ux-v2 .place-pin::after{
+  content:"";
+  position:absolute;
+  left:50%;top:50%;
+  width:18px;height:1px;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  pointer-events:none;
+}
+
+body.ux-v2 .place-pin .icon{display:none!important}
+body.ux-v2 .mfy-marker.is-active .mfy-dot,
+body.ux-v2 .place-marker.is-active .place-pin{
+  box-shadow:
+    0 0 3px #fff,
+    0 0 8px var(--marker),
+    0 0 18px color-mix(in srgb,var(--marker) 88%,transparent),
+    0 0 34px color-mix(in srgb,var(--marker) 48%,transparent)!important;
+}
+body.ux-v2 .mfy-marker.is-dim,
+body.ux-v2 .place-marker.is-dim{
+  opacity:.10!important;
+  filter:saturate(.25)!important;
+  transform:none!important;
+}
+
+@keyframes mapStarTwinkle{
+  0%,100%{opacity:.46;filter:brightness(.82)}
+  45%{opacity:1;filter:brightness(1.34)}
+  62%{opacity:.72;filter:brightness(1.02)}
+}
+
+/* No map blur when a detail card opens */
+body.ux-v2.detail-focus #map .maplibregl-canvas,
+html[data-theme="light"] body.ux-v2.detail-focus #map .maplibregl-canvas{
+  filter:brightness(.82) saturate(.82) contrast(1.12)!important;
+}
+body.ux-v2.detail-focus .explore-panel{
+  opacity:1!important;
+  filter:none!important;
+  pointer-events:auto!important;
+}
+
+/* Galaxy sphere: pure black, independent stars, exit only with X */
+body.ux-v2 #idleSphereOverlay{
+  background:#000!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+body.ux-v2 #idleSphereStars{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 24%,rgba(68,125,255,.10),transparent 19%),
+    radial-gradient(circle at 78% 72%,rgba(126,76,255,.08),transparent 23%),
+    #000;
+}
+body.ux-v2 .idle-star{
+  position:absolute;
+  width:var(--size);
+  height:var(--size);
+  border-radius:50%;
+  background:#fff;
+  opacity:var(--alpha);
+  box-shadow:0 0 5px rgba(255,255,255,.85),0 0 12px rgba(132,176,255,.28);
+  animation:galaxyTwinkle var(--dur) ease-in-out infinite;
+  animation-delay:var(--delay);
+}
+@keyframes galaxyTwinkle{
+  0%,100%{opacity:calc(var(--alpha) * .35);transform:scale(.72)}
+  50%{opacity:1;transform:scale(1.18)}
+}
+body.ux-v2 #idleSphereCanvas{z-index:2!important}
+body.ux-v2 #idleSphereLabel{z-index:3!important}
+body.ux-v2 #idleSphereClose{z-index:4!important}
+
+/* Manual Sphere button: bottom-right, above attribution, away from dock */
+body.ux-v2 .sphere-test-button{
+  position:fixed!important;
+  right:18px!important;
+  bottom:18px!important;
+  left:auto!important;
+  top:auto!important;
+  z-index:96!important;
+  height:46px!important;
+  min-width:46px!important;
+  padding:0 14px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  border:1px solid var(--line)!important;
+  border-radius:17px!important;
+  color:var(--text)!important;
+  cursor:pointer!important;
+}
+body.ux-v2 .sphere-test-button .icon{width:18px;height:18px;display:grid;place-items:center}
+body.ux-v2 .sphere-test-button .sphere-test-label{font-size:.64rem;font-weight:760;letter-spacing:.04em}
+body.ux-v2.idle-mode .sphere-test-button{opacity:0!important;pointer-events:none!important}
+
+@media(max-width:760px){
+  body.ux-v2 .sphere-test-button{right:10px!important;bottom:86px!important;width:44px!important;min-width:44px!important;padding:0!important}
+  body.ux-v2 .sphere-test-button .sphere-test-label{display:none}
+}
+
