@@ -241,7 +241,7 @@ app.get(
 );
 
 /* Agar boshqa frontend route ochilsa */
-app.get('*', (req, res, next) => {
+app.get('/{*splat}', (req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return next();
   }
