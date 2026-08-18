@@ -2,118 +2,286 @@
 <html lang="%%LANG%%" dir="%%DIR%%" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
 
   <title>%%TITLE%%</title>
 
-  <meta name="description" content="%%DESCRIPTION%%">
-  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="theme-color" content="#071017">
+  <meta
+    name="description"
+    content="%%DESCRIPTION%%"
+  >
 
-  <link rel="canonical" href="%%CANONICAL%%">
+  <meta
+    name="robots"
+    content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+  >
+
+  <meta
+    name="theme-color"
+    content="#071017"
+  >
+
+  <link
+    rel="canonical"
+    href="%%CANONICAL%%"
+  >
 
   %%HREFLANG%%
 
-  <!-- OpenGraph -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="%%TITLE%%">
-  <meta property="og:description" content="%%DESCRIPTION%%">
-  <meta property="og:url" content="%%CANONICAL%%">
-  <meta property="og:locale" content="%%OG_LOCALE%%">
-  <meta property="og:image" content="%%OG_IMAGE%%">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Uchko‘prik Digital District">
+
+  <!-- ======================================================
+       OPEN GRAPH
+  ======================================================= -->
+
+  <meta
+    property="og:type"
+    content="website"
+  >
+
+  <meta
+    property="og:title"
+    content="%%TITLE%%"
+  >
+
+  <meta
+    property="og:description"
+    content="%%DESCRIPTION%%"
+  >
+
+  <meta
+    property="og:url"
+    content="%%CANONICAL%%"
+  >
+
+  <meta
+    property="og:locale"
+    content="%%OG_LOCALE%%"
+  >
+
+  <meta
+    property="og:image"
+    content="%%OG_IMAGE%%"
+  >
+
+  <meta
+    property="og:image:width"
+    content="1200"
+  >
+
+  <meta
+    property="og:image:height"
+    content="630"
+  >
+
+  <meta
+    property="og:image:alt"
+    content="Uchko‘prik Digital District"
+  >
+
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="%%OG_IMAGE%%">
+
+  <meta
+    name="twitter:card"
+    content="summary_large_image"
+  >
+
+  <meta
+    name="twitter:image"
+    content="%%OG_IMAGE%%"
+  >
+
 
   <!-- Structured data -->
+
   <script type="application/ld+json">
     %%JSONLD%%
   </script>
 
-  <!-- Icons / PWA -->
-  <link rel="icon" href="/logo.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/manifest.webmanifest">
 
-  <!-- Map -->
-  <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+  <!-- ======================================================
+       ICONS / PWA
+  ======================================================= -->
+
+  <link
+    rel="icon"
+    href="/logo.svg"
+    type="image/svg+xml"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="/icon-192.png"
+  >
+
+  <link
+    rel="manifest"
+    href="/manifest.webmanifest"
+  >
+
+
+  <!-- ======================================================
+       MAP
+  ======================================================= -->
+
+  <link
+    rel="preconnect"
+    href="https://tiles.openfreemap.org"
+    crossorigin
+  >
+
   <link
     rel="stylesheet"
     href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css"
   >
 
-  <!-- Main styles -->
-  <link rel="stylesheet" href="/assets/css/app.css">
-  <link rel="stylesheet" href="/assets/css/ux-v2.css">
+
+  <!-- ======================================================
+       STYLES
+  ======================================================= -->
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/app.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/ux-v2.css"
+  >
+
 </head>
 
-<body>
 
-  <a class="skip-link" href="#mainMap" data-i18n="skip">
+<!-- ========================================================
+     UX V2
+========================================================= -->
+
+<body class="ux-v2">
+
+
+  <a
+    class="skip-link"
+    href="#mainMap"
+    data-i18n="skip"
+  >
     Skip to map
   </a>
 
-  <div id="app" class="app-shell">
 
-    <!-- ======================================================
-         TOPBAR
-    ======================================================= -->
+  <div
+    id="app"
+    class="app-shell"
+  >
 
-    <header class="topbar glass floating" role="banner">
 
-      <a class="brand" href="/" aria-label="Uchko‘prik Digital District">
-        <img
-          src="/logo.svg"
-          alt=""
-          width="34"
-          height="34"
+    <!-- ====================================================
+         TOP NAVIGATION
+
+         LEFT   = DISTRICT PASSPORT
+         CENTER = DISTRICT NAME
+         RIGHT  = SEARCH + SETTINGS
+    ===================================================== -->
+
+    <header
+      class="topbar glass floating"
+      role="banner"
+    >
+
+
+      <!-- LEFT -->
+
+      <div class="ux-top-left">
+
+        <button
+          id="districtPassportBtn"
+          class="ux-top-button"
+          type="button"
+          title="Tuman pasporti"
         >
 
-        <span class="brand-copy">
-          <strong>UCHKO‘PRIK</strong>
-          <small data-i18n="brandSubtitle">Digital District</small>
-        </span>
-      </a>
+          <span
+            class="icon"
+            data-icon="landmark"
+          ></span>
+
+          <span data-i18n="districtPassport">
+            Tuman pasporti
+          </span>
+
+        </button>
+
+      </div>
 
 
-      <button
-        id="searchOpen"
-        class="search-launch sunken"
-        type="button"
-        aria-haspopup="dialog"
+      <!-- CENTER -->
+
+      <div
+        class="ux-district-title"
+        aria-label="Uchko‘prik tumani"
       >
-        <span class="icon" data-icon="search"></span>
 
-        <span
-          class="search-placeholder"
-          data-i18n="searchPlaceholder"
+        <strong>
+          UCHKO‘PRIK TUMANI
+        </strong>
+
+        <small>
+          51 MFY · interaktiv xarita
+        </small>
+
+      </div>
+
+
+      <!-- RIGHT -->
+
+      <div class="ux-top-right">
+
+
+        <!-- SEARCH -->
+
+        <button
+          id="searchOpen"
+          class="ux-top-button"
+          type="button"
+          aria-haspopup="dialog"
+          title="Qidiruv"
         >
-          Search Uchko‘prik
-        </span>
 
-        <kbd>⌘ K</kbd>
-      </button>
+          <span
+            class="icon"
+            data-icon="search"
+          ></span>
+
+          <span>
+            Qidiruv
+          </span>
+
+        </button>
 
 
-      <div class="top-actions">
+        <!-- PRESENTATION -->
 
         <button
           id="presentationBtn"
-          class="icon-btn hide-mobile"
+          class="icon-btn"
           type="button"
           title="Presentation"
           data-i18n-aria="presentation"
         >
+
           <span
             class="icon"
             data-icon="presentation"
           ></span>
+
         </button>
 
+
+        <!-- ACCESSIBILITY -->
 
         <button
           id="accessibilityBtn"
@@ -122,12 +290,16 @@
           title="Accessibility"
           data-i18n-aria="accessibility"
         >
+
           <span
             class="icon"
             data-icon="accessibility"
           ></span>
+
         </button>
 
+
+        <!-- LANGUAGE -->
 
         <button
           id="languageBtn"
@@ -135,12 +307,16 @@
           type="button"
           aria-haspopup="dialog"
         >
-          <span id="langShort">UZ</span>
+
+          <span id="langShort">
+            UZ
+          </span>
 
           <span
             class="icon small"
             data-icon="chevronDown"
           ></span>
+
         </button>
 
       </div>
@@ -148,16 +324,25 @@
     </header>
 
 
-    <!-- ======================================================
+    <!-- ====================================================
          MAIN MAP
-    ======================================================= -->
+    ===================================================== -->
 
-    <main class="map-stage" id="mainMap">
+    <main
+      class="map-stage"
+      id="mainMap"
+    >
+
+
+      <!-- MAP -->
 
       <div
         id="map"
         aria-label="Uchko‘prik district interactive map"
       ></div>
+
+
+      <!-- MAP VIGNETTE -->
 
       <div
         class="map-vignette"
@@ -165,68 +350,88 @@
       ></div>
 
 
-      <!-- ====================================================
-           EXPLORE PANEL
-      ===================================================== -->
+
+      <!-- ==================================================
+           FILTER OPEN BUTTON
+
+           Chap filter yopilganda chiqadi.
+      =================================================== -->
+
+      <button
+        id="filterToggle"
+        class="ux-filter-toggle glass floating"
+        type="button"
+        title="Xarita filtrlari"
+      >
+
+        <span
+          class="icon"
+          data-icon="map"
+        ></span>
+
+      </button>
+
+
+
+      <!-- ==================================================
+           LEFT FILTER PANEL
+
+           FAQAT FILTER.
+           STATISTIKA BU YERDA BO‘LMAYDI.
+      =================================================== -->
 
       <aside
         id="explorePanel"
         class="explore-panel glass floating"
-        aria-label="Explore"
+        aria-label="Map filters"
       >
+
+
+        <!-- HEADER -->
 
         <div class="panel-header">
 
           <div>
 
-            <span
-              class="eyebrow"
-              data-i18n="explore"
-            >
-              Explore
+            <span class="eyebrow">
+              XARITA
             </span>
 
-            <h1 data-i18n="welcomeTitle">
-              Discover Uchko‘prik
+            <h1>
+              Xarita filtrlari
             </h1>
 
           </div>
 
 
           <button
-            class="panel-close mobile-only"
             id="exploreClose"
+            class="panel-close icon-btn"
             type="button"
+            title="Yopish"
           >
+
             <span
               class="icon"
               data-icon="x"
             ></span>
+
           </button>
 
         </div>
 
 
-        <p
-          class="panel-lead"
-          data-i18n="welcomeLead"
-        >
-          Official district data, places, business and investment information
-          in one interactive experience.
-        </p>
 
-
-        <div
-          class="quick-stats"
-          id="quickStats"
-        ></div>
-
+        <!-- =================================================
+             MAIN LAYERS
+        ================================================== -->
 
         <div class="section-title-row">
 
           <h2 data-i18n="layers">
-            Map layers
+            Xarita qatlamlari
           </h2>
+
 
           <button
             id="fitDistrict"
@@ -234,7 +439,7 @@
             type="button"
             data-i18n="showAll"
           >
-            Show all
+            Barchasini ko‘rsatish
           </button>
 
         </div>
@@ -246,130 +451,88 @@
         ></div>
 
 
-        <div class="section-title-row">
 
-          <h2 data-i18n="highlights">
-            Highlights
-          </h2>
+        <!-- =================================================
+             SPECIALIZATION FILTER
 
-        </div>
+             JS orqali MFY tanlanganda ochiladi.
+        ================================================== -->
 
+        <section
+          id="specializationFilters"
+          class="filter-specializations hidden"
+        >
 
-        <div class="highlight-list">
+          <div class="filter-specializations-head">
 
-          <!-- Investor -->
-
-          <button
-            class="highlight-card"
-            data-mode="invest"
-          >
-
-            <span class="highlight-icon">
-              <span
-                class="icon"
-                data-icon="chart"
-              ></span>
-            </span>
-
-            <span>
-
-              <strong data-i18n="investorMode">
-                Investor Mode
-              </strong>
-
-              <small data-i18n="investorModeDesc">
-                Economy, industry and opportunities
-              </small>
-
-            </span>
-
-            <span
-              class="icon"
-              data-icon="arrowRight"
-            ></span>
-
-          </button>
+            <strong>
+              Ixtisoslashuv
+            </strong>
 
 
-          <!-- Products -->
+            <button
+              id="specializationReset"
+              class="filter-reset"
+              type="button"
+            >
+              Tozalash
+            </button>
 
-          <button
-            class="highlight-card"
-            data-mode="products"
-          >
-
-            <span class="highlight-icon">
-
-              <span
-                class="icon"
-                data-icon="package"
-              ></span>
-
-            </span>
-
-            <span>
-
-              <strong data-i18n="madeIn">
-                Made in Uchko‘prik
-              </strong>
-
-              <small data-i18n="madeInDesc">
-                Local products and producers
-              </small>
-
-            </span>
-
-            <span
-              class="icon"
-              data-icon="arrowRight"
-            ></span>
-
-          </button>
+          </div>
 
 
-          <!-- District -->
+          <div
+            id="specializationList"
+            class="filter-specializations-list"
+          ></div>
 
-          <button
-            class="highlight-card"
-            data-mode="district"
-          >
+        </section>
 
-            <span class="highlight-icon">
 
-              <span
-                class="icon"
-                data-icon="landmark"
-              ></span>
 
-            </span>
+        <!-- =================================================
+             ORGANIZATION SUB FILTER
 
-            <span>
+             Keyinchalik kategoriya → ichki tur
+        ================================================== -->
 
-              <strong data-i18n="districtPassport">
-                District Passport
-              </strong>
+        <section
+          id="organizationFilters"
+          class="filter-specializations hidden"
+        >
 
-              <small data-i18n="districtPassportDesc">
-                Verified facts and statistics
-              </small>
+          <div class="filter-specializations-head">
 
-            </span>
+            <strong>
+              Tashkilot turlari
+            </strong>
 
-            <span
-              class="icon"
-              data-icon="arrowRight"
-            ></span>
 
-          </button>
+            <button
+              id="organizationFilterReset"
+              class="filter-reset"
+              type="button"
+            >
+              Tozalash
+            </button>
 
-        </div>
+          </div>
+
+
+          <div
+            id="organizationFilterList"
+            class="filter-specializations-list"
+          ></div>
+
+        </section>
 
       </aside>
 
 
-      <!-- ====================================================
+
+      <!-- ==================================================
            INVESTOR MODE
-      ===================================================== -->
+      =================================================== -->
 
       <section
         id="investorPanel"
@@ -389,7 +552,7 @@
             </span>
 
             <h2 data-i18n="economyTitle">
-              Uchko‘prik Economy
+              Uchko‘prik iqtisodiyoti
             </h2>
 
           </div>
@@ -400,26 +563,30 @@
             class="icon-btn"
             type="button"
           >
+
             <span
               class="icon"
               data-icon="x"
             ></span>
+
           </button>
 
         </div>
 
 
         <div
-          class="investor-metrics"
           id="investorMetrics"
+          class="investor-metrics"
         ></div>
 
 
         <div class="mode-actions">
 
+
           <button
-            class="primary-btn"
             id="showBusinesses"
+            class="primary-btn"
+            type="button"
           >
 
             <span
@@ -428,15 +595,16 @@
             ></span>
 
             <span data-i18n="showBusinesses">
-              Show businesses
+              Korxonalarni ko‘rsatish
             </span>
 
           </button>
 
 
           <button
-            class="secondary-btn"
             id="askInvestment"
+            class="secondary-btn"
+            type="button"
           >
 
             <span
@@ -445,7 +613,7 @@
             ></span>
 
             <span data-i18n="askAI">
-              Ask AI
+              AI dan so‘rash
             </span>
 
           </button>
@@ -461,8 +629,7 @@
           ></span>
 
           <span data-i18n="verifiedNote">
-            Verified values are shown with their last update date.
-            Demo values are never presented as official.
+            Faqat tasdiqlangan ma’lumotlar rasmiy sifatida ko‘rsatiladi.
           </span>
 
         </div>
@@ -470,9 +637,10 @@
       </section>
 
 
-      <!-- ====================================================
+
+      <!-- ==================================================
            PRODUCTS
-      ===================================================== -->
+      =================================================== -->
 
       <section
         id="productsPanel"
@@ -492,7 +660,7 @@
             </span>
 
             <h2 data-i18n="productsTitle">
-              Local Products Showcase
+              Mahalliy mahsulotlar
             </h2>
 
           </div>
@@ -503,10 +671,12 @@
             class="icon-btn"
             type="button"
           >
+
             <span
               class="icon"
               data-icon="x"
             ></span>
+
           </button>
 
         </div>
@@ -520,9 +690,13 @@
       </section>
 
 
-      <!-- ====================================================
+
+      <!-- ==================================================
            DISTRICT PASSPORT
-      ===================================================== -->
+
+           Keyinchalik passport-mode paytida
+           o‘ng tomondagi katta panelga aylanadi.
+      =================================================== -->
 
       <section
         id="districtPanel"
@@ -538,11 +712,11 @@
               class="eyebrow"
               data-i18n="districtPassport"
             >
-              District Passport
+              Tuman pasporti
             </span>
 
             <h2 data-i18n="districtNumbers">
-              Uchko‘prik in Numbers
+              Uchko‘prik raqamlarda
             </h2>
 
           </div>
@@ -553,20 +727,78 @@
             class="icon-btn"
             type="button"
           >
+
             <span
               class="icon"
               data-icon="x"
             ></span>
+
           </button>
 
         </div>
 
+
+
+        <!-- MAIN METRICS -->
 
         <div
           id="districtMetrics"
           class="passport-grid"
         ></div>
 
+
+
+        <!-- SPECIALIZATION DISTRIBUTION -->
+
+        <section
+          id="districtSpecializationSection"
+          class="passport-section"
+        >
+
+          <div class="section-title-row">
+
+            <h2>
+              Ixtisoslashuv bo‘yicha taqsimot
+            </h2>
+
+          </div>
+
+
+          <div
+            id="districtSpecializationStats"
+            class="passport-specialization-list"
+          ></div>
+
+        </section>
+
+
+
+        <!-- TOP MFY -->
+
+        <section
+          id="districtTopMahallasSection"
+          class="passport-section"
+        >
+
+          <div class="section-title-row">
+
+            <h2>
+              Eng ko‘p aholili MFYlar
+            </h2>
+
+          </div>
+
+
+          <div
+            id="districtTopMahallas"
+            class="passport-ranking"
+          ></div>
+
+        </section>
+
+
+
+        <!-- DATA DATE -->
 
         <div class="data-note">
 
@@ -578,7 +810,7 @@
           <span>
 
             <span data-i18n="dataUpdated">
-              Data updated
+              Ma’lumot yangilangan
             </span>
 
             :
@@ -594,9 +826,198 @@
       </section>
 
 
-      <!-- ====================================================
+
+      <!-- ==================================================
+           PASSPORT DASHBOARD
+
+           Tuman pasporti bosilganda:
+           - xarita kichrayadi
+           - bu bloklar pastda ochiladi
+      =================================================== -->
+
+      <section
+        id="passportDashboard"
+        aria-label="District analytics"
+      >
+
+
+        <!-- ECONOMY -->
+
+        <article
+          class="passport-card glass floating"
+        >
+
+          <h3>
+            Iqtisodiyot
+          </h3>
+
+          <div id="passportEconomy">
+
+            <div class="passport-row">
+
+              <span>
+                Sanoat
+              </span>
+
+              <strong id="passportIndustry">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Qishloq xo‘jaligi
+              </span>
+
+              <strong id="passportAgriculture">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Xizmatlar
+              </span>
+
+              <strong id="passportServices">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+        </article>
+
+
+
+        <!-- SOCIAL -->
+
+        <article
+          class="passport-card glass floating"
+        >
+
+          <h3>
+            Mehnat va ijtimoiy ko‘rsatkichlar
+          </h3>
+
+
+          <div id="passportSocial">
+
+            <div class="passport-row">
+
+              <span>
+                Ishsizlik
+              </span>
+
+              <strong id="passportUnemployment">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Kambag‘allik
+              </span>
+
+              <strong id="passportPoverty">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Sog‘liqni saqlash
+              </span>
+
+              <strong id="passportHealthcare">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+        </article>
+
+
+
+        <!-- GENERAL -->
+
+        <article
+          class="passport-card glass floating"
+        >
+
+          <h3>
+            Umumiy ko‘rsatkichlar
+          </h3>
+
+
+          <div id="passportGeneral">
+
+            <div class="passport-row">
+
+              <span>
+                Tashkil topgan
+              </span>
+
+              <strong id="passportFounded">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Maydoni
+              </span>
+
+              <strong id="passportArea">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="passport-row">
+
+              <span>
+                Chegara uzunligi
+              </span>
+
+              <strong id="passportBorder">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+        </article>
+
+      </section>
+
+
+
+      <!-- ==================================================
            DETAIL CARD
-      ===================================================== -->
+
+           Marker bosilganda o‘ng tomonda Liquid Glass.
+      =================================================== -->
 
       <section
         id="detailCard"
@@ -604,39 +1025,47 @@
         aria-live="polite"
       >
 
+
         <button
           id="detailClose"
           class="detail-close icon-btn"
           type="button"
         >
+
           <span
             class="icon"
             data-icon="x"
           ></span>
+
         </button>
 
 
+
         <div
-          class="detail-hero"
           id="detailHero"
+          class="detail-hero"
         >
 
           <div
-            class="detail-symbol"
             id="detailSymbol"
+            class="detail-symbol"
           ></div>
 
         </div>
 
 
+
         <div class="detail-body">
 
+
           <div
-            class="detail-kicker"
             id="detailKicker"
+            class="detail-kicker"
           ></div>
 
-          <h2 id="detailTitle"></h2>
+
+          <h2 id="detailTitle">
+          </h2>
 
 
           <div
@@ -645,7 +1074,8 @@
           ></div>
 
 
-          <p id="detailDescription"></p>
+          <p id="detailDescription">
+          </p>
 
 
           <div
@@ -654,11 +1084,23 @@
           ></div>
 
 
+
+          <!-- FUTURE EXTRA DATA -->
+
+          <div
+            id="detailExtra"
+            class="detail-extra"
+          ></div>
+
+
+
           <div class="detail-actions">
+
 
             <button
               id="detailDirections"
               class="primary-btn"
+              type="button"
             >
 
               <span
@@ -667,7 +1109,7 @@
               ></span>
 
               <span data-i18n="directions">
-                Directions
+                Yo‘nalish
               </span>
 
             </button>
@@ -676,6 +1118,7 @@
             <button
               id="detailAsk"
               class="secondary-btn"
+              type="button"
             >
 
               <span
@@ -684,7 +1127,7 @@
               ></span>
 
               <span data-i18n="askAI">
-                Ask AI
+                AI
               </span>
 
             </button>
@@ -693,6 +1136,7 @@
             <button
               id="detailShare"
               class="icon-btn"
+              type="button"
             >
 
               <span
@@ -709,9 +1153,75 @@
       </section>
 
 
-      <!-- ====================================================
+
+      <!-- ==================================================
+           MARKER → DETAIL CONNECTOR
+
+           Keyinchalik JS nuqtadan kartagacha
+           animatsiyali nurli ip chizadi.
+      =================================================== -->
+
+      <svg
+        id="uxConnector"
+        class="hidden"
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+
+        <defs>
+
+          <linearGradient
+            id="uxConnectorGradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
+
+            <stop
+              offset="0%"
+              stop-color="#62e6ff"
+              stop-opacity="0.10"
+            ></stop>
+
+            <stop
+              offset="45%"
+              stop-color="#62e6ff"
+              stop-opacity="0.95"
+            ></stop>
+
+            <stop
+              offset="100%"
+              stop-color="#60ebc4"
+              stop-opacity="0.45"
+            ></stop>
+
+          </linearGradient>
+
+        </defs>
+
+
+        <path
+          class="glow"
+          d=""
+        ></path>
+
+
+        <path
+          class="main"
+          d=""
+        ></path>
+
+      </svg>
+
+
+
+      <!-- ==================================================
            SEARCH
-      ===================================================== -->
+      =================================================== -->
 
       <section
         id="searchDialog"
@@ -720,6 +1230,7 @@
         aria-modal="true"
         aria-label="Search"
       >
+
 
         <div class="search-box">
 
@@ -734,7 +1245,7 @@
             type="search"
             autocomplete="off"
             data-i18n-placeholder="searchPlaceholder"
-            placeholder="Search Uchko‘prik"
+            placeholder="Uchko‘prik bo‘yicha qidirish"
           >
 
 
@@ -757,7 +1268,7 @@
         <div class="search-hints">
 
           <span data-i18n="searchHint">
-            Try a mahalla, category, business or a natural-language question.
+            MFY, tashkilot, kategoriya yoki boshqa ma’lumotni qidiring.
           </span>
 
         </div>
@@ -771,9 +1282,10 @@
       </section>
 
 
-      <!-- ====================================================
-           AI ASSISTANT
-      ===================================================== -->
+
+      <!-- ==================================================
+           AI
+      =================================================== -->
 
       <section
         id="aiPanel"
@@ -781,13 +1293,17 @@
         aria-label="Uchko‘prik AI"
       >
 
+
         <div class="ai-head">
 
+
           <div class="ai-brand">
+
 
             <div class="ai-mini-orb">
               <span></span>
             </div>
+
 
             <div>
 
@@ -820,10 +1336,12 @@
         </div>
 
 
+
         <div
           id="aiMessages"
           class="ai-messages"
         ></div>
+
 
 
         <div
@@ -832,10 +1350,12 @@
         ></div>
 
 
+
         <form
           id="aiForm"
           class="ai-compose"
         >
+
 
           <button
             id="voiceBtn"
@@ -856,7 +1376,7 @@
             id="aiInput"
             autocomplete="off"
             data-i18n-placeholder="askPlaceholder"
-            placeholder="Ask about Uchko‘prik…"
+            placeholder="Uchko‘prik haqida so‘rang…"
           >
 
 
@@ -875,6 +1395,7 @@
         </form>
 
 
+
         <div class="ai-foot">
 
           <span
@@ -883,8 +1404,7 @@
           ></span>
 
           <span data-i18n="aiDisclaimer">
-            Answers prioritize verified district data.
-            Missing facts are not guessed.
+            Javoblarda tasdiqlangan tuman ma’lumotlariga ustuvorlik beriladi.
           </span>
 
         </div>
@@ -892,35 +1412,24 @@
       </section>
 
 
-      <!-- AI ORB -->
 
-      <button
-        id="aiOrb"
-        class="ai-orb"
-        type="button"
-        aria-label="Open Uchko‘prik AI"
-      >
+      <!-- ==================================================
+           PRIMARY DOCK
 
-        <span class="orb-core"></span>
-        <span class="orb-ring one"></span>
-        <span class="orb-ring two"></span>
-        <span class="orb-label">AI</span>
-
-      </button>
-
-
-      <!-- ====================================================
-           DOCK NAVIGATION
-      ===================================================== -->
+           Barcha asosiy bo‘limlar shu yerda.
+           Ortiqcha AI orb YO‘Q.
+      =================================================== -->
 
       <nav
         class="dock glass floating"
         aria-label="Primary navigation"
       >
 
+
         <button
           class="dock-item active"
           data-nav="explore"
+          type="button"
         >
 
           <span
@@ -929,15 +1438,17 @@
           ></span>
 
           <span data-i18n="explore">
-            Explore
+            Filtr
           </span>
 
         </button>
 
 
+
         <button
           class="dock-item"
           data-nav="map"
+          type="button"
         >
 
           <span
@@ -946,15 +1457,19 @@
           ></span>
 
           <span data-i18n="map">
-            Map
+            Xarita
           </span>
 
         </button>
 
 
+
+        <!-- CENTRAL AI -->
+
         <button
           class="dock-item center"
           data-nav="ai"
+          type="button"
         >
 
           <span class="dock-ai">
@@ -973,9 +1488,11 @@
         </button>
 
 
+
         <button
           class="dock-item"
           data-nav="invest"
+          type="button"
         >
 
           <span
@@ -984,15 +1501,17 @@
           ></span>
 
           <span data-i18n="invest">
-            Invest
+            Investitsiya
           </span>
 
         </button>
 
 
+
         <button
           class="dock-item"
           data-nav="products"
+          type="button"
         >
 
           <span
@@ -1001,7 +1520,7 @@
           ></span>
 
           <span data-i18n="products">
-            Products
+            Mahsulotlar
           </span>
 
         </button>
@@ -1013,9 +1532,10 @@
   </div>
 
 
-  <!-- ========================================================
+
+  <!-- ======================================================
        LANGUAGE
-  ========================================================= -->
+  ======================================================= -->
 
   <section
     id="languageSheet"
@@ -1023,7 +1543,10 @@
     aria-label="Language selection"
   >
 
-    <div class="sheet glass floating">
+    <div
+      class="sheet glass floating"
+    >
+
 
       <div class="sheet-head">
 
@@ -1066,9 +1589,10 @@
   </section>
 
 
-  <!-- ========================================================
+
+  <!-- ======================================================
        ACCESSIBILITY
-  ========================================================= -->
+  ======================================================= -->
 
   <section
     id="accessibilitySheet"
@@ -1076,7 +1600,10 @@
     aria-label="Accessibility settings"
   >
 
-    <div class="sheet glass floating">
+    <div
+      class="sheet glass floating"
+    >
+
 
       <div class="sheet-head">
 
@@ -1112,9 +1639,11 @@
       </div>
 
 
+
       <div class="settings-list">
 
-        <!-- Text size -->
+
+        <!-- TEXT -->
 
         <div class="setting-row">
 
@@ -1160,7 +1689,8 @@
         </div>
 
 
-        <!-- Contrast -->
+
+        <!-- CONTRAST -->
 
         <label class="setting-row">
 
@@ -1185,7 +1715,8 @@
         </label>
 
 
-        <!-- Motion -->
+
+        <!-- REDUCE MOTION -->
 
         <label class="setting-row">
 
@@ -1210,7 +1741,8 @@
         </label>
 
 
-        <!-- Transparency -->
+
+        <!-- TRANSPARENCY -->
 
         <label class="setting-row">
 
@@ -1235,7 +1767,8 @@
         </label>
 
 
-        <!-- Theme -->
+
+        <!-- THEME -->
 
         <label class="setting-row">
 
@@ -1266,9 +1799,10 @@
   </section>
 
 
-  <!-- ========================================================
+
+  <!-- ======================================================
        PRESENTATION MODE
-  ========================================================= -->
+  ======================================================= -->
 
   <section
     id="presentationOverlay"
@@ -1276,12 +1810,17 @@
     aria-label="Presentation Mode"
   >
 
+
     <div
       id="presentationMap"
       class="presentation-map"
     ></div>
 
-    <div class="presentation-shade"></div>
+
+    <div
+      class="presentation-shade"
+    ></div>
+
 
 
     <div class="presentation-brand">
@@ -1298,6 +1837,7 @@
     </div>
 
 
+
     <div class="presentation-copy">
 
       <span
@@ -1307,16 +1847,23 @@
         DIGITAL DISTRICT
       </span>
 
+
       <h2 id="sceneTitle">
         Welcome to Uchko‘prik
       </h2>
 
-      <p id="sceneText"></p>
+
+      <p id="sceneText">
+      </p>
 
     </div>
 
 
-    <div class="presentation-controls glass floating">
+
+    <div
+      class="presentation-controls glass floating"
+    >
+
 
       <button
         id="scenePrev"
@@ -1329,6 +1876,7 @@
         ></span>
 
       </button>
+
 
 
       <button
@@ -1344,9 +1892,11 @@
       </button>
 
 
+
       <span id="sceneCounter">
         1 / 6
       </span>
+
 
 
       <button
@@ -1360,6 +1910,7 @@
         ></span>
 
       </button>
+
 
 
       <button
@@ -1379,7 +1930,35 @@
   </section>
 
 
-  <!-- Toast -->
+
+  <!-- ======================================================
+       10 MINUTE IDLE PARTICLE EARTH
+
+       Three.js keyingi qadamda shu yerga ulanadi.
+  ======================================================= -->
+
+  <section
+    id="idleSphereOverlay"
+    aria-hidden="true"
+  >
+
+    <div id="idleSphereCanvas">
+    </div>
+
+
+    <div id="idleSphereLabel">
+
+      UCHKO‘PRIK DIGITAL DISTRICT
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ======================================================
+       TOAST
+  ======================================================= -->
 
   <div
     id="toastHost"
@@ -1388,25 +1967,40 @@
   ></div>
 
 
-  <!-- ========================================================
+
+  <!-- ======================================================
        JAVASCRIPT
-  ========================================================= -->
-
-  <!-- MapLibre -->
-  <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+  ======================================================= -->
 
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- MAPLIBRE -->
 
-  <script src="/assets/js/supabase.js"></script>
+  <script
+    src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"
+  ></script>
 
 
-  <!-- Main application -->
+
+  <!-- SUPABASE -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+
+  <script
+    src="/assets/js/supabase.js"
+  ></script>
+
+
+
+  <!-- MAIN APP -->
+
   <script
     type="module"
     src="/assets/js/app.js"
   ></script>
+
 
 </body>
 </html>
