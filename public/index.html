@@ -1929,30 +1929,35 @@
 
   </section>
 
-
-
   <!-- ======================================================
-       10 MINUTE IDLE PARTICLE EARTH
-
-       Three.js keyingi qadamda shu yerga ulanadi.
+       10 MINUTE IDLE PARTICLE EARTH / MANUAL SPHERE MODE
   ======================================================= -->
+  <section id="idleSphereOverlay" aria-hidden="true">
+    <div id="idleSphereStars" aria-hidden="true"></div>
 
-  <section
-    id="idleSphereOverlay"
-    aria-hidden="true"
-  >
+    <button
+      id="idleSphereClose"
+      type="button"
+      aria-label="Sphere rejimini yopish"
+      title="Yopish"
+    >
+      <span class="icon" data-icon="x"></span>
+    </button>
 
-    <div id="idleSphereCanvas">
-    </div>
-
-
-    <div id="idleSphereLabel">
-
-      UCHKO‘PRIK DIGITAL DISTRICT
-
-    </div>
-
+    <div id="idleSphereCanvas"></div>
+    <div id="idleSphereLabel">UCHKO‘PRIK DIGITAL DISTRICT</div>
   </section>
+
+  <button
+    id="sphereTestBtn"
+    class="sphere-test-button glass floating"
+    type="button"
+    aria-label="Sphere animatsiyasini sinash"
+    title="Sphere animatsiyasini sinash"
+  >
+    <span class="icon" data-icon="globe"></span>
+    <span class="sphere-test-label">Sphere</span>
+  </button>
 
 
 
