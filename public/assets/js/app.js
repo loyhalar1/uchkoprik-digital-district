@@ -28,6 +28,7 @@ const ICONS = {
   service:'<path d="M4 7h16v12H4z"></path><path d="M8 7V4h8v3M8 12h8"></path>',
   home:'<path d="m3 11 9-8 9 8v10h-6v-6H9v6H3V11Z"></path>',
   marker:'<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>',
+  globe:'<circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path>',
   info:'<circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path>'
 };
 
@@ -55,6 +56,78 @@ const validCoords=i=>Number.isFinite(Number(i?.lng))&&Number.isFinite(Number(i?.
 function svg(name){return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]||ICONS.info}</svg>`}
 function bindIcons(root=document){$$('[data-icon]',root).forEach(el=>el.innerHTML=svg(el.dataset.icon))}
 function setText(sel,val){const el=$(sel);if(el)el.textContent=val??'—'}
+
+/* =========================================================
+   MOTION SYSTEM
+========================================================= */
+
+function motionDisabled(){return document.documentElement.classList.contains('reduce-motion')}
+function easeOut(){return 'cubic-bezier(.16,1,.3,1)'}
+
+function cancelMotion(el){
+  if(!el?.getAnimations)return;
+  el.getAnimations().forEach(a=>{try{a.cancel()}catch{}});
+}
+
+function showSmooth(target,options={}){
+  const el=typeof target==='string'?$(target):target;
+  if(!el)return Promise.resolve();
+  cancelMotion(el);
+  el.classList.remove('hidden');
+  if(motionDisabled())return Promise.resolve();
+  const duration=options.duration||420;
+  const keyframes=options.keyframes||[
+    {opacity:0,translate:'0 14px',scale:.965,filter:'blur(8px)'},
+    {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}
+  ];
+  const anim=el.animate(keyframes,{duration,easing:options.easing||easeOut(),fill:'both'});
+  return anim.finished.catch(()=>{}).finally(()=>{try{anim.cancel()}catch{}});
+}
+
+function hideSmooth(target,options={}){
+  const el=typeof target==='string'?$(target):target;
+  if(!el||el.classList.contains('hidden'))return Promise.resolve();
+  cancelMotion(el);
+  if(motionDisabled()){
+    el.classList.add('hidden');
+    return Promise.resolve();
+  }
+  const duration=options.duration||300;
+  const keyframes=options.keyframes||[
+    {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'},
+    {opacity:0,translate:'0 10px',scale:.975,filter:'blur(6px)'}
+  ];
+  const anim=el.animate(keyframes,{duration,easing:options.easing||'cubic-bezier(.4,0,.6,1)',fill:'both'});
+  return anim.finished.catch(()=>{}).finally(()=>{
+    el.classList.add('hidden');
+    try{anim.cancel()}catch{}
+  });
+}
+
+function animateChromeIn(){
+  if(motionDisabled())return;
+  const rows=[
+    ['.topbar',0,'0 -18px'],
+    ['#explorePanel',90,'-18px 0'],
+    ['.dock',160,'0 22px']
+  ];
+  rows.forEach(([sel,delay,translate])=>{
+    const el=$(sel);if(!el)return;
+    el.animate([
+      {opacity:0,translate,scale:.97,filter:'blur(10px)'},
+      {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}
+    ],{duration:650,delay,easing:easeOut(),fill:'both'}).finished.catch(()=>{}).finally(()=>{el.getAnimations().forEach(a=>{try{a.cancel()}catch{}})});
+  });
+}
+
+function liquidPress(el){
+  if(!el||motionDisabled())return;
+  el.animate([
+    {scale:1},
+    {scale:.94,offset:.42},
+    {scale:1}
+  ],{duration:260,easing:easeOut()});
+}
 
 function detectLanguage(){const seg=location.pathname.split('/').filter(Boolean)[0];state.lang=LANGUAGES.some(l=>l.code===seg)?seg:(localStorage.getItem('uchkoprik-lang')||'uz')}
 function applyLanguage(){const meta=langMeta(state.lang);document.documentElement.lang=meta.code;document.documentElement.dir=meta.dir;if($('#langShort'))$('#langShort').textContent=meta.short;$$('[data-i18n]').forEach(el=>{const v=tr(el.dataset.i18n);if(v&&v!==el.dataset.i18n)el.textContent=v});$$('[data-i18n-placeholder]').forEach(el=>el.placeholder=tr(el.dataset.i18nPlaceholder));$$('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAria)));localStorage.setItem('uchkoprik-lang',state.lang);renderAllTextual()}
@@ -117,25 +190,25 @@ function renderPassportAnalytics(){const d=state.data.district;setText('#passpor
 function renderDistrictSpecializationStats(){const host=$('#districtSpecializationStats');if(!host)return;const stats=getSpecializationStats(),max=Math.max(1,...stats.map(x=>x.count));host.innerHTML=stats.map(x=>`<div class="passport-bar-row"><span class="label" title="${esc(x.name)}">${esc(x.name)}</span><span class="passport-bar"><i style="width:${x.count/max*100}%;--bar-color:${x.color}"></i></span><b>${x.count}</b></div>`).join('')}
 function renderDistrictTopMahallas(){const host=$('#districtTopMahallas');if(!host)return;const top=[...state.data.mahallas].sort((a,b)=>b.population-a.population).slice(0,5);host.innerHTML=top.map((m,i)=>`<button type="button" class="search-result" data-top-mahalla="${m.id}"><span class="result-icon">${i+1}</span><span class="result-copy"><strong>${esc(m.name)}</strong><small>${esc(m.specialization)}</small></span><span class="result-type">${fmt(m.population)}</span></button>`).join('');$$('[data-top-mahalla]',host).forEach(btn=>btn.addEventListener('click',()=>{const item=state.data.mahallas.find(m=>String(m.id)===btn.dataset.topMahalla);closePassportMode(false);setTimeout(()=>openDetail(item,'mahalla'),500)}))}
 
-function openPassportMode(){closeDetail(false);closeMajorPanels();if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();document.body.classList.add('passport-mode');$('#districtPanel')?.classList.remove('hidden');state.activePanel='district';setDockActive(null);setTimeout(()=>{state.map?.resize();fitDistrict(true)},450)}
-function closePassportMode(restore=true){if(!document.body.classList.contains('passport-mode'))return;document.body.classList.remove('passport-mode');$('#districtPanel')?.classList.add('hidden');state.activePanel='explore';setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,800);else fitDistrict(true);state.passportCamera=null},420)}
+async function openPassportMode(){closeDetail(false);await closeMajorPanels();if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();document.body.classList.add('passport-mode');state.activePanel='district';setDockActive(null);showSmooth('#districtPanel',{duration:520,keyframes:[{opacity:0,translate:'38px 0',scale:.97,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});setTimeout(()=>{state.map?.resize();fitDistrict(true)},520)}
+function closePassportMode(restore=true){if(!document.body.classList.contains('passport-mode'))return;hideSmooth('#districtPanel',{duration:340,keyframes:[{opacity:1,translate:'0 0',scale:1},{opacity:0,translate:'30px 0',scale:.98}]});document.body.classList.remove('passport-mode');state.activePanel='explore';setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,900);else fitDistrict(true);state.passportCamera=null},470)}
 
-function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};document.body.classList.add('detail-focus');setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
+async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};document.body.classList.add('detail-focus');setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
   const verify=$('#detailVerification');if(verify)verify.innerHTML=`<span class="badge ${item.verified?'verified':'demo'}"><span class="icon">${svg(item.verified?'shield':'info')}</span>${item.verified?'Tasdiqlangan':'Tasdiqlanmagan'}</span>${item.updatedAt?`<span class="badge">${esc(item.updatedAt)}</span>`:''}`;
-  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;$('#detailCard')?.classList.remove('hidden');state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));flyToItem(item);setTimeout(showConnector,430)}
+  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;showSmooth('#detailCard',{duration:460,keyframes:[{opacity:0,translate:'30px 0',scale:.955,filter:'blur(12px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));flyToItem(item);setTimeout(showConnector,430)}
 function renderDetailExtra(item,kind){const host=$('#detailExtra');if(!host)return;const rows=[];if(kind==='mahalla'){if(item.schools)rows.push(['Maktablar',item.schools]);if(item.kindergartens)rows.push(['Bog‘chalar',item.kindergartens]);if(item.clinics)rows.push(['Tibbiyot',item.clinics]);if(item.mosques)rows.push(['Masjidlar',item.mosques]);if(item.shops)rows.push(['Savdo nuqtalari',item.shops]);if(item.head)rows.push(['MFY raisi',item.head])}if(kind==='business'){if(item.address)rows.push(['Manzil',item.address]);if(item.website)rows.push(['Veb-sayt',item.website])}host.innerHTML=rows.length?`<div class="detail-extra-grid">${rows.map(([l,v])=>`<div class="passport-row"><span>${esc(l)}</span><strong>${typeof v==='number'?fmt(v):esc(v)}</strong></div>`).join('')}</div>`:''}
-function closeDetail(restore=true){const had=!!state.selected;$('#detailCard')?.classList.add('hidden');document.body.classList.remove('detail-focus');hideConnector();state.markers.forEach(m=>m.el.classList.remove('is-active'));state.selected=null;if(restore&&had&&state.detailCamera)restoreCamera(state.detailCamera,720);state.detailCamera=null}
+function closeDetail(restore=true){const had=!!state.selected;hideSmooth('#detailCard',{duration:280,keyframes:[{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'},{opacity:0,translate:'28px 0',scale:.97,filter:'blur(8px)'}]});document.body.classList.remove('detail-focus');hideConnector();state.markers.forEach(m=>m.el.classList.remove('is-active'));state.selected=null;if(restore&&had&&state.detailCamera)restoreCamera(state.detailCamera,820);state.detailCamera=null}
 
 function showConnector(){if(!state.selected||window.innerWidth<=760){hideConnector();return}$('#uxConnector')?.classList.remove('hidden');updateConnector()}
 function hideConnector(){$('#uxConnector')?.classList.add('hidden');if(state.connectorFrame){cancelAnimationFrame(state.connectorFrame);state.connectorFrame=null}}
 function scheduleConnectorUpdate(){if(!state.selected||state.connectorFrame)return;state.connectorFrame=requestAnimationFrame(()=>{state.connectorFrame=null;updateConnector()})}
 function updateConnector(){if(!state.selected||!state.map||window.innerWidth<=760)return;const marker=state.markers.find(m=>String(m.item.id)===String(state.selected.item.id)),card=$('#detailCard'),s=$('#uxConnector');if(!marker||!card||!s||card.classList.contains('hidden'))return;const mr=marker.el.getBoundingClientRect(),cr=card.getBoundingClientRect(),w=innerWidth,h=innerHeight;s.setAttribute('viewBox',`0 0 ${w} ${h}`);const x1=mr.left+mr.width/2,y1=mr.top+mr.height/2,x2=cr.left,y2=cr.top+Math.min(cr.height*.42,190),d=Math.max(90,Math.abs(x2-x1)*.43),path=`M ${x1} ${y1} C ${x1+d} ${y1}, ${x2-d*.65} ${y2}, ${x2} ${y2}`;$$('path',s).forEach(p=>p.setAttribute('d',path))}
 
-function openFilterPanel(){closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');setTimeout(()=>state.map?.resize(),200)}
-function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map');setTimeout(()=>state.map?.resize(),200)}
-function closeMajorPanels(){['investorPanel','productsPanel'].forEach(id=>$('#'+id)?.classList.add('hidden'));$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden')}
+async function openFilterPanel(){await closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');if(!motionDisabled())$('#explorePanel')?.animate([{opacity:.15,translate:'-18px 0',filter:'blur(5px)'},{opacity:1,translate:'0 0',filter:'blur(0px)'}],{duration:430,easing:easeOut()});setTimeout(()=>state.map?.resize(),360)}
+function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map');setTimeout(()=>state.map?.resize(),360)}
+async function closeMajorPanels(except=null){const jobs=[];['investorPanel','productsPanel'].forEach(id=>{if(id!==except)jobs.push(hideSmooth('#'+id,{duration:260}))});if(except!=='searchDialog')jobs.push(hideSmooth('#searchDialog',{duration:230}));if(except!=='aiPanel')jobs.push(hideSmooth('#aiPanel',{duration:230}));await Promise.all(jobs)}
 function setDockActive(name){$$('.dock-item').forEach(x=>x.classList.toggle('active',!!name&&x.dataset.nav===name))}
-function openPanel(name){if(name==='explore'){openFilterPanel();return}closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')$('#investorPanel')?.classList.remove('hidden');if(name==='products')$('#productsPanel')?.classList.remove('hidden');state.activePanel=name;setDockActive(name)}
+async function openPanel(name){if(name==='explore'){await openFilterPanel();return}closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();await closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')await showSmooth('#investorPanel',{duration:420});if(name==='products')await showSmooth('#productsPanel',{duration:420});state.activePanel=name;setDockActive(name)}
 function openInvestorMode(){openPanel('invest');state.activeLayer='business';renderCategories();renderMarkers();state.map?.easeTo({pitch:35,bearing:-5,duration:750})}
 function closeInvestorMode(){$('#investorPanel')?.classList.add('hidden');openFilterPanel();state.map?.easeTo({pitch:10,bearing:0,duration:550})}
 
@@ -151,7 +224,7 @@ function ensureAIWelcome(){const host=$('#aiMessages');if(host&&!host.children.l
 function addMessage(role,text,sources=[]){const host=$('#aiMessages');if(!host)return;const el=document.createElement('div');el.className=`message ${role}`;el.textContent=text;if(sources.length){const row=document.createElement('div');row.className='source-row';sources.forEach(s=>{const b=document.createElement('span');b.className='badge verified';b.textContent=s;row.appendChild(b)});el.appendChild(row)}host.appendChild(el);host.scrollTop=host.scrollHeight}
 function localAI(question){const q=normalize(question),d=state.data.district,m=state.data.mahallas;if(/nechta.*(mfy|mahalla)|how many.*mahalla/.test(q))return{text:`Uchko‘prik tumanida ${fmt(d.mahallas)} ta MFY mavjud.`,sources:['Tasdiqlangan ma’lumot']};if(/eng.*kop.*aholi|largest.*population|most populous/.test(q)){const top=[...m].sort((a,b)=>b.population-a.population)[0];return{text:`${top.name} — ${fmt(top.population)} nafar.`,sources:['Tasdiqlangan ma’lumot'],focus:top}}const spec=getSpecializationStats().find(x=>q.includes(normalize(x.name)));if(spec)return{text:`${spec.name} bo‘yicha ${spec.count} ta MFY topildi.`,action:'specialization',specialization:spec.name};if(/invest/.test(q))return{text:`Uchko‘prik tumani aholisi ${fmt(d.population)} nafar, maydoni ${fmt(d.areaKm2)} km².`,action:'invest'};const hit=searchLocal(question)[0];if(hit)return{text:`${hit.name} topildi.`,focus:hit};return{text:'Bu ma’lumot hozircha tasdiqlangan bazada mavjud emas.'}}
 async function askAI(question){question=String(question||'').trim();if(!question)return;openAI();addMessage('user',question);if($('#aiInput'))$('#aiInput').value='';addMessage('system','Tahlil qilinmoqda…');let answer=null;try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:question,lang:state.lang})});if(r.ok){const j=await r.json();if(j?.ok)answer=j}}catch{}$('#aiMessages .message.system:last-child')?.remove();if(!answer)answer=localAI(question);addMessage('assistant',answer.text||'—',answer.sources||[]);if(answer.action==='specialization'){state.activeLayer='mahalla';state.selectedSpecialization=answer.specialization;renderCategories();renderMarkers();openFilterPanel()}if(answer.action==='invest')openInvestorMode();if(answer.focus)setTimeout(()=>openDetail(answer.focus,answer.focus._kind||answer.focus.type||'mahalla'),220)}
-function openAI(){closeMajorPanels();$('#aiPanel')?.classList.remove('hidden');ensureAIWelcome();setDockActive('ai')}
+async function openAI(){await closeMajorPanels('aiPanel');await showSmooth('#aiPanel',{duration:420,keyframes:[{opacity:0,translate:'18px 16px',scale:.96,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});ensureAIWelcome();setDockActive('ai')}
 
 function setupVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;const r=new SR();r.interimResults=false;r.continuous=false;r.onstart=()=>$('#voiceBtn')?.classList.add('listening');r.onend=()=>$('#voiceBtn')?.classList.remove('listening');r.onresult=e=>{const q=e.results[0][0].transcript;if($('#aiInput'))$('#aiInput').value=q;askAI(q)};state.voiceRecognition=r}
 function startVoice(){if(!state.voiceRecognition){toast('Ovozli qidiruv','Brauzer qo‘llab-quvvatlamaydi');return}state.voiceRecognition.lang=localeCode();state.voiceRecognition.start()}
@@ -169,8 +242,8 @@ const scenes=()=>[
   {eyebrow:'MADE IN UCHKO‘PRIK',title:'Mahalliy mahsulotlar',text:'Mahalliy ishlab chiqaruvchilar va mahsulotlar.',center:[71.01,40.50],zoom:10.8,pitch:42,bearing:10},
   {eyebrow:'AI · MAP · DATA',title:'Digital District',text:'Raqamli boshqaruv va zamonaviy hududiy ma’lumotlar.',center:[71.045,40.54],zoom:9.8,pitch:50,bearing:0}
 ];
-function openPresentation(){$('#presentationOverlay')?.classList.remove('hidden');state.presentation.index=0;state.presentation.playing=true;if(!state.presentation.map)state.presentation.map=new maplibregl.Map({container:'presentationMap',style:getMapStyleUrl(),center:[71.045,40.54],zoom:9.7,pitch:20,interactive:false,attributionControl:true});renderScene();scheduleScene()}
-function closePresentation(){$('#presentationOverlay')?.classList.add('hidden');clearTimeout(state.presentation.timer)}
+function openPresentation(){showSmooth('#presentationOverlay',{duration:620,keyframes:[{opacity:0,scale:1.035,filter:'blur(14px)'},{opacity:1,scale:1,filter:'blur(0px)'}]});state.presentation.index=0;state.presentation.playing=true;if(!state.presentation.map)state.presentation.map=new maplibregl.Map({container:'presentationMap',style:getMapStyleUrl(),center:[71.045,40.54],zoom:9.7,pitch:20,interactive:false,attributionControl:true});renderScene();scheduleScene()}
+function closePresentation(){hideSmooth('#presentationOverlay',{duration:360,keyframes:[{opacity:1,scale:1},{opacity:0,scale:1.025,filter:'blur(10px)'}]});clearTimeout(state.presentation.timer)}
 function renderScene(){const all=scenes(),s=all[state.presentation.index];setText('#sceneEyebrow',s.eyebrow);setText('#sceneTitle',s.title);setText('#sceneText',s.text);setText('#sceneCounter',`${state.presentation.index+1} / ${all.length}`);if($('#scenePlay'))$('#scenePlay').innerHTML=`<span class="icon">${svg(state.presentation.playing?'pause':'play')}</span>`;state.presentation.map?.flyTo({center:s.center,zoom:s.zoom,pitch:s.pitch,bearing:s.bearing,duration:document.documentElement.classList.contains('reduce-motion')?0:1600})}
 function scheduleScene(){clearTimeout(state.presentation.timer);if(!state.presentation.playing)return;state.presentation.timer=setTimeout(()=>{state.presentation.index=(state.presentation.index+1)%scenes().length;renderScene();scheduleScene()},6500)}
 function sceneStep(d){state.presentation.index=(state.presentation.index+d+scenes().length)%scenes().length;renderScene();scheduleScene()}function togglePresentationPlay(){state.presentation.playing=!state.presentation.playing;renderScene();scheduleScene()}
@@ -178,9 +251,27 @@ function sceneStep(d){state.presentation.index=(state.presentation.index+d+scene
 async function initIdleSphere(){if(state.idle.initialized)return;const container=$('#idleSphereCanvas');if(!container)return;try{const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.1,100);camera.position.z=3.25;const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x000000,0);container.innerHTML='';container.appendChild(renderer.domElement);const count=innerWidth<760?4500:8000,positions=new Float32Array(count*3),gold=Math.PI*(3-Math.sqrt(5));for(let i=0;i<count;i++){const y=1-(i/(count-1))*2,r=Math.sqrt(Math.max(0,1-y*y)),th=gold*i;positions[i*3]=Math.cos(th)*r;positions[i*3+1]=y;positions[i*3+2]=Math.sin(th)*r}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({size:innerWidth<760?.013:.0105,color:document.documentElement.dataset.theme==='light'?0x132b36:0xffffff,transparent:true,opacity:.92,depthWrite:false,blending:THREE.AdditiveBlending});const points=new THREE.Points(geo,mat),group=new THREE.Group();group.add(points);scene.add(group);const resize=()=>{const w=Math.max(1,container.clientWidth),h=Math.max(1,container.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};new ResizeObserver(resize).observe(container);resize();state.idle={...state.idle,initialized:true,renderer,scene,camera,group,points};const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;group.rotation.y+=.0016;group.rotation.x=.12+Math.sin(performance.now()*.00022)*.03;group.scale.setScalar(1+Math.sin(performance.now()*.00065)*.008);renderer.render(scene,camera)};animate()}catch(e){console.warn('Idle sphere:',e)}}
 function updateIdleSphereTheme(){if(!state.idle.points)return;state.idle.points.material.color.setHex(document.documentElement.dataset.theme==='light'?0x132b36:0xffffff)}
 function resetIdleTimer(){clearTimeout(state.idle.timer);if(state.idle.active)exitIdleMode();state.idle.timer=setTimeout(enterIdleMode,state.idle.timeout)}
-async function enterIdleMode(){if(state.idle.active)return;if(!state.idle.initialized)await initIdleSphere();if(!state.idle.initialized)return;closeDetail(false);closeMajorPanels();if(document.body.classList.contains('passport-mode'))closePassportMode(false);state.idle.active=true;document.body.classList.add('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','false')}
-function exitIdleMode(){if(!state.idle.active)return;state.idle.active=false;document.body.classList.remove('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','true');setTimeout(()=>state.map?.resize(),520)}
-function setupIdleDetection(){let last=0;['pointerdown','pointermove','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{const now=Date.now();if(ev==='pointermove'&&now-last<500)return;last=now;resetIdleTimer()},{passive:true}));resetIdleTimer()}
+async function enterIdleMode(manual=false){if(state.idle.active)return;if(!state.idle.initialized)await initIdleSphere();if(!state.idle.initialized)return;closeDetail(false);await closeMajorPanels();if(document.body.classList.contains('passport-mode'))closePassportMode(false);state.idle.active=true;state.idle.manualGraceUntil=manual?Date.now()+650:0;document.body.classList.add('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','false');if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:0,scale:.22,rotate:'-8deg',filter:'blur(20px)'},{opacity:1,scale:1,rotate:'0deg',filter:'blur(0px)'}],{duration:1050,easing:easeOut()})}
+function exitIdleMode(){if(!state.idle.active)return;state.idle.active=false;if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:1,scale:1,filter:'blur(0px)'},{opacity:0,scale:.28,filter:'blur(18px)'}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)'});document.body.classList.remove('idle-mode');$('#idleSphereOverlay')?.setAttribute('aria-hidden','true');setTimeout(()=>{state.map?.resize();if(!motionDisabled())$('#map')?.animate([{scale:.82,opacity:.28,filter:'blur(12px)'},{scale:1,opacity:1,filter:'blur(0px)'}],{duration:820,easing:easeOut()})},420)}
+function setupIdleDetection(){let last=0;['pointerdown','pointermove','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{const now=Date.now();if(state.idle.active&&now<(state.idle.manualGraceUntil||0))return;if(ev==='pointermove'&&now-last<450)return;last=now;resetIdleTimer()},{passive:true}));resetIdleTimer()}
+
+function ensureSphereTestButton(){
+  if($('#sphereTestBtn'))return;
+  const button=document.createElement('button');
+  button.id='sphereTestBtn';
+  button.type='button';
+  button.className='sphere-test-button glass floating';
+  button.setAttribute('aria-label','Sphere animatsiyasini sinash');
+  button.title='Sphere animatsiyasini sinash';
+  button.innerHTML=`<span class="icon">${svg('globe')}</span><span class="sphere-test-label">Sphere</span>`;
+  button.addEventListener('click',async e=>{
+    e.stopPropagation();
+    liquidPress(button);
+    clearTimeout(state.idle.timer);
+    if(state.idle.active)exitIdleMode();else await enterIdleMode(true);
+  });
+  document.body.appendChild(button);
+}
 
 function toast(title,body=''){const host=$('#toastHost');if(!host)return;const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${body?`<small>${esc(body)}</small>`:''}`;host.appendChild(el);setTimeout(()=>el.remove(),3200)}
 function renderAllTextual(){renderCategories();renderProducts();renderDistrictMetrics();renderAISuggestions()}
@@ -188,15 +279,15 @@ function renderAllTextual(){renderCategories();renderProducts();renderDistrictMe
 function setupEvents(){
   $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#fitDistrict')?.addEventListener('click',()=>{state.selectedSpecialization=null;state.selectedOrganizationType=null;renderSpecializationFilters();renderOrganizationFilters();applyMarkerFilters();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters()});
   $('#districtPassportBtn')?.addEventListener('click',openPassportMode);$('#districtClose')?.addEventListener('click',()=>closePassportMode());
-  $('#searchOpen')?.addEventListener('click',()=>{closeMajorPanels();$('#searchDialog')?.classList.remove('hidden');renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),50)});$('#searchClose')?.addEventListener('click',()=>$('#searchDialog')?.classList.add('hidden'));$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
+  $('#searchOpen')?.addEventListener('click',async()=>{await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:380,keyframes:[{opacity:0,translate:'0 -10px',scale:.97,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSmooth('#searchDialog',{duration:240}));$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
   $$('.dock-item').forEach(btn=>btn.addEventListener('click',()=>{const nav=btn.dataset.nav;if(nav==='explore')return openFilterPanel();if(nav==='map'){closeMajorPanels();closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeFilterPanel();fitDistrict();return}if(nav==='ai')return openAI();if(nav==='invest')return openInvestorMode();if(nav==='products')return openPanel('products')}));
   $('#investorClose')?.addEventListener('click',closeInvestorMode);$('#showBusinesses')?.addEventListener('click',()=>{state.activeLayer='business';renderCategories();renderMarkers();closeInvestorMode()});$('#askInvestment')?.addEventListener('click',()=>askAI('Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'));$('#productsClose')?.addEventListener('click',openFilterPanel);
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
-  $('#aiClose')?.addEventListener('click',()=>{$('#aiPanel')?.classList.add('hidden');setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
+  $('#aiClose')?.addEventListener('click',()=>{hideSmooth('#aiPanel',{duration:260});setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
   $('#languageBtn')?.addEventListener('click',()=>openSheet('languageSheet'));$('#accessibilityBtn')?.addEventListener('click',()=>openSheet('accessibilitySheet'));$$('[data-sheet-close]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.sheetClose)));$$('.sheet-backdrop').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)s.classList.add('hidden')}));['lightModeToggle','reduceMotionToggle','reduceTransparencyToggle','highContrastToggle'].forEach(id=>$('#'+id)?.addEventListener('change',savePrefs));$$('[data-font]').forEach(btn=>btn.addEventListener('click',()=>setFont(btn.dataset.font)));
   $('#presentationBtn')?.addEventListener('click',openPresentation);$('#presentationExit')?.addEventListener('click',closePresentation);$('#scenePrev')?.addEventListener('click',()=>sceneStep(-1));$('#sceneNext')?.addEventListener('click',()=>sceneStep(1));$('#scenePlay')?.addEventListener('click',togglePresentationPlay);
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}if(e.key==='Escape'){if(state.selected){closeDetail();return}if(document.body.classList.contains('passport-mode')){closePassportMode();return}$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden');if(!$('#presentationOverlay')?.classList.contains('hidden'))closePresentation()}if(!$('#presentationOverlay')?.classList.contains('hidden')){if(e.key==='ArrowRight')sceneStep(1);if(e.key==='ArrowLeft')sceneStep(-1)}});window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize()});
 }
 
-async function boot(){detectLanguage();bindIcons();loadPrefs();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();setupIdleDetection();if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
+async function boot(){detectLanguage();bindIcons();loadPrefs();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();ensureSphereTestButton();setupIdleDetection();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
 boot().catch(error=>{console.error('Application error:',error);toast('Application error',error.message)});
