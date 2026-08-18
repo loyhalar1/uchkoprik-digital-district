@@ -3,12 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
   <title>%%TITLE%%</title>
+
   <meta name="description" content="%%DESCRIPTION%%">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <meta name="theme-color" content="#071017">
+
   <link rel="canonical" href="%%CANONICAL%%">
+
   %%HREFLANG%%
+
+  <!-- OpenGraph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="%%TITLE%%">
   <meta property="og:description" content="%%DESCRIPTION%%">
@@ -18,173 +24,1388 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Uchko‘prik Digital District">
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="%%OG_IMAGE%%">
-  <script type="application/ld+json">%%JSONLD%%</script>
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+    %%JSONLD%%
+  </script>
+
+  <!-- Icons / PWA -->
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.webmanifest">
+
+  <!-- Map -->
   <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css"
+  >
+
+  <!-- Main styles -->
   <link rel="stylesheet" href="/assets/css/app.css">
 </head>
+
 <body>
-  <a class="skip-link" href="#mainMap" data-i18n="skip">Skip to map</a>
+
+  <a class="skip-link" href="#mainMap" data-i18n="skip">
+    Skip to map
+  </a>
 
   <div id="app" class="app-shell">
+
+    <!-- ======================================================
+         TOPBAR
+    ======================================================= -->
+
     <header class="topbar glass floating" role="banner">
+
       <a class="brand" href="/" aria-label="Uchko‘prik Digital District">
-        <img src="/logo.svg" alt="" width="34" height="34">
-        <span class="brand-copy"><strong>UCHKO‘PRIK</strong><small data-i18n="brandSubtitle">Digital District</small></span>
+        <img
+          src="/logo.svg"
+          alt=""
+          width="34"
+          height="34"
+        >
+
+        <span class="brand-copy">
+          <strong>UCHKO‘PRIK</strong>
+          <small data-i18n="brandSubtitle">Digital District</small>
+        </span>
       </a>
 
-      <button id="searchOpen" class="search-launch sunken" type="button" aria-haspopup="dialog">
+
+      <button
+        id="searchOpen"
+        class="search-launch sunken"
+        type="button"
+        aria-haspopup="dialog"
+      >
         <span class="icon" data-icon="search"></span>
-        <span class="search-placeholder" data-i18n="searchPlaceholder">Search Uchko‘prik</span>
+
+        <span
+          class="search-placeholder"
+          data-i18n="searchPlaceholder"
+        >
+          Search Uchko‘prik
+        </span>
+
         <kbd>⌘ K</kbd>
       </button>
 
+
       <div class="top-actions">
-        <button id="presentationBtn" class="icon-btn hide-mobile" type="button" title="Presentation" data-i18n-aria="presentation">
-          <span class="icon" data-icon="presentation"></span>
+
+        <button
+          id="presentationBtn"
+          class="icon-btn hide-mobile"
+          type="button"
+          title="Presentation"
+          data-i18n-aria="presentation"
+        >
+          <span
+            class="icon"
+            data-icon="presentation"
+          ></span>
         </button>
-        <button id="accessibilityBtn" class="icon-btn" type="button" title="Accessibility" data-i18n-aria="accessibility">
-          <span class="icon" data-icon="accessibility"></span>
+
+
+        <button
+          id="accessibilityBtn"
+          class="icon-btn"
+          type="button"
+          title="Accessibility"
+          data-i18n-aria="accessibility"
+        >
+          <span
+            class="icon"
+            data-icon="accessibility"
+          ></span>
         </button>
-        <button id="languageBtn" class="language-btn" type="button" aria-haspopup="dialog"><span id="langShort">UZ</span><span class="icon small" data-icon="chevronDown"></span></button>
+
+
+        <button
+          id="languageBtn"
+          class="language-btn"
+          type="button"
+          aria-haspopup="dialog"
+        >
+          <span id="langShort">UZ</span>
+
+          <span
+            class="icon small"
+            data-icon="chevronDown"
+          ></span>
+        </button>
+
       </div>
+
     </header>
 
-    <main class="map-stage" id="mainMap">
-      <div id="map" aria-label="Uchko‘prik district interactive map"></div>
-      <div class="map-vignette" aria-hidden="true"></div>
 
-      <aside id="explorePanel" class="explore-panel glass floating" aria-label="Explore">
+    <!-- ======================================================
+         MAIN MAP
+    ======================================================= -->
+
+    <main class="map-stage" id="mainMap">
+
+      <div
+        id="map"
+        aria-label="Uchko‘prik district interactive map"
+      ></div>
+
+      <div
+        class="map-vignette"
+        aria-hidden="true"
+      ></div>
+
+
+      <!-- ====================================================
+           EXPLORE PANEL
+      ===================================================== -->
+
+      <aside
+        id="explorePanel"
+        class="explore-panel glass floating"
+        aria-label="Explore"
+      >
+
         <div class="panel-header">
-          <div><span class="eyebrow" data-i18n="explore">Explore</span><h1 data-i18n="welcomeTitle">Discover Uchko‘prik</h1></div>
-          <button class="panel-close mobile-only" id="exploreClose" type="button"><span class="icon" data-icon="x"></span></button>
+
+          <div>
+
+            <span
+              class="eyebrow"
+              data-i18n="explore"
+            >
+              Explore
+            </span>
+
+            <h1 data-i18n="welcomeTitle">
+              Discover Uchko‘prik
+            </h1>
+
+          </div>
+
+
+          <button
+            class="panel-close mobile-only"
+            id="exploreClose"
+            type="button"
+          >
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+          </button>
+
         </div>
-        <p class="panel-lead" data-i18n="welcomeLead">Official district data, places, business and investment information in one interactive experience.</p>
-        <div class="quick-stats" id="quickStats"></div>
-        <div class="section-title-row"><h2 data-i18n="layers">Map layers</h2><button id="fitDistrict" class="text-btn" type="button" data-i18n="showAll">Show all</button></div>
-        <div id="categoryChips" class="category-grid"></div>
-        <div class="section-title-row"><h2 data-i18n="highlights">Highlights</h2></div>
+
+
+        <p
+          class="panel-lead"
+          data-i18n="welcomeLead"
+        >
+          Official district data, places, business and investment information
+          in one interactive experience.
+        </p>
+
+
+        <div
+          class="quick-stats"
+          id="quickStats"
+        ></div>
+
+
+        <div class="section-title-row">
+
+          <h2 data-i18n="layers">
+            Map layers
+          </h2>
+
+          <button
+            id="fitDistrict"
+            class="text-btn"
+            type="button"
+            data-i18n="showAll"
+          >
+            Show all
+          </button>
+
+        </div>
+
+
+        <div
+          id="categoryChips"
+          class="category-grid"
+        ></div>
+
+
+        <div class="section-title-row">
+
+          <h2 data-i18n="highlights">
+            Highlights
+          </h2>
+
+        </div>
+
+
         <div class="highlight-list">
-          <button class="highlight-card" data-mode="invest"><span class="highlight-icon"><span class="icon" data-icon="chart"></span></span><span><strong data-i18n="investorMode">Investor Mode</strong><small data-i18n="investorModeDesc">Economy, industry and opportunities</small></span><span class="icon" data-icon="arrowRight"></span></button>
-          <button class="highlight-card" data-mode="products"><span class="highlight-icon"><span class="icon" data-icon="package"></span></span><span><strong data-i18n="madeIn">Made in Uchko‘prik</strong><small data-i18n="madeInDesc">Local products and producers</small></span><span class="icon" data-icon="arrowRight"></span></button>
-          <button class="highlight-card" data-mode="district"><span class="highlight-icon"><span class="icon" data-icon="landmark"></span></span><span><strong data-i18n="districtPassport">District Passport</strong><small data-i18n="districtPassportDesc">Verified facts and statistics</small></span><span class="icon" data-icon="arrowRight"></span></button>
+
+          <!-- Investor -->
+
+          <button
+            class="highlight-card"
+            data-mode="invest"
+          >
+
+            <span class="highlight-icon">
+              <span
+                class="icon"
+                data-icon="chart"
+              ></span>
+            </span>
+
+            <span>
+
+              <strong data-i18n="investorMode">
+                Investor Mode
+              </strong>
+
+              <small data-i18n="investorModeDesc">
+                Economy, industry and opportunities
+              </small>
+
+            </span>
+
+            <span
+              class="icon"
+              data-icon="arrowRight"
+            ></span>
+
+          </button>
+
+
+          <!-- Products -->
+
+          <button
+            class="highlight-card"
+            data-mode="products"
+          >
+
+            <span class="highlight-icon">
+
+              <span
+                class="icon"
+                data-icon="package"
+              ></span>
+
+            </span>
+
+            <span>
+
+              <strong data-i18n="madeIn">
+                Made in Uchko‘prik
+              </strong>
+
+              <small data-i18n="madeInDesc">
+                Local products and producers
+              </small>
+
+            </span>
+
+            <span
+              class="icon"
+              data-icon="arrowRight"
+            ></span>
+
+          </button>
+
+
+          <!-- District -->
+
+          <button
+            class="highlight-card"
+            data-mode="district"
+          >
+
+            <span class="highlight-icon">
+
+              <span
+                class="icon"
+                data-icon="landmark"
+              ></span>
+
+            </span>
+
+            <span>
+
+              <strong data-i18n="districtPassport">
+                District Passport
+              </strong>
+
+              <small data-i18n="districtPassportDesc">
+                Verified facts and statistics
+              </small>
+
+            </span>
+
+            <span
+              class="icon"
+              data-icon="arrowRight"
+            ></span>
+
+          </button>
+
         </div>
+
       </aside>
 
-      <section id="investorPanel" class="mode-panel glass floating hidden" aria-label="Investor Mode">
-        <div class="mode-head"><div><span class="eyebrow" data-i18n="investorMode">Investor Mode</span><h2 data-i18n="economyTitle">Uchko‘prik Economy</h2></div><button id="investorClose" class="icon-btn" type="button"><span class="icon" data-icon="x"></span></button></div>
-        <div class="investor-metrics" id="investorMetrics"></div>
-        <div class="mode-actions">
-          <button class="primary-btn" id="showBusinesses"><span class="icon" data-icon="briefcase"></span><span data-i18n="showBusinesses">Show businesses</span></button>
-          <button class="secondary-btn" id="askInvestment"><span class="icon" data-icon="sparkles"></span><span data-i18n="askAI">Ask AI</span></button>
-        </div>
-        <div class="data-note"><span class="icon" data-icon="shield"></span><span data-i18n="verifiedNote">Verified values are shown with their last update date. Demo values are never presented as official.</span></div>
-      </section>
 
-      <section id="productsPanel" class="mode-panel wide glass floating hidden" aria-label="Made in Uchko‘prik">
-        <div class="mode-head"><div><span class="eyebrow" data-i18n="madeIn">Made in Uchko‘prik</span><h2 data-i18n="productsTitle">Local Products Showcase</h2></div><button id="productsClose" class="icon-btn" type="button"><span class="icon" data-icon="x"></span></button></div>
-        <div id="productGrid" class="product-grid"></div>
-      </section>
+      <!-- ====================================================
+           INVESTOR MODE
+      ===================================================== -->
 
-      <section id="districtPanel" class="mode-panel glass floating hidden" aria-label="District Passport">
-        <div class="mode-head"><div><span class="eyebrow" data-i18n="districtPassport">District Passport</span><h2 data-i18n="districtNumbers">Uchko‘prik in Numbers</h2></div><button id="districtClose" class="icon-btn" type="button"><span class="icon" data-icon="x"></span></button></div>
-        <div id="districtMetrics" class="passport-grid"></div>
-        <div class="data-note"><span class="icon" data-icon="database"></span><span><span data-i18n="dataUpdated">Data updated</span>: <b id="districtUpdated">—</b></span></div>
-      </section>
+      <section
+        id="investorPanel"
+        class="mode-panel glass floating hidden"
+        aria-label="Investor Mode"
+      >
 
-      <section id="detailCard" class="detail-card glass floating hidden" aria-live="polite">
-        <button id="detailClose" class="detail-close icon-btn" type="button"><span class="icon" data-icon="x"></span></button>
-        <div class="detail-hero" id="detailHero"><div class="detail-symbol" id="detailSymbol"></div></div>
-        <div class="detail-body">
-          <div class="detail-kicker" id="detailKicker"></div>
-          <h2 id="detailTitle"></h2>
-          <div id="detailVerification" class="verification-row"></div>
-          <p id="detailDescription"></p>
-          <div id="detailStats" class="detail-stats"></div>
-          <div class="detail-actions">
-            <button id="detailDirections" class="primary-btn"><span class="icon" data-icon="navigation"></span><span data-i18n="directions">Directions</span></button>
-            <button id="detailAsk" class="secondary-btn"><span class="icon" data-icon="sparkles"></span><span data-i18n="askAI">Ask AI</span></button>
-            <button id="detailShare" class="icon-btn"><span class="icon" data-icon="share"></span></button>
+        <div class="mode-head">
+
+          <div>
+
+            <span
+              class="eyebrow"
+              data-i18n="investorMode"
+            >
+              Investor Mode
+            </span>
+
+            <h2 data-i18n="economyTitle">
+              Uchko‘prik Economy
+            </h2>
+
           </div>
+
+
+          <button
+            id="investorClose"
+            class="icon-btn"
+            type="button"
+          >
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+          </button>
+
         </div>
+
+
+        <div
+          class="investor-metrics"
+          id="investorMetrics"
+        ></div>
+
+
+        <div class="mode-actions">
+
+          <button
+            class="primary-btn"
+            id="showBusinesses"
+          >
+
+            <span
+              class="icon"
+              data-icon="briefcase"
+            ></span>
+
+            <span data-i18n="showBusinesses">
+              Show businesses
+            </span>
+
+          </button>
+
+
+          <button
+            class="secondary-btn"
+            id="askInvestment"
+          >
+
+            <span
+              class="icon"
+              data-icon="sparkles"
+            ></span>
+
+            <span data-i18n="askAI">
+              Ask AI
+            </span>
+
+          </button>
+
+        </div>
+
+
+        <div class="data-note">
+
+          <span
+            class="icon"
+            data-icon="shield"
+          ></span>
+
+          <span data-i18n="verifiedNote">
+            Verified values are shown with their last update date.
+            Demo values are never presented as official.
+          </span>
+
+        </div>
+
       </section>
 
-      <section id="searchDialog" class="search-dialog glass floating hidden" role="dialog" aria-modal="true" aria-label="Search">
+
+      <!-- ====================================================
+           PRODUCTS
+      ===================================================== -->
+
+      <section
+        id="productsPanel"
+        class="mode-panel wide glass floating hidden"
+        aria-label="Made in Uchko‘prik"
+      >
+
+        <div class="mode-head">
+
+          <div>
+
+            <span
+              class="eyebrow"
+              data-i18n="madeIn"
+            >
+              Made in Uchko‘prik
+            </span>
+
+            <h2 data-i18n="productsTitle">
+              Local Products Showcase
+            </h2>
+
+          </div>
+
+
+          <button
+            id="productsClose"
+            class="icon-btn"
+            type="button"
+          >
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+          </button>
+
+        </div>
+
+
+        <div
+          id="productGrid"
+          class="product-grid"
+        ></div>
+
+      </section>
+
+
+      <!-- ====================================================
+           DISTRICT PASSPORT
+      ===================================================== -->
+
+      <section
+        id="districtPanel"
+        class="mode-panel glass floating hidden"
+        aria-label="District Passport"
+      >
+
+        <div class="mode-head">
+
+          <div>
+
+            <span
+              class="eyebrow"
+              data-i18n="districtPassport"
+            >
+              District Passport
+            </span>
+
+            <h2 data-i18n="districtNumbers">
+              Uchko‘prik in Numbers
+            </h2>
+
+          </div>
+
+
+          <button
+            id="districtClose"
+            class="icon-btn"
+            type="button"
+          >
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+          </button>
+
+        </div>
+
+
+        <div
+          id="districtMetrics"
+          class="passport-grid"
+        ></div>
+
+
+        <div class="data-note">
+
+          <span
+            class="icon"
+            data-icon="database"
+          ></span>
+
+          <span>
+
+            <span data-i18n="dataUpdated">
+              Data updated
+            </span>
+
+            :
+
+            <b id="districtUpdated">
+              —
+            </b>
+
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- ====================================================
+           DETAIL CARD
+      ===================================================== -->
+
+      <section
+        id="detailCard"
+        class="detail-card glass floating hidden"
+        aria-live="polite"
+      >
+
+        <button
+          id="detailClose"
+          class="detail-close icon-btn"
+          type="button"
+        >
+          <span
+            class="icon"
+            data-icon="x"
+          ></span>
+        </button>
+
+
+        <div
+          class="detail-hero"
+          id="detailHero"
+        >
+
+          <div
+            class="detail-symbol"
+            id="detailSymbol"
+          ></div>
+
+        </div>
+
+
+        <div class="detail-body">
+
+          <div
+            class="detail-kicker"
+            id="detailKicker"
+          ></div>
+
+          <h2 id="detailTitle"></h2>
+
+
+          <div
+            id="detailVerification"
+            class="verification-row"
+          ></div>
+
+
+          <p id="detailDescription"></p>
+
+
+          <div
+            id="detailStats"
+            class="detail-stats"
+          ></div>
+
+
+          <div class="detail-actions">
+
+            <button
+              id="detailDirections"
+              class="primary-btn"
+            >
+
+              <span
+                class="icon"
+                data-icon="navigation"
+              ></span>
+
+              <span data-i18n="directions">
+                Directions
+              </span>
+
+            </button>
+
+
+            <button
+              id="detailAsk"
+              class="secondary-btn"
+            >
+
+              <span
+                class="icon"
+                data-icon="sparkles"
+              ></span>
+
+              <span data-i18n="askAI">
+                Ask AI
+              </span>
+
+            </button>
+
+
+            <button
+              id="detailShare"
+              class="icon-btn"
+            >
+
+              <span
+                class="icon"
+                data-icon="share"
+              ></span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ====================================================
+           SEARCH
+      ===================================================== -->
+
+      <section
+        id="searchDialog"
+        class="search-dialog glass floating hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
+      >
+
         <div class="search-box">
-          <span class="icon" data-icon="search"></span>
-          <input id="globalSearch" type="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="Search Uchko‘prik">
-          <button id="searchClose" class="icon-btn" type="button"><span class="icon" data-icon="x"></span></button>
+
+          <span
+            class="icon"
+            data-icon="search"
+          ></span>
+
+
+          <input
+            id="globalSearch"
+            type="search"
+            autocomplete="off"
+            data-i18n-placeholder="searchPlaceholder"
+            placeholder="Search Uchko‘prik"
+          >
+
+
+          <button
+            id="searchClose"
+            class="icon-btn"
+            type="button"
+          >
+
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+
+          </button>
+
         </div>
-        <div class="search-hints"><span data-i18n="searchHint">Try a mahalla, category, business or a natural-language question.</span></div>
-        <div id="searchResults" class="search-results"></div>
+
+
+        <div class="search-hints">
+
+          <span data-i18n="searchHint">
+            Try a mahalla, category, business or a natural-language question.
+          </span>
+
+        </div>
+
+
+        <div
+          id="searchResults"
+          class="search-results"
+        ></div>
+
       </section>
 
-      <section id="aiPanel" class="ai-panel glass floating hidden" aria-label="Uchko‘prik AI">
+
+      <!-- ====================================================
+           AI ASSISTANT
+      ===================================================== -->
+
+      <section
+        id="aiPanel"
+        class="ai-panel glass floating hidden"
+        aria-label="Uchko‘prik AI"
+      >
+
         <div class="ai-head">
-          <div class="ai-brand"><div class="ai-mini-orb"><span></span></div><div><strong>Uchko‘prik AI</strong><small data-i18n="officialDataAI">Official-data assistant</small></div></div>
-          <button id="aiClose" class="icon-btn" type="button"><span class="icon" data-icon="x"></span></button>
+
+          <div class="ai-brand">
+
+            <div class="ai-mini-orb">
+              <span></span>
+            </div>
+
+            <div>
+
+              <strong>
+                Uchko‘prik AI
+              </strong>
+
+              <small data-i18n="officialDataAI">
+                Official-data assistant
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <button
+            id="aiClose"
+            class="icon-btn"
+            type="button"
+          >
+
+            <span
+              class="icon"
+              data-icon="x"
+            ></span>
+
+          </button>
+
         </div>
-        <div id="aiMessages" class="ai-messages"></div>
-        <div id="aiSuggestions" class="ai-suggestions"></div>
-        <form id="aiForm" class="ai-compose">
-          <button id="voiceBtn" class="icon-btn voice-btn" type="button" title="Voice"><span class="icon" data-icon="mic"></span></button>
-          <input id="aiInput" autocomplete="off" data-i18n-placeholder="askPlaceholder" placeholder="Ask about Uchko‘prik…">
-          <button class="send-btn" type="submit"><span class="icon" data-icon="arrowUp"></span></button>
+
+
+        <div
+          id="aiMessages"
+          class="ai-messages"
+        ></div>
+
+
+        <div
+          id="aiSuggestions"
+          class="ai-suggestions"
+        ></div>
+
+
+        <form
+          id="aiForm"
+          class="ai-compose"
+        >
+
+          <button
+            id="voiceBtn"
+            class="icon-btn voice-btn"
+            type="button"
+            title="Voice"
+          >
+
+            <span
+              class="icon"
+              data-icon="mic"
+            ></span>
+
+          </button>
+
+
+          <input
+            id="aiInput"
+            autocomplete="off"
+            data-i18n-placeholder="askPlaceholder"
+            placeholder="Ask about Uchko‘prik…"
+          >
+
+
+          <button
+            class="send-btn"
+            type="submit"
+          >
+
+            <span
+              class="icon"
+              data-icon="arrowUp"
+            ></span>
+
+          </button>
+
         </form>
-        <div class="ai-foot"><span class="icon" data-icon="shield"></span><span data-i18n="aiDisclaimer">Answers prioritize verified district data. Missing facts are not guessed.</span></div>
+
+
+        <div class="ai-foot">
+
+          <span
+            class="icon"
+            data-icon="shield"
+          ></span>
+
+          <span data-i18n="aiDisclaimer">
+            Answers prioritize verified district data.
+            Missing facts are not guessed.
+          </span>
+
+        </div>
+
       </section>
 
-      <button id="aiOrb" class="ai-orb" type="button" aria-label="Open Uchko‘prik AI">
-        <span class="orb-core"></span><span class="orb-ring one"></span><span class="orb-ring two"></span>
+
+      <!-- AI ORB -->
+
+      <button
+        id="aiOrb"
+        class="ai-orb"
+        type="button"
+        aria-label="Open Uchko‘prik AI"
+      >
+
+        <span class="orb-core"></span>
+        <span class="orb-ring one"></span>
+        <span class="orb-ring two"></span>
         <span class="orb-label">AI</span>
+
       </button>
 
-      <nav class="dock glass floating" aria-label="Primary navigation">
-        <button class="dock-item active" data-nav="explore"><span class="icon" data-icon="compass"></span><span data-i18n="explore">Explore</span></button>
-        <button class="dock-item" data-nav="map"><span class="icon" data-icon="map"></span><span data-i18n="map">Map</span></button>
-        <button class="dock-item center" data-nav="ai"><span class="dock-ai"><span class="icon" data-icon="sparkles"></span></span><span>AI</span></button>
-        <button class="dock-item" data-nav="invest"><span class="icon" data-icon="chart"></span><span data-i18n="invest">Invest</span></button>
-        <button class="dock-item" data-nav="products"><span class="icon" data-icon="package"></span><span data-i18n="products">Products</span></button>
+
+      <!-- ====================================================
+           DOCK NAVIGATION
+      ===================================================== -->
+
+      <nav
+        class="dock glass floating"
+        aria-label="Primary navigation"
+      >
+
+        <button
+          class="dock-item active"
+          data-nav="explore"
+        >
+
+          <span
+            class="icon"
+            data-icon="compass"
+          ></span>
+
+          <span data-i18n="explore">
+            Explore
+          </span>
+
+        </button>
+
+
+        <button
+          class="dock-item"
+          data-nav="map"
+        >
+
+          <span
+            class="icon"
+            data-icon="map"
+          ></span>
+
+          <span data-i18n="map">
+            Map
+          </span>
+
+        </button>
+
+
+        <button
+          class="dock-item center"
+          data-nav="ai"
+        >
+
+          <span class="dock-ai">
+
+            <span
+              class="icon"
+              data-icon="sparkles"
+            ></span>
+
+          </span>
+
+          <span>
+            AI
+          </span>
+
+        </button>
+
+
+        <button
+          class="dock-item"
+          data-nav="invest"
+        >
+
+          <span
+            class="icon"
+            data-icon="chart"
+          ></span>
+
+          <span data-i18n="invest">
+            Invest
+          </span>
+
+        </button>
+
+
+        <button
+          class="dock-item"
+          data-nav="products"
+        >
+
+          <span
+            class="icon"
+            data-icon="package"
+          ></span>
+
+          <span data-i18n="products">
+            Products
+          </span>
+
+        </button>
+
       </nav>
+
     </main>
+
   </div>
 
-  <section id="languageSheet" class="sheet-backdrop hidden" aria-label="Language selection">
-    <div class="sheet glass floating">
-      <div class="sheet-head"><div><span class="eyebrow">Language</span><h2 data-i18n="chooseLanguage">Choose language</h2></div><button class="icon-btn" data-sheet-close="languageSheet"><span class="icon" data-icon="x"></span></button></div>
-      <div id="languageGrid" class="language-grid"></div>
-    </div>
-  </section>
 
-  <section id="accessibilitySheet" class="sheet-backdrop hidden" aria-label="Accessibility settings">
+  <!-- ========================================================
+       LANGUAGE
+  ========================================================= -->
+
+  <section
+    id="languageSheet"
+    class="sheet-backdrop hidden"
+    aria-label="Language selection"
+  >
+
     <div class="sheet glass floating">
-      <div class="sheet-head"><div><span class="eyebrow" data-i18n="accessibility">Accessibility</span><h2 data-i18n="accessibilitySettings">Display & motion</h2></div><button class="icon-btn" data-sheet-close="accessibilitySheet"><span class="icon" data-icon="x"></span></button></div>
-      <div class="settings-list">
-        <div class="setting-row"><div><strong data-i18n="textSize">Text size</strong><small data-i18n="textSizeDesc">Adjust interface text size</small></div><div class="segment"><button data-font="small">A−</button><button data-font="normal" class="active">A</button><button data-font="large">A+</button></div></div>
-        <label class="setting-row"><div><strong data-i18n="highContrast">High contrast</strong><small data-i18n="highContrastDesc">Increase interface contrast</small></div><input id="highContrastToggle" type="checkbox" class="switch"></label>
-        <label class="setting-row"><div><strong data-i18n="reduceMotion">Reduce motion</strong><small data-i18n="reduceMotionDesc">Use simpler transitions</small></div><input id="reduceMotionToggle" type="checkbox" class="switch"></label>
-        <label class="setting-row"><div><strong data-i18n="reduceTransparency">Reduce transparency</strong><small data-i18n="reduceTransparencyDesc">Use solid surfaces instead of glass</small></div><input id="reduceTransparencyToggle" type="checkbox" class="switch"></label>
-        <label class="setting-row"><div><strong data-i18n="lightMode">Light mode</strong><small data-i18n="lightModeDesc">Switch between dark and light appearance</small></div><input id="lightModeToggle" type="checkbox" class="switch"></label>
+
+      <div class="sheet-head">
+
+        <div>
+
+          <span class="eyebrow">
+            Language
+          </span>
+
+          <h2 data-i18n="chooseLanguage">
+            Choose language
+          </h2>
+
+        </div>
+
+
+        <button
+          class="icon-btn"
+          data-sheet-close="languageSheet"
+          type="button"
+        >
+
+          <span
+            class="icon"
+            data-icon="x"
+          ></span>
+
+        </button>
+
       </div>
+
+
+      <div
+        id="languageGrid"
+        class="language-grid"
+      ></div>
+
     </div>
+
   </section>
 
-  <section id="presentationOverlay" class="presentation hidden" aria-label="Presentation Mode">
-    <div id="presentationMap" class="presentation-map"></div>
+
+  <!-- ========================================================
+       ACCESSIBILITY
+  ========================================================= -->
+
+  <section
+    id="accessibilitySheet"
+    class="sheet-backdrop hidden"
+    aria-label="Accessibility settings"
+  >
+
+    <div class="sheet glass floating">
+
+      <div class="sheet-head">
+
+        <div>
+
+          <span
+            class="eyebrow"
+            data-i18n="accessibility"
+          >
+            Accessibility
+          </span>
+
+          <h2 data-i18n="accessibilitySettings">
+            Display & motion
+          </h2>
+
+        </div>
+
+
+        <button
+          class="icon-btn"
+          data-sheet-close="accessibilitySheet"
+          type="button"
+        >
+
+          <span
+            class="icon"
+            data-icon="x"
+          ></span>
+
+        </button>
+
+      </div>
+
+
+      <div class="settings-list">
+
+        <!-- Text size -->
+
+        <div class="setting-row">
+
+          <div>
+
+            <strong data-i18n="textSize">
+              Text size
+            </strong>
+
+            <small data-i18n="textSizeDesc">
+              Adjust interface text size
+            </small>
+
+          </div>
+
+
+          <div class="segment">
+
+            <button
+              type="button"
+              data-font="small"
+            >
+              A−
+            </button>
+
+            <button
+              type="button"
+              data-font="normal"
+              class="active"
+            >
+              A
+            </button>
+
+            <button
+              type="button"
+              data-font="large"
+            >
+              A+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- Contrast -->
+
+        <label class="setting-row">
+
+          <div>
+
+            <strong data-i18n="highContrast">
+              High contrast
+            </strong>
+
+            <small data-i18n="highContrastDesc">
+              Increase interface contrast
+            </small>
+
+          </div>
+
+          <input
+            id="highContrastToggle"
+            type="checkbox"
+            class="switch"
+          >
+
+        </label>
+
+
+        <!-- Motion -->
+
+        <label class="setting-row">
+
+          <div>
+
+            <strong data-i18n="reduceMotion">
+              Reduce motion
+            </strong>
+
+            <small data-i18n="reduceMotionDesc">
+              Use simpler transitions
+            </small>
+
+          </div>
+
+          <input
+            id="reduceMotionToggle"
+            type="checkbox"
+            class="switch"
+          >
+
+        </label>
+
+
+        <!-- Transparency -->
+
+        <label class="setting-row">
+
+          <div>
+
+            <strong data-i18n="reduceTransparency">
+              Reduce transparency
+            </strong>
+
+            <small data-i18n="reduceTransparencyDesc">
+              Use solid surfaces instead of glass
+            </small>
+
+          </div>
+
+          <input
+            id="reduceTransparencyToggle"
+            type="checkbox"
+            class="switch"
+          >
+
+        </label>
+
+
+        <!-- Theme -->
+
+        <label class="setting-row">
+
+          <div>
+
+            <strong data-i18n="lightMode">
+              Light mode
+            </strong>
+
+            <small data-i18n="lightModeDesc">
+              Switch between dark and light appearance
+            </small>
+
+          </div>
+
+          <input
+            id="lightModeToggle"
+            type="checkbox"
+            class="switch"
+          >
+
+        </label>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ========================================================
+       PRESENTATION MODE
+  ========================================================= -->
+
+  <section
+    id="presentationOverlay"
+    class="presentation hidden"
+    aria-label="Presentation Mode"
+  >
+
+    <div
+      id="presentationMap"
+      class="presentation-map"
+    ></div>
+
     <div class="presentation-shade"></div>
-    <div class="presentation-brand"><img src="/logo.svg" alt=""><span>UCHKO‘PRIK</span></div>
-    <div class="presentation-copy"><span class="eyebrow" id="sceneEyebrow">DIGITAL DISTRICT</span><h2 id="sceneTitle">Welcome to Uchko‘prik</h2><p id="sceneText"></p></div>
-    <div class="presentation-controls glass floating"><button id="scenePrev"><span class="icon" data-icon="arrowLeft"></span></button><button id="scenePlay"><span class="icon" data-icon="pause"></span></button><span id="sceneCounter">1 / 6</span><button id="sceneNext"><span class="icon" data-icon="arrowRight"></span></button><button id="presentationExit"><span class="icon" data-icon="x"></span></button></div>
+
+
+    <div class="presentation-brand">
+
+      <img
+        src="/logo.svg"
+        alt=""
+      >
+
+      <span>
+        UCHKO‘PRIK
+      </span>
+
+    </div>
+
+
+    <div class="presentation-copy">
+
+      <span
+        class="eyebrow"
+        id="sceneEyebrow"
+      >
+        DIGITAL DISTRICT
+      </span>
+
+      <h2 id="sceneTitle">
+        Welcome to Uchko‘prik
+      </h2>
+
+      <p id="sceneText"></p>
+
+    </div>
+
+
+    <div class="presentation-controls glass floating">
+
+      <button
+        id="scenePrev"
+        type="button"
+      >
+
+        <span
+          class="icon"
+          data-icon="arrowLeft"
+        ></span>
+
+      </button>
+
+
+      <button
+        id="scenePlay"
+        type="button"
+      >
+
+        <span
+          class="icon"
+          data-icon="pause"
+        ></span>
+
+      </button>
+
+
+      <span id="sceneCounter">
+        1 / 6
+      </span>
+
+
+      <button
+        id="sceneNext"
+        type="button"
+      >
+
+        <span
+          class="icon"
+          data-icon="arrowRight"
+        ></span>
+
+      </button>
+
+
+      <button
+        id="presentationExit"
+        type="button"
+      >
+
+        <span
+          class="icon"
+          data-icon="x"
+        ></span>
+
+      </button>
+
+    </div>
+
   </section>
 
-  <div id="toastHost" class="toast-host" aria-live="polite"></div>
 
+  <!-- Toast -->
+
+  <div
+    id="toastHost"
+    class="toast-host"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- ========================================================
+       JAVASCRIPT
+  ========================================================= -->
+
+  <!-- MapLibre -->
   <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
-  <script type="module" src="/assets/js/app.js"></script>
+
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="/assets/js/supabase.js"></script>
+
+
+  <!-- Main application -->
+  <script
+    type="module"
+    src="/assets/js/app.js"
+  ></script>
+
 </body>
 </html>
