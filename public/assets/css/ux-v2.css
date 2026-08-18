@@ -1,1 +1,1547 @@
+/* =========================================================
+   UCHKO‘PRIK DIGITAL DISTRICT
+   UX V2 — LIQUID GLASS / MAP FIRST
+========================================================= */
 
+:root {
+  --ux-bg: #061018;
+  --ux-bg-2: #0a1721;
+
+  --ux-text: #f5fbff;
+  --ux-muted: #91a7b7;
+  --ux-faint: #617685;
+
+  --ux-cyan: #62e6ff;
+  --ux-aqua: #60ebc4;
+  --ux-blue: #4d8cff;
+  --ux-violet: #8c7cff;
+
+  --ux-glass: rgba(11, 25, 36, 0.48);
+  --ux-glass-strong: rgba(10, 23, 34, 0.72);
+
+  --ux-border: rgba(255, 255, 255, 0.13);
+  --ux-border-strong: rgba(255, 255, 255, 0.23);
+
+  --ux-shadow:
+    0 30px 100px rgba(0, 0, 0, 0.38),
+    0 8px 30px rgba(0, 0, 0, 0.18);
+
+  --ux-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+
+/* =========================================================
+   LIGHT THEME
+========================================================= */
+
+html[data-theme="light"] {
+  --ux-bg: #eef4f7;
+  --ux-bg-2: #f9fcfd;
+
+  --ux-text: #10202a;
+  --ux-muted: #647986;
+  --ux-faint: #8a9ca7;
+
+  --ux-glass: rgba(250, 253, 255, 0.52);
+  --ux-glass-strong: rgba(252, 254, 255, 0.78);
+
+  --ux-border: rgba(16, 38, 52, 0.11);
+  --ux-border-strong: rgba(16, 38, 52, 0.20);
+
+  --ux-shadow:
+    0 28px 90px rgba(32, 58, 74, 0.16),
+    0 8px 26px rgba(32, 58, 74, 0.10);
+}
+
+
+/* =========================================================
+   BASE
+========================================================= */
+
+body.ux-v2 {
+  background: var(--ux-bg);
+}
+
+body.ux-v2 button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+body.ux-v2 #map {
+  background: #02070b;
+}
+
+
+/* DARK MAP */
+
+body.ux-v2 #map .maplibregl-canvas {
+  filter:
+    brightness(.38)
+    saturate(.55)
+    contrast(1.25);
+
+  transition:
+    filter .7s var(--ux-ease),
+    opacity .5s var(--ux-ease),
+    transform .8s var(--ux-ease);
+}
+
+
+/* LIGHT MAP */
+
+html[data-theme="light"] body.ux-v2 #map .maplibregl-canvas {
+  filter:
+    brightness(1.03)
+    saturate(.82)
+    contrast(1.02);
+}
+
+
+/* map shade */
+
+body.ux-v2 .map-vignette {
+  background:
+
+    linear-gradient(
+      180deg,
+      rgba(2, 8, 12, .46),
+      transparent 18%,
+      transparent 72%,
+      rgba(2, 8, 12, .34)
+    ),
+
+    radial-gradient(
+      circle at 50% 46%,
+      transparent 38%,
+      rgba(1, 6, 10, .25) 100%
+    );
+}
+
+
+html[data-theme="light"] body.ux-v2 .map-vignette {
+  background:
+
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.10),
+      transparent 20%,
+      transparent 78%,
+      rgba(229,238,243,.18)
+    );
+}
+
+
+/* =========================================================
+   REAL LIQUID GLASS
+========================================================= */
+
+body.ux-v2 .glass {
+
+  background:
+
+    radial-gradient(
+      120% 80% at 8% -8%,
+      rgba(255,255,255,.15),
+      transparent 38%
+    ),
+
+    radial-gradient(
+      90% 60% at 95% 110%,
+      rgba(98,230,255,.07),
+      transparent 46%
+    ),
+
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.07),
+      rgba(255,255,255,.015) 40%,
+      rgba(255,255,255,.035)
+    ),
+
+    var(--ux-glass);
+
+  border: 1px solid var(--ux-border);
+
+  box-shadow:
+    var(--ux-shadow),
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(255,255,255,.035);
+
+  backdrop-filter:
+    blur(30px)
+    saturate(165%);
+
+  -webkit-backdrop-filter:
+    blur(30px)
+    saturate(165%);
+}
+
+
+body.ux-v2 .floating::before {
+
+  background:
+
+    radial-gradient(
+      100% 65% at 12% -5%,
+      rgba(255,255,255,.20),
+      transparent 42%
+    ),
+
+    linear-gradient(
+      120deg,
+      rgba(255,255,255,.09),
+      transparent 25%,
+      transparent 75%,
+      rgba(255,255,255,.025)
+    );
+
+  opacity: .78;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+body.ux-v2 .topbar {
+
+  top: 14px;
+
+  width:
+    min(
+      1100px,
+      calc(100% - 32px)
+    );
+
+  height: 58px;
+
+  border-radius:
+    22px 22px 18px 22px;
+
+  padding:
+    7px 10px;
+
+  gap: 12px;
+
+  transition:
+    width .45s var(--ux-ease),
+    opacity .4s,
+    transform .45s var(--ux-ease);
+}
+
+
+body.ux-v2 .brand {
+
+  min-width: 180px;
+}
+
+
+body.ux-v2 .brand-copy strong {
+
+  font-size: .76rem;
+
+  letter-spacing: .15em;
+}
+
+
+body.ux-v2 .brand-copy small {
+
+  display: none;
+}
+
+
+/* Search smaller */
+
+body.ux-v2 .search-launch {
+
+  max-width: 420px;
+
+  height: 40px;
+
+  border-radius: 15px;
+
+  background:
+    rgba(255,255,255,.035);
+}
+
+
+body.ux-v2 .search-launch:hover {
+
+  background:
+    rgba(255,255,255,.075);
+}
+
+
+/* =========================================================
+   LEFT FILTER PANEL
+========================================================= */
+
+body.ux-v2 .explore-panel {
+
+  left: 18px;
+
+  top: 88px;
+
+  width: 310px;
+
+  max-height:
+    calc(100vh - 178px);
+
+  padding: 18px;
+
+  border-radius:
+    34px 34px 34px 14px;
+
+  transition:
+
+    opacity .38s var(--ux-ease),
+
+    transform .48s var(--ux-ease),
+
+    filter .38s;
+}
+
+
+/* HIDE OLD STATISTICS */
+
+body.ux-v2 .explore-panel
+.panel-lead,
+
+body.ux-v2 .explore-panel
+.quick-stats {
+
+  display: none !important;
+}
+
+
+/* remove big old intro */
+
+body.ux-v2
+.explore-panel
+.panel-header
+.eyebrow {
+
+  display: none;
+}
+
+
+body.ux-v2
+.explore-panel
+.panel-header h1 {
+
+  font-size: 1rem;
+
+  letter-spacing: -.01em;
+
+  margin:
+    2px 0 10px;
+}
+
+
+/* close always visible */
+
+body.ux-v2
+.explore-panel
+.panel-close {
+
+  display: grid !important;
+
+  width: 35px;
+
+  height: 35px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.055);
+
+  border:
+    1px solid var(--ux-border);
+}
+
+
+/* =========================================================
+   FILTER CATEGORIES
+========================================================= */
+
+body.ux-v2 .category-grid {
+
+  display: grid;
+
+  grid-template-columns: 1fr;
+
+  gap: 7px;
+}
+
+
+body.ux-v2 .category-chip {
+
+  width: 100%;
+
+  min-height: 42px;
+
+  padding:
+    0 12px;
+
+  border-radius: 14px;
+
+  justify-content:
+    flex-start;
+
+  background:
+    rgba(255,255,255,.038);
+
+  border:
+    1px solid var(--ux-border);
+
+  color:
+    var(--ux-muted);
+
+  transition:
+    .2s var(--ux-ease);
+}
+
+
+body.ux-v2
+.category-chip:hover {
+
+  background:
+    rgba(255,255,255,.075);
+
+  color:
+    var(--ux-text);
+
+  transform:
+    translateX(2px);
+}
+
+
+body.ux-v2
+.category-chip.active {
+
+  background:
+
+    linear-gradient(
+      90deg,
+      color-mix(
+        in srgb,
+        var(--chip) 14%,
+        transparent
+      ),
+      rgba(255,255,255,.035)
+    );
+
+  color:
+    var(--ux-text);
+
+  border-color:
+
+    color-mix(
+      in srgb,
+      var(--chip) 45%,
+      var(--ux-border)
+    );
+}
+
+
+body.ux-v2
+.category-chip .dot {
+
+  width: 9px;
+
+  height: 9px;
+
+  box-shadow:
+
+    0 0 12px
+    currentColor;
+}
+
+
+/* =========================================================
+   OLD HIGHLIGHTS
+   temporarily cleaner until navbar UX update
+========================================================= */
+
+body.ux-v2 .highlight-list {
+
+  display: none;
+}
+
+
+body.ux-v2
+.explore-panel
+.section-title-row:last-of-type {
+
+  display: none;
+}
+
+
+/* =========================================================
+   MFY MARKERS
+   ROUND 3D GLOW SPHERES
+========================================================= */
+
+body.ux-v2
+.mfy-marker {
+
+  width: 24px !important;
+
+  height: 24px !important;
+
+  min-width: 24px !important;
+
+  min-height: 24px !important;
+
+  border: 0 !important;
+
+  background:
+    transparent !important;
+
+  padding: 0 !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  overflow:
+    visible !important;
+
+  cursor:
+    pointer;
+
+  transition:
+
+    transform .22s
+    var(--ux-ease),
+
+    opacity .35s
+    var(--ux-ease),
+
+    filter .35s;
+}
+
+
+/* actual sphere */
+
+body.ux-v2
+.mfy-marker
+.mfy-dot {
+
+  width: 13px !important;
+
+  height: 13px !important;
+
+  min-width: 13px !important;
+
+  min-height: 13px !important;
+
+  border-radius: 50% !important;
+
+  display: block !important;
+
+  position: relative;
+
+  background:
+
+    radial-gradient(
+      circle at 30% 24%,
+
+      #ffffff 0%,
+
+      rgba(255,255,255,.95) 8%,
+
+      color-mix(
+        in srgb,
+        var(--marker)
+        88%,
+        white
+      )
+      18%,
+
+      var(--marker)
+      52%,
+
+      color-mix(
+        in srgb,
+        var(--marker)
+        62%,
+        black
+      )
+      100%
+    )
+    !important;
+
+  border:
+
+    1px solid
+    rgba(255,255,255,.68)
+    !important;
+
+  box-shadow:
+
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--marker)
+      12%,
+      transparent
+    ),
+
+    0 0 14px
+    color-mix(
+      in srgb,
+      var(--marker)
+      82%,
+      transparent
+    ),
+
+    0 0 30px
+    color-mix(
+      in srgb,
+      var(--marker)
+      40%,
+      transparent
+    ),
+
+    inset
+    -2px
+    -2px
+    5px
+    rgba(0,0,0,.30),
+
+    inset
+    2px
+    2px
+    5px
+    rgba(255,255,255,.24)
+
+    !important;
+
+  animation:
+
+    uxSpherePulse
+    2.8s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes uxSpherePulse {
+
+  0%,
+  100% {
+
+    transform:
+      scale(.94);
+
+    filter:
+      brightness(.92);
+  }
+
+  50% {
+
+    transform:
+      scale(1.12);
+
+    filter:
+      brightness(1.22);
+  }
+}
+
+
+/* hover */
+
+body.ux-v2
+.mfy-marker:hover {
+
+  transform:
+    scale(1.30);
+
+  z-index:
+    100 !important;
+}
+
+
+/* active */
+
+body.ux-v2
+.mfy-marker.is-active {
+
+  transform:
+    scale(1.42);
+
+  z-index:
+    101 !important;
+}
+
+
+body.ux-v2
+.mfy-marker.is-active
+.mfy-dot {
+
+  box-shadow:
+
+    0 0 0 5px
+    color-mix(
+      in srgb,
+      var(--marker)
+      18%,
+      transparent
+    ),
+
+    0 0 22px
+    color-mix(
+      in srgb,
+      var(--marker)
+      95%,
+      transparent
+    ),
+
+    0 0 48px
+    color-mix(
+      in srgb,
+      var(--marker)
+      60%,
+      transparent
+    )
+
+    !important;
+}
+
+
+/* =========================================================
+   MARKER HOVER NAME
+========================================================= */
+
+body.ux-v2
+.mfy-marker::after {
+
+  content:
+    attr(aria-label);
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    calc(100% + 10px);
+
+  transform:
+    translate(-50%, 5px)
+    scale(.96);
+
+  white-space:
+    nowrap;
+
+  max-width:
+    220px;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  padding:
+    7px 10px;
+
+  border-radius:
+    11px;
+
+  color:
+    #ffffff;
+
+  background:
+    rgba(5, 14, 20, .90);
+
+  border:
+    1px solid
+    rgba(255,255,255,.16);
+
+  box-shadow:
+    0 12px 32px
+    rgba(0,0,0,.30);
+
+  backdrop-filter:
+    blur(12px);
+
+  font-size:
+    .66rem;
+
+  font-weight:
+    750;
+
+  opacity:
+    0;
+
+  pointer-events:
+    none;
+
+  transition:
+    .18s var(--ux-ease);
+}
+
+
+body.ux-v2
+.mfy-marker:hover::after {
+
+  opacity:
+    1;
+
+  transform:
+    translate(-50%, 0)
+    scale(1);
+}
+
+
+/* =========================================================
+   DIM FILTER MODE
+========================================================= */
+
+body.ux-v2
+.mfy-marker.is-dim,
+
+body.ux-v2
+.place-marker.is-dim {
+
+  opacity:
+    .10 !important;
+
+  filter:
+    saturate(.2);
+
+  transform:
+    scale(.75);
+}
+
+
+/* =========================================================
+   PLACE / BUSINESS MARKERS
+========================================================= */
+
+body.ux-v2
+.place-marker {
+
+  background:
+    transparent !important;
+
+  border:
+    0 !important;
+
+  overflow:
+    visible;
+
+  transition:
+    .25s var(--ux-ease);
+}
+
+
+body.ux-v2
+.place-pin {
+
+  border-radius:
+    50% !important;
+
+  width:
+    30px !important;
+
+  height:
+    30px !important;
+
+  background:
+
+    radial-gradient(
+      circle at 30% 25%,
+
+      rgba(255,255,255,.95),
+
+      var(--marker)
+      38%,
+
+      color-mix(
+        in srgb,
+        var(--marker)
+        58%,
+        black
+      )
+      100%
+    )
+    !important;
+
+  border:
+
+    1px solid
+    rgba(255,255,255,.55);
+
+  box-shadow:
+
+    0 0 18px
+    color-mix(
+      in srgb,
+      var(--marker)
+      50%,
+      transparent
+    );
+}
+
+
+/* =========================================================
+   DETAIL CARD
+========================================================= */
+
+body.ux-v2
+.detail-card {
+
+  right:
+    34px;
+
+  top:
+    50%;
+
+  bottom:
+    auto;
+
+  width:
+    min(
+      440px,
+      calc(100vw - 72px)
+    );
+
+  max-height:
+    calc(100vh - 150px);
+
+  transform:
+    translateY(-50%);
+
+  overflow:
+    auto;
+
+  border-radius:
+    38px 38px 18px 38px;
+
+  background:
+
+    radial-gradient(
+      110% 70%
+      at 8% -10%,
+      rgba(255,255,255,.19),
+      transparent 36%
+    ),
+
+    linear-gradient(
+      140deg,
+      rgba(18,37,50,.75),
+      rgba(8,20,29,.65)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,.18);
+
+  box-shadow:
+
+    0 42px 120px
+    rgba(0,0,0,.50),
+
+    inset
+    0 1px
+    rgba(255,255,255,.15);
+
+  backdrop-filter:
+    blur(36px)
+    saturate(175%);
+
+  -webkit-backdrop-filter:
+    blur(36px)
+    saturate(175%);
+
+  animation:
+    uxDetailOpen
+    .5s
+    var(--ux-ease)
+    both;
+}
+
+
+@keyframes uxDetailOpen {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+
+      translateY(-47%)
+      translateX(28px)
+      scale(.94);
+
+    filter:
+      blur(8px);
+  }
+
+  to {
+
+    opacity:
+      1;
+
+    transform:
+
+      translateY(-50%)
+      translateX(0)
+      scale(1);
+
+    filter:
+      blur(0);
+  }
+}
+
+
+html[data-theme="light"]
+body.ux-v2
+.detail-card {
+
+  background:
+
+    radial-gradient(
+      100% 70%
+      at 8% -5%,
+      rgba(255,255,255,.98),
+      transparent 43%
+    ),
+
+    linear-gradient(
+      140deg,
+      rgba(250,253,255,.85),
+      rgba(233,242,247,.76)
+    );
+}
+
+
+/* detail hero */
+
+body.ux-v2
+.detail-hero {
+
+  height:
+    112px;
+
+  background:
+
+    radial-gradient(
+      circle at 22% 20%,
+      rgba(98,230,255,.24),
+      transparent 30%
+    ),
+
+    radial-gradient(
+      circle at 82% 88%,
+      rgba(140,124,255,.15),
+      transparent 42%
+    ),
+
+    rgba(255,255,255,.025);
+}
+
+
+body.ux-v2
+.detail-body {
+
+  padding:
+    20px 22px 24px;
+}
+
+
+body.ux-v2
+.detail-body h2 {
+
+  font-size:
+    1.42rem;
+
+  letter-spacing:
+    -.035em;
+}
+
+
+/* =========================================================
+   DETAIL FOCUS BLUR
+   JS will activate .detail-focus
+========================================================= */
+
+body.ux-v2.detail-focus
+#map
+.maplibregl-canvas {
+
+  filter:
+
+    blur(6px)
+    brightness(.27)
+    saturate(.38)
+    contrast(1.22);
+}
+
+
+html[data-theme="light"]
+body.ux-v2.detail-focus
+#map
+.maplibregl-canvas {
+
+  filter:
+
+    blur(6px)
+    brightness(.82)
+    saturate(.45);
+}
+
+
+body.ux-v2.detail-focus
+.explore-panel {
+
+  opacity:
+    .16;
+
+  filter:
+    blur(2px);
+
+  pointer-events:
+    none;
+}
+
+
+/* =========================================================
+   DOCK
+========================================================= */
+
+body.ux-v2
+.dock {
+
+  bottom:
+    14px;
+
+  height:
+    62px;
+
+  border-radius:
+    23px 23px 14px 23px;
+
+  padding:
+    5px;
+
+  gap:
+    2px;
+}
+
+
+body.ux-v2
+.dock-item {
+
+  min-width:
+    70px;
+
+  border-radius:
+    16px;
+
+  font-size:
+    .58rem;
+}
+
+
+body.ux-v2
+.dock-item:hover {
+
+  transform:
+    translateY(-1px);
+}
+
+
+/* CENTER AI */
+
+body.ux-v2
+.dock-ai {
+
+  width:
+    38px;
+
+  height:
+    38px;
+
+  border-radius:
+    50%;
+
+  background:
+
+    radial-gradient(
+      circle at 30% 24%,
+
+      #ffffff 0 5%,
+
+      #86f3ff 17%,
+
+      #55e2d5 55%,
+
+      #237d9d 100%
+    );
+
+  color:
+    #07313b;
+
+  box-shadow:
+
+    0 0 22px
+    rgba(98,230,255,.42),
+
+    0 10px 24px
+    rgba(0,0,0,.24);
+}
+
+
+/* REMOVE SECOND AI */
+
+body.ux-v2
+#aiOrb {
+
+  display:
+    none !important;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+body.ux-v2
+.search-dialog {
+
+  top:
+    88px;
+
+  width:
+    min(
+      720px,
+      calc(100vw - 32px)
+    );
+
+  border-radius:
+    34px 34px 18px 34px;
+}
+
+
+body.ux-v2
+.search-box {
+
+  background:
+    rgba(255,255,255,.04);
+
+  border-radius:
+    18px;
+}
+
+
+/* =========================================================
+   AI PANEL
+========================================================= */
+
+body.ux-v2
+.ai-panel {
+
+  right:
+    22px;
+
+  bottom:
+    88px;
+
+  width:
+    min(
+      420px,
+      calc(100vw - 32px)
+    );
+
+  max-height:
+    calc(100vh - 120px);
+
+  border-radius:
+    34px 34px 18px 34px;
+}
+
+
+/* =========================================================
+   MODE PANELS
+========================================================= */
+
+body.ux-v2
+.mode-panel {
+
+  border-radius:
+    34px 34px 18px 34px;
+
+  backdrop-filter:
+    blur(32px)
+    saturate(170%);
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+body.ux-v2
+.primary-btn {
+
+  background:
+
+    linear-gradient(
+      135deg,
+      var(--ux-cyan),
+      var(--ux-aqua)
+    );
+
+  color:
+    #05282f;
+
+  border-radius:
+    15px;
+
+  box-shadow:
+    0 9px 24px
+    rgba(98,230,255,.15);
+}
+
+
+body.ux-v2
+.secondary-btn {
+
+  background:
+    rgba(255,255,255,.05);
+
+  border:
+    1px solid
+    var(--ux-border);
+
+  border-radius:
+    15px;
+}
+
+
+/* =========================================================
+   MAP CONTROLS
+========================================================= */
+
+body.ux-v2
+.maplibregl-ctrl-group {
+
+  border-radius:
+    16px !important;
+
+  overflow:
+    hidden;
+
+  background:
+    var(--ux-glass-strong)
+    !important;
+
+  backdrop-filter:
+    blur(22px);
+
+  border:
+    1px solid
+    var(--ux-border)
+    !important;
+
+  box-shadow:
+    var(--ux-shadow)
+    !important;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media
+(max-width: 760px) {
+
+  body.ux-v2
+  .topbar {
+
+    top:
+      8px;
+
+    width:
+      calc(100% - 16px);
+
+    height:
+      54px;
+
+    border-radius:
+      20px;
+
+    padding:
+      6px 8px;
+  }
+
+
+  body.ux-v2
+  .brand {
+
+    min-width:
+      auto;
+  }
+
+
+  body.ux-v2
+  .brand-copy strong {
+
+    font-size:
+      .65rem;
+  }
+
+
+  body.ux-v2
+  .search-launch {
+
+    display:
+      none;
+  }
+
+
+  body.ux-v2
+  .explore-panel {
+
+    left:
+      8px;
+
+    right:
+      8px;
+
+    top:
+      auto;
+
+    bottom:
+      80px;
+
+    width:
+      auto;
+
+    max-height:
+      62vh;
+
+    border-radius:
+      30px 30px 20px 20px;
+
+    padding:
+      17px;
+  }
+
+
+  body.ux-v2
+  .dock {
+
+    bottom:
+      8px;
+
+    max-width:
+      calc(100% - 16px);
+  }
+
+
+  body.ux-v2
+  .dock-item {
+
+    min-width:
+      57px;
+
+    font-size:
+      .53rem;
+  }
+
+
+  body.ux-v2
+  .detail-card {
+
+    left:
+      8px;
+
+    right:
+      8px;
+
+    top:
+      auto;
+
+    bottom:
+      80px;
+
+    width:
+      auto;
+
+    max-height:
+      66vh;
+
+    transform:
+      none;
+
+    border-radius:
+      30px 30px 20px 20px;
+
+    animation:
+      uxDetailMobile
+      .45s
+      var(--ux-ease)
+      both;
+  }
+
+
+  @keyframes
+  uxDetailMobile {
+
+    from {
+
+      opacity:
+        0;
+
+      transform:
+        translateY(35px)
+        scale(.97);
+    }
+
+    to {
+
+      opacity:
+        1;
+
+      transform:
+        none;
+    }
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media
+(prefers-reduced-motion: reduce) {
+
+  body.ux-v2 *,
+  body.ux-v2 *::before,
+  body.ux-v2 *::after {
+
+    animation-duration:
+      .01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      .01ms !important;
+  }
+}
