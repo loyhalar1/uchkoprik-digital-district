@@ -74,12 +74,11 @@ function showSmooth(target,options={}){
   if(!el)return Promise.resolve();
   cancelMotion(el);
   el.classList.remove('hidden');
-  scheduleLiquidGlassRedraw(el);
   if(motionDisabled())return Promise.resolve();
-  const duration=options.duration||420;
+  const duration=options.duration||360;
   const keyframes=options.keyframes||[
-    {opacity:0,translate:'0 14px',scale:.965,filter:'blur(8px)'},
-    {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}
+    {opacity:0,transform:'translate3d(0,12px,0) scale(.985)'},
+    {opacity:1,transform:'translate3d(0,0,0) scale(1)'}
   ];
   const anim=el.animate(keyframes,{duration,easing:options.easing||easeOut(),fill:'both'});
   return anim.finished.catch(()=>{}).finally(()=>{try{anim.cancel()}catch{}});
@@ -89,35 +88,23 @@ function hideSmooth(target,options={}){
   const el=typeof target==='string'?$(target):target;
   if(!el||el.classList.contains('hidden'))return Promise.resolve();
   cancelMotion(el);
-  if(motionDisabled()){
-    el.classList.add('hidden');
-    return Promise.resolve();
-  }
-  const duration=options.duration||300;
+  if(motionDisabled()){el.classList.add('hidden');return Promise.resolve();}
+  const duration=options.duration||250;
   const keyframes=options.keyframes||[
-    {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'},
-    {opacity:0,translate:'0 10px',scale:.975,filter:'blur(6px)'}
+    {opacity:1,transform:'translate3d(0,0,0) scale(1)'},
+    {opacity:0,transform:'translate3d(0,8px,0) scale(.99)'}
   ];
-  const anim=el.animate(keyframes,{duration,easing:options.easing||'cubic-bezier(.4,0,.6,1)',fill:'both'});
-  return anim.finished.catch(()=>{}).finally(()=>{
-    el.classList.add('hidden');
-    try{anim.cancel()}catch{}
-  });
+  const anim=el.animate(keyframes,{duration,easing:options.easing||'cubic-bezier(.4,0,.2,1)',fill:'both'});
+  return anim.finished.catch(()=>{}).finally(()=>{el.classList.add('hidden');try{anim.cancel()}catch{}});
 }
 
 function animateChromeIn(){
   if(motionDisabled())return;
-  const rows=[
-    ['.topbar',0,'0 -18px'],
-    ['#explorePanel',90,'-18px 0'],
-    ['.dock',160,'0 22px']
-  ];
-  rows.forEach(([sel,delay,translate])=>{
+  const rows=[['.topbar',0,'translate3d(-50%,-12px,0)'],['#explorePanel',70,'translate3d(-14px,0,0)'],['.dock',120,'translate3d(-50%,16px,0)']];
+  rows.forEach(([sel,delay,from])=>{
     const el=$(sel);if(!el)return;
-    el.animate([
-      {opacity:0,translate,scale:.97,filter:'blur(10px)'},
-      {opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}
-    ],{duration:650,delay,easing:easeOut(),fill:'both'}).finished.catch(()=>{}).finally(()=>{el.getAnimations().forEach(a=>{try{a.cancel()}catch{}})});
+    const to=sel==='.topbar'||sel==='.dock'?'translate3d(-50%,0,0)':'translate3d(0,0,0)';
+    el.animate([{opacity:0,transform:from},{opacity:1,transform:to}],{duration:520,delay,easing:easeOut()});
   });
 }
 
@@ -132,159 +119,10 @@ function liquidPress(el){
 
 
 /* =========================================================
-   LIQUID GLASS REFRACTION ENGINE
-   Adapted for vanilla JS from the user-provided MIT-licensed
-   "liquid-glass" project by Nikita Stadnik.
-   Runtime has no Astro/Tailwind/Anime.js dependency.
+   PERFORMANCE NOTE
+   Heavy SVG displacement/refraction was intentionally removed.
+   Public glass is now a static CSS blur surface.
 ========================================================= */
-
-const liquidGlassState = {
-  initialized: false,
-  supportsUrlFilter: null,
-  observer: null,
-  elements: new Set(),
-  resizeTimer: null
-};
-
-function getDisplacementMap({height,width,radius,depth}){
-  const safeHeight=Math.max(1,Math.round(height));
-  const safeWidth=Math.max(1,Math.round(width));
-  const safeRadius=Math.max(0,Number(radius)||0);
-  const safeDepth=Math.max(1,Math.min(Number(depth)||10,Math.floor(Math.min(safeHeight,safeWidth)/3)));
-  return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg height="${safeHeight}" width="${safeWidth}" viewBox="0 0 ${safeWidth} ${safeHeight}" xmlns="http://www.w3.org/2000/svg">
-    <style>.mix{mix-blend-mode:screen}</style>
-    <defs>
-      <linearGradient id="Y" x1="0" x2="0" y1="${Math.ceil((safeRadius/safeHeight)*15)}%" y2="${Math.floor(100-(safeRadius/safeHeight)*15)}%">
-        <stop offset="0%" stop-color="#0F0"/><stop offset="100%" stop-color="#000"/>
-      </linearGradient>
-      <linearGradient id="X" x1="${Math.ceil((safeRadius/safeWidth)*15)}%" x2="${Math.floor(100-(safeRadius/safeWidth)*15)}%" y1="0" y2="0">
-        <stop offset="0%" stop-color="#F00"/><stop offset="100%" stop-color="#000"/>
-      </linearGradient>
-    </defs>
-    <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="#808080"/>
-    <g filter="blur(2px)">
-      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="#000080"/>
-      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="url(#Y)" class="mix"/>
-      <rect x="0" y="0" height="${safeHeight}" width="${safeWidth}" fill="url(#X)" class="mix"/>
-      <rect x="${safeDepth}" y="${safeDepth}" height="${Math.max(1,safeHeight-2*safeDepth)}" width="${Math.max(1,safeWidth-2*safeDepth)}" fill="#808080" rx="${safeRadius}" ry="${safeRadius}" filter="blur(${safeDepth}px)"/>
-    </g>
-  </svg>`);
-}
-
-function getDisplacementFilter({height,width,radius,depth,strength=36,chromaticAberration=1.25}){
-  const map=getDisplacementMap({height,width,radius,depth});
-  return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <filter id="displace" color-interpolation-filters="sRGB">
-        <feImage x="0" y="0" height="${height}" width="${width}" href="${map}" result="displacementMap"/>
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength+chromaticAberration*2}" xChannelSelector="R" yChannelSelector="G"/>
-        <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedR"/>
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength+chromaticAberration}" xChannelSelector="R" yChannelSelector="G"/>
-        <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="displacedG"/>
-        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G"/>
-        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="displacedB"/>
-        <feBlend in="displacedR" in2="displacedG" mode="screen"/>
-        <feBlend in2="displacedB" mode="screen"/>
-      </filter>
-    </defs>
-  </svg>`)+"#displace";
-}
-
-function supportsBackdropFilterUrl(){
-  if(liquidGlassState.supportsUrlFilter!==null)return liquidGlassState.supportsUrlFilter;
-  const test=document.createElement('div');
-  test.style.cssText='backdrop-filter:url(#test)';
-  liquidGlassState.supportsUrlFilter=(test.style.backdropFilter==='url(#test)'||test.style.backdropFilter==='url("#test")');
-  return liquidGlassState.supportsUrlFilter;
-}
-
-function glassConfig(el){
-  const isButton=el.matches('button,.dock-item,.ux-top-button,.language-btn,.icon-btn,.sphere-test-button,.filter-specialization,.category-chip');
-  const isLarge=el.matches('.explore-panel,.detail-card,.mode-panel,.search-dialog,.ai-panel,.sheet,.passport-card');
-  return {
-    depth:isButton?4:(isLarge?8:6),
-    strength:isButton?8:(isLarge?18:12),
-    chromaticAberration:isButton?.35:.65,
-    blur:isButton?1:(isLarge?2.2:1.6),
-    brightness:isButton?1.08:1.04,
-    saturate:isButton?1.20:1.32
-  };
-}
-
-function redrawLiquidGlass(el){
-  if(!el||!el.isConnected)return;
-  const rect=el.getBoundingClientRect();
-  if(rect.width<2||rect.height<2)return;
-  const styles=getComputedStyle(el);
-  const radius=parseFloat(styles.borderTopLeftRadius)||0;
-  const cfg=glassConfig(el);
-  el.classList.add('liquid-refraction');
-  if(document.documentElement.classList.contains('reduce-transparency')){
-    el.style.removeProperty('backdrop-filter');
-    el.style.removeProperty('-webkit-backdrop-filter');
-    return;
-  }
-  if(supportsBackdropFilterUrl()){
-    const filterUrl=getDisplacementFilter({
-      height:Math.round(rect.height),
-      width:Math.round(rect.width),
-      radius,
-      depth:cfg.depth,
-      strength:cfg.strength,
-      chromaticAberration:cfg.chromaticAberration
-    });
-    const value=`blur(${cfg.blur/2}px) url("${filterUrl}") blur(${cfg.blur}px) brightness(${cfg.brightness}) saturate(${cfg.saturate})`;
-    el.style.setProperty('backdrop-filter',value,'important');
-    el.style.setProperty('-webkit-backdrop-filter',`blur(${Math.max(8,Math.min(24,rect.width/28))}px) saturate(165%)`,'important');
-  }else{
-    const fallback=`blur(${Math.max(10,Math.min(28,rect.width/24))}px) saturate(170%)`;
-    el.style.setProperty('backdrop-filter',fallback,'important');
-    el.style.setProperty('-webkit-backdrop-filter',fallback,'important');
-  }
-}
-
-function scheduleLiquidGlassRedraw(el){
-  if(!el)return;
-  requestAnimationFrame(()=>redrawLiquidGlass(el));
-}
-
-function initLiquidGlassElement(el){
-  if(!el||el.dataset.liquidReady==='1')return;
-  el.dataset.liquidReady='1';
-  liquidGlassState.elements.add(el);
-  el.classList.add('liquid-refraction');
-  liquidGlassState.observer?.observe(el);
-  redrawLiquidGlass(el);
-}
-
-function initLiquidGlassSystem(){
-  if(liquidGlassState.initialized)return;
-  liquidGlassState.initialized=true;
-  liquidGlassState.observer=new ResizeObserver(entries=>{
-    entries.forEach(entry=>scheduleLiquidGlassRedraw(entry.target));
-  });
-  const selector=[
-    '.topbar','.explore-panel','.dock','.detail-card','.mode-panel',
-    '.search-dialog','.ai-panel','.sheet','.passport-card'
-  ].join(',');
-  $$(selector).forEach(initLiquidGlassElement);
-  const mutationObserver=new MutationObserver(records=>{
-    records.forEach(record=>record.addedNodes.forEach(node=>{
-      if(!(node instanceof HTMLElement))return;
-      if(node.matches?.(selector))initLiquidGlassElement(node);
-      node.querySelectorAll?.(selector).forEach(initLiquidGlassElement);
-    }));
-  });
-  mutationObserver.observe(document.body,{childList:true,subtree:true});
-  window.addEventListener('resize',()=>{
-    clearTimeout(liquidGlassState.resizeTimer);
-    liquidGlassState.resizeTimer=setTimeout(()=>liquidGlassState.elements.forEach(redrawLiquidGlass),120);
-  },{passive:true});
-}
-
-function refreshLiquidGlass(){
-  liquidGlassState.elements.forEach(el=>scheduleLiquidGlassRedraw(el));
-}
 
 function detectLanguage(){const seg=location.pathname.split('/').filter(Boolean)[0];state.lang=LANGUAGES.some(l=>l.code===seg)?seg:(localStorage.getItem('uchkoprik-lang')||'uz')}
 function applyLanguage(){const meta=langMeta(state.lang);document.documentElement.lang=meta.code;document.documentElement.dir=meta.dir;if($('#langShort'))$('#langShort').textContent=meta.short;$$('[data-i18n]').forEach(el=>{const v=tr(el.dataset.i18n);if(v&&v!==el.dataset.i18n)el.textContent=v});$$('[data-i18n-placeholder]').forEach(el=>el.placeholder=tr(el.dataset.i18nPlaceholder));$$('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAria)));localStorage.setItem('uchkoprik-lang',state.lang);renderAllTextual()}
@@ -316,11 +154,31 @@ async function loadData(){
 
 function getMapStyleUrl(){return document.documentElement.dataset.theme==='light'?'https://tiles.openfreemap.org/styles/positron':'https://tiles.openfreemap.org/styles/dark'}
 function applyMapTheme(){if(!state.map)return;const camera=getCamera();state.map.setStyle(getMapStyleUrl());state.map.once('styledata',()=>{if(camera)restoreCamera(camera,0);renderMarkers()})}
-function initMap(){const reduced=document.documentElement.classList.contains('reduce-motion');state.map=new maplibregl.Map({container:'map',style:getMapStyleUrl(),center:[71.045,40.54],zoom:10.2,pitch:reduced?0:10,bearing:0,attributionControl:true,cooperativeGestures:false});state.map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}),'top-right');state.map.on('load',()=>{renderMarkers();fitDistrict(false)});state.map.on('move',scheduleConnectorUpdate);state.map.on('zoom',scheduleConnectorUpdate);state.map.on('resize',scheduleConnectorUpdate)}
+function initMap(){
+  const reduced=document.documentElement.classList.contains('reduce-motion');
+  state.map=new maplibregl.Map({container:'map',style:getMapStyleUrl(),center:[71.045,40.54],zoom:10.2,pitch:reduced?0:8,bearing:0,attributionControl:true,cooperativeGestures:false,fadeDuration:120});
+  state.map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}),'top-right');
+  state.map.on('load',()=>{renderMarkers();fitDistrict(false)});
+  state.map.on('moveend',()=>{if(state.selected)updateConnector()});
+  state.map.on('resize',()=>{if(state.selected)updateConnector()});
+}
 function getCamera(){if(!state.map)return null;const c=state.map.getCenter();return{center:[c.lng,c.lat],zoom:state.map.getZoom(),pitch:state.map.getPitch(),bearing:state.map.getBearing()}}
 function restoreCamera(cam,duration=700){if(!state.map||!cam)return;state.map.easeTo({...cam,duration:document.documentElement.classList.contains('reduce-motion')?0:duration})}
-function fitDistrict(animate=true){if(!state.map||!state.data.mahallas.length)return;const b=new maplibregl.LngLatBounds();state.data.mahallas.forEach(m=>{if(validCoords(m))b.extend([m.lng,m.lat])});state.map.fitBounds(b,{padding:{top:100,bottom:90,left:window.innerWidth>760&&!document.body.classList.contains('filter-closed')?330:70,right:70},duration:animate&&!document.documentElement.classList.contains('reduce-motion')?850:0,maxZoom:11.4})}
-function flyToItem(item){if(!state.map||!validCoords(item))return;const desktop=window.innerWidth>760;state.map.easeTo({center:desktop?[Number(item.lng)-.012,Number(item.lat)]:[Number(item.lng),Number(item.lat)],zoom:13.15,pitch:12,bearing:0,duration:document.documentElement.classList.contains('reduce-motion')?0:780})}
+function districtBounds(){
+  if(!state.data.mahallas.length)return null;
+  const b=new maplibregl.LngLatBounds();
+  state.data.mahallas.forEach(m=>{if(validCoords(m))b.extend([m.lng,m.lat])});
+  return b;
+}
+function fitDistrict(animate=true){
+  if(!state.map)return;const b=districtBounds();if(!b)return;
+  const passport=document.body.classList.contains('passport-mode');
+  state.map.fitBounds(b,{padding:passport?38:{top:92,bottom:84,left:72,right:72},duration:animate&&!motionDisabled()?760:0,maxZoom:passport?11.1:11.4,essential:true});
+}
+function flyToItem(item){
+  if(!state.map||!validCoords(item))return;
+  state.map.flyTo({center:[Number(item.lng),Number(item.lat)],zoom:13.25,pitch:8,bearing:0,duration:motionDisabled()?0:900,curve:1.42,speed:.85,essential:true});
+}
 
 function getCategory(id){return state.data.categories.find(c=>c.id===id||c.slug===id)}
 function getCategoryColor(id){return getCategory(id)?.color||'#63e6ff'}
@@ -336,33 +194,79 @@ function renderSpecializationFilters(){const section=$('#specializationFilters')
 function renderOrganizationFilters(){const section=$('#organizationFilters'),host=$('#organizationFilterList');if(!section||!host)return;const isOrg=state.activeLayer==='business'||(state.activeLayer!=='all'&&state.activeLayer!=='mahalla'&&state.data.businesses.some(b=>b.category===state.activeLayer));if(!isOrg||!state.data.businesses.length){section.classList.add('hidden');return}section.classList.remove('hidden');const items=getOrganizationTypes();host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedOrganizationType===i.name?'active':''}" type="button" data-organization-type="${esc(i.name)}" style="--spec-color:#8b7cff"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-organization-type]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.organizationType;state.selectedOrganizationType=state.selectedOrganizationType===v?null:v;renderOrganizationFilters();applyMarkerFilters()}))}
 
 function clearMarkers(){state.markers.forEach(x=>x.marker.remove());state.markers=[]}
-function markerElement(item,kind,color){const el=document.createElement('button');el.type='button';el.className=kind==='mahalla'?'mfy-marker':'place-marker';el.setAttribute('aria-label',item.name||'');el.title=item.name||'';el.innerHTML=kind==='mahalla'?`<span class="mfy-dot" style="--marker:${color}"></span>`:`<span class="place-pin" style="--marker:${color}"><span class="icon">${svg(getCategoryIcon(item.category))}</span></span>`;el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openDetail(item,kind)});return el}
+function markerElement(item,kind,color){
+  const el=document.createElement('button');
+  el.type='button';el.className=kind==='mahalla'?'mfy-marker':'place-marker';
+  el.setAttribute('aria-label',item.name||'');el.title=item.name||'';
+  const twinkle=(1.7+Math.random()*3.8).toFixed(2);
+  const ray=(2.3+Math.random()*4.6).toFixed(2);
+  const delay=(-Math.random()*7).toFixed(2);
+  const delay2=(-Math.random()*9).toFixed(2);
+  const style=`--marker:${color};--twinkle:${twinkle}s;--ray:${ray}s;--delay:${delay}s;--delay2:${delay2}s`;
+  el.innerHTML=kind==='mahalla'?`<span class="mfy-dot" style="${style}"></span>`:`<span class="place-pin" style="${style}"><span class="icon">${svg(getCategoryIcon(item.category))}</span></span>`;
+  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openDetail(item,kind)});
+  return el;
+}
 function addMarker(item,kind,color){if(!validCoords(item))return;const el=markerElement(item,kind,color);const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(state.map);state.markers.push({item,kind,marker,el})}
 function renderMarkers(){if(!state.map)return;clearMarkers();const layer=state.activeLayer;if(layer==='all'||layer==='mahalla')state.data.mahallas.forEach(m=>addMarker(m,'mahalla',getSpecializationColor(m.specialization)));state.data.places.forEach(p=>{if(layer==='all'||layer===p.category)addMarker(p,'place',getCategoryColor(p.category))});state.data.businesses.forEach(b=>{if(layer==='all'||layer==='business'||layer===b.category)addMarker(b,'business',b.categoryColor||getCategoryColor(b.category))});applyMarkerFilters()}
 function applyMarkerFilters(){state.markers.forEach(m=>{let dim=false;if(m.kind==='mahalla'&&state.selectedSpecialization)dim=m.item.specialization!==state.selectedSpecialization;if(m.kind==='business'&&state.selectedOrganizationType)dim=m.item.organizationType!==state.selectedOrganizationType;m.el.classList.toggle('is-dim',dim)})}
 
-function renderDistrictMetrics(){const d=state.data.district,host=$('#districtMetrics');if(host){const vals=[[d.population,'Umumiy aholi'],[d.households,'Umumiy xonadon'],[d.families,'Umumiy oila'],[d.mahallas,'MFY soni']];host.innerHTML=vals.map(([v,l])=>`<div class="metric-card"><strong>${fmt(v)}</strong><span>${esc(l)}</span><small>Tasdiqlangan</small></div>`).join('')}setText('#districtUpdated',d.updatedAt||'—');renderPassportAnalytics();renderInvestorMetrics()}
+function renderDistrictMetrics(){
+  const d=state.data.district,host=$('#districtMetrics');
+  if(host){
+    const vals=[[d.population,'Umumiy aholi'],[d.households,'Umumiy xonadon'],[d.families,'Umumiy oila'],[d.mahallas,'MFY soni'],[state.data.businesses.length,'Tashkilotlar'],[state.data.categories.filter(c=>c.id!=='mahalla').length,'Kategoriyalar']];
+    host.innerHTML=vals.map(([v,l])=>`<div class="metric-card"><strong>${fmt(v)}</strong><span>${esc(l)}</span><small>Tasdiqlangan</small></div>`).join('');
+  }
+  setText('#districtUpdated',d.updatedAt||'—');renderPassportAnalytics();renderInvestorMetrics();
+}
 function renderInvestorMetrics(){const host=$('#investorMetrics');if(!host)return;const d=state.data.district;host.innerHTML=[[d.population,'Aholi'],[d.areaKm2,'km²'],[d.mahallas,'MFY'],[state.data.businesses.length,'Tashkilot']].map(([v,l])=>`<div class="metric-card"><strong>${fmt(v)}</strong><span>${esc(l)}</span><small>Tasdiqlangan</small></div>`).join('')}
-function renderPassportAnalytics(){const d=state.data.district;setText('#passportIndustry',d.industryVolume||'—');setText('#passportAgriculture',d.agricultureVolume||'—');setText('#passportServices',d.servicesVolume||'—');setText('#passportUnemployment',d.unemploymentRate?`${d.unemploymentRate} %`:'—');setText('#passportPoverty',d.povertyRate?`${d.povertyRate} %`:'—');setText('#passportHealthcare',d.healthcareCount?`${fmt(d.healthcareCount)} ta muassasa`:'—');setText('#passportFounded',d.founded||'—');setText('#passportArea',d.areaKm2?`${fmt(d.areaKm2)} km²`:'—');setText('#passportBorder',d.borderLengthKm?`${d.borderLengthKm} km`:'—');renderDistrictSpecializationStats();renderDistrictTopMahallas()}
+function renderPassportAnalytics(){
+  const d=state.data.district;
+  setText('#passportIndustry',d.industryVolume||'—');setText('#passportAgriculture',d.agricultureVolume||'—');setText('#passportServices',d.servicesVolume||'—');
+  setText('#passportUnemployment',d.unemploymentRate?`${d.unemploymentRate} %`:'—');setText('#passportPoverty',d.povertyRate?`${d.povertyRate} %`:'—');setText('#passportHealthcare',d.healthcareCount?`${fmt(d.healthcareCount)} ta muassasa`:'—');
+  setText('#passportFounded',d.founded||'—');setText('#passportGovernor',d.governor||'—');setText('#passportArea',d.areaKm2?`${fmt(d.areaKm2)} km²`:'—');setText('#passportBorder',d.borderLengthKm?`${d.borderLengthKm} km`:'—');
+  setText('#passportOrganizations',`${fmt(state.data.businesses.length)} ta`);setText('#passportCategories',`${fmt(state.data.categories.filter(c=>c.id!=='mahalla').length)} ta`);
+  renderDistrictSpecializationStats();renderDistrictTopMahallas();
+}
 function renderDistrictSpecializationStats(){const host=$('#districtSpecializationStats');if(!host)return;const stats=getSpecializationStats(),max=Math.max(1,...stats.map(x=>x.count));host.innerHTML=stats.map(x=>`<div class="passport-bar-row"><span class="label" title="${esc(x.name)}">${esc(x.name)}</span><span class="passport-bar"><i style="width:${x.count/max*100}%;--bar-color:${x.color}"></i></span><b>${x.count}</b></div>`).join('')}
-function renderDistrictTopMahallas(){const host=$('#districtTopMahallas');if(!host)return;const top=[...state.data.mahallas].sort((a,b)=>b.population-a.population).slice(0,5);host.innerHTML=top.map((m,i)=>`<button type="button" class="search-result" data-top-mahalla="${m.id}"><span class="result-icon">${i+1}</span><span class="result-copy"><strong>${esc(m.name)}</strong><small>${esc(m.specialization)}</small></span><span class="result-type">${fmt(m.population)}</span></button>`).join('');$$('[data-top-mahalla]',host).forEach(btn=>btn.addEventListener('click',()=>{const item=state.data.mahallas.find(m=>String(m.id)===btn.dataset.topMahalla);closePassportMode(false);setTimeout(()=>openDetail(item,'mahalla'),500)}))}
+function renderDistrictTopMahallas(){
+  const hosts=[$('#passportTopMahallas'),$('#districtTopMahallas')].filter(Boolean);if(!hosts.length)return;
+  const top=[...state.data.mahallas].sort((a,b)=>b.population-a.population).slice(0,5);
+  const html=top.map((m,i)=>`<button type="button" class="passport-rank-item" data-top-mahalla="${m.id}"><span class="rank-index">${i+1}</span><span class="rank-copy"><strong>${esc(m.name)}</strong><small>${esc(m.specialization)}</small></span><b>${fmt(m.population)}</b></button>`).join('');
+  hosts.forEach(h=>h.innerHTML=html);
+  $$('[data-top-mahalla]').forEach(btn=>btn.addEventListener('click',()=>{const item=state.data.mahallas.find(m=>String(m.id)===btn.dataset.topMahalla);closePassportMode(false);setTimeout(()=>openDetail(item,'mahalla'),260)}));
+}
 
-async function openPassportMode(){closeDetail(false);await closeMajorPanels();if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();document.body.classList.add('passport-mode');state.activePanel='district';setDockActive(null);showSmooth('#districtPanel',{duration:520,keyframes:[{opacity:0,translate:'38px 0',scale:.97,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});setTimeout(()=>{state.map?.resize();fitDistrict(true)},520)}
-function closePassportMode(restore=true){if(!document.body.classList.contains('passport-mode'))return;hideSmooth('#districtPanel',{duration:340,keyframes:[{opacity:1,translate:'0 0',scale:1},{opacity:0,translate:'30px 0',scale:.98}]});document.body.classList.remove('passport-mode');state.activePanel='explore';setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,900);else fitDistrict(true);state.passportCamera=null},470)}
+async function openPassportMode(){
+  closeDetail(false);await closeMajorPanels();
+  if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();
+  document.body.classList.add('passport-mode');state.activePanel='district';setDockActive(null);
+  await showSmooth('#districtPanel',{duration:360,keyframes:[{opacity:0,transform:'translate3d(22px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}]});
+  setTimeout(()=>{state.map?.resize();fitDistrict(true)},360);
+}
+function closePassportMode(restore=true){
+  if(!document.body.classList.contains('passport-mode'))return;
+  hideSmooth('#districtPanel',{duration:220,keyframes:[{opacity:1,transform:'translate3d(0,0,0)'},{opacity:0,transform:'translate3d(18px,0,0)'}]});
+  document.body.classList.remove('passport-mode');state.activePanel='explore';
+  setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,720);else fitDistrict(true);state.passportCamera=null},330);
+}
 
 async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
   const verify=$('#detailVerification');if(verify)verify.innerHTML=`<span class="badge ${item.verified?'verified':'demo'}"><span class="icon">${svg(item.verified?'shield':'info')}</span>${item.verified?'Tasdiqlangan':'Tasdiqlanmagan'}</span>${item.updatedAt?`<span class="badge">${esc(item.updatedAt)}</span>`:''}`;
-  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;showSmooth('#detailCard',{duration:460,keyframes:[{opacity:0,translate:'30px 0',scale:.955,filter:'blur(12px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));flyToItem(item);setTimeout(showConnector,430)}
+  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;flyToItem(item);showSmooth('#detailCard',{duration:360,keyframes:[{opacity:0,transform:'translate3d(24px,-50%,0) scale(.985)'},{opacity:1,transform:'translate3d(0,-50%,0) scale(1)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));setTimeout(showConnector,920)}
 function renderDetailExtra(item,kind){const host=$('#detailExtra');if(!host)return;const rows=[];if(kind==='mahalla'){if(item.schools)rows.push(['Maktablar',item.schools]);if(item.kindergartens)rows.push(['Bog‘chalar',item.kindergartens]);if(item.clinics)rows.push(['Tibbiyot',item.clinics]);if(item.mosques)rows.push(['Masjidlar',item.mosques]);if(item.shops)rows.push(['Savdo nuqtalari',item.shops]);if(item.head)rows.push(['MFY raisi',item.head])}if(kind==='business'){if(item.address)rows.push(['Manzil',item.address]);if(item.website)rows.push(['Veb-sayt',item.website])}host.innerHTML=rows.length?`<div class="detail-extra-grid">${rows.map(([l,v])=>`<div class="passport-row"><span>${esc(l)}</span><strong>${typeof v==='number'?fmt(v):esc(v)}</strong></div>`).join('')}</div>`:''}
-function closeDetail(restore=true){const had=!!state.selected;hideSmooth('#detailCard',{duration:280,keyframes:[{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'},{opacity:0,translate:'28px 0',scale:.97,filter:'blur(8px)'}]});document.body.classList.remove('detail-focus');hideConnector();state.markers.forEach(m=>m.el.classList.remove('is-active'));state.selected=null;if(restore&&had&&state.detailCamera)restoreCamera(state.detailCamera,820);state.detailCamera=null}
+function closeDetail(restore=true){const had=!!state.selected;hideSmooth('#detailCard',{duration:220,keyframes:[{opacity:1,transform:'translate3d(0,-50%,0) scale(1)'},{opacity:0,transform:'translate3d(22px,-50%,0) scale(.99)'}]});document.body.classList.remove('detail-focus');hideConnector();state.markers.forEach(m=>m.el.classList.remove('is-active'));state.selected=null;if(restore&&had&&state.detailCamera)restoreCamera(state.detailCamera,820);state.detailCamera=null}
 
 function showConnector(){if(!state.selected||window.innerWidth<=760){hideConnector();return}$('#uxConnector')?.classList.remove('hidden');updateConnector()}
 function hideConnector(){$('#uxConnector')?.classList.add('hidden');if(state.connectorFrame){cancelAnimationFrame(state.connectorFrame);state.connectorFrame=null}}
 function scheduleConnectorUpdate(){if(!state.selected||state.connectorFrame)return;state.connectorFrame=requestAnimationFrame(()=>{state.connectorFrame=null;updateConnector()})}
 function updateConnector(){if(!state.selected||!state.map||window.innerWidth<=760)return;const marker=state.markers.find(m=>String(m.item.id)===String(state.selected.item.id)),card=$('#detailCard'),s=$('#uxConnector');if(!marker||!card||!s||card.classList.contains('hidden'))return;const mr=marker.el.getBoundingClientRect(),cr=card.getBoundingClientRect(),w=innerWidth,h=innerHeight;s.setAttribute('viewBox',`0 0 ${w} ${h}`);const x1=mr.left+mr.width/2,y1=mr.top+mr.height/2,x2=cr.left,y2=cr.top+Math.min(cr.height*.42,190),d=Math.max(90,Math.abs(x2-x1)*.43),path=`M ${x1} ${y1} C ${x1+d} ${y1}, ${x2-d*.65} ${y2}, ${x2} ${y2}`;$$('path',s).forEach(p=>p.setAttribute('d',path))}
 
-async function openFilterPanel(){await closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');if(!motionDisabled())$('#explorePanel')?.animate([{opacity:.15,translate:'-18px 0',filter:'blur(5px)'},{opacity:1,translate:'0 0',filter:'blur(0px)'}],{duration:430,easing:easeOut()});setTimeout(()=>state.map?.resize(),360)}
-function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map');setTimeout(()=>state.map?.resize(),360)}
+async function openFilterPanel(){
+  await closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');
+  if(!motionDisabled())$('#explorePanel')?.animate([{opacity:0,transform:'translate3d(-16px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:320,easing:easeOut()});
+}
+function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map')}
 async function closeMajorPanels(except=null){const jobs=[];['investorPanel','productsPanel'].forEach(id=>{if(id!==except)jobs.push(hideSmooth('#'+id,{duration:260}))});if(except!=='searchDialog')jobs.push(hideSmooth('#searchDialog',{duration:230}));if(except!=='aiPanel')jobs.push(hideSmooth('#aiPanel',{duration:230}));await Promise.all(jobs)}
 function setDockActive(name){$$('.dock-item').forEach(x=>x.classList.toggle('active',!!name&&x.dataset.nav===name))}
 async function openPanel(name){if(name==='explore'){await openFilterPanel();return}closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();await closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')await showSmooth('#investorPanel',{duration:420});if(name==='products')await showSmooth('#productsPanel',{duration:420});state.activePanel=name;setDockActive(name)}
@@ -381,29 +285,58 @@ function ensureAIWelcome(){const host=$('#aiMessages');if(host&&!host.children.l
 function addMessage(role,text,sources=[]){const host=$('#aiMessages');if(!host)return;const el=document.createElement('div');el.className=`message ${role}`;el.textContent=text;if(sources.length){const row=document.createElement('div');row.className='source-row';sources.forEach(s=>{const b=document.createElement('span');b.className='badge verified';b.textContent=s;row.appendChild(b)});el.appendChild(row)}host.appendChild(el);host.scrollTop=host.scrollHeight}
 function localAI(question){const q=normalize(question),d=state.data.district,m=state.data.mahallas;if(/nechta.*(mfy|mahalla)|how many.*mahalla/.test(q))return{text:`Uchko‘prik tumanida ${fmt(d.mahallas)} ta MFY mavjud.`,sources:['Tasdiqlangan ma’lumot']};if(/eng.*kop.*aholi|largest.*population|most populous/.test(q)){const top=[...m].sort((a,b)=>b.population-a.population)[0];return{text:`${top.name} — ${fmt(top.population)} nafar.`,sources:['Tasdiqlangan ma’lumot'],focus:top}}const spec=getSpecializationStats().find(x=>q.includes(normalize(x.name)));if(spec)return{text:`${spec.name} bo‘yicha ${spec.count} ta MFY topildi.`,action:'specialization',specialization:spec.name};if(/invest/.test(q))return{text:`Uchko‘prik tumani aholisi ${fmt(d.population)} nafar, maydoni ${fmt(d.areaKm2)} km².`,action:'invest'};const hit=searchLocal(question)[0];if(hit)return{text:`${hit.name} topildi.`,focus:hit};return{text:'Bu ma’lumot hozircha tasdiqlangan bazada mavjud emas.'}}
 async function askAI(question){question=String(question||'').trim();if(!question)return;openAI();addMessage('user',question);if($('#aiInput'))$('#aiInput').value='';addMessage('system','Tahlil qilinmoqda…');let answer=null;try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:question,lang:state.lang})});if(r.ok){const j=await r.json();if(j?.ok)answer=j}}catch{}$('#aiMessages .message.system:last-child')?.remove();if(!answer)answer=localAI(question);addMessage('assistant',answer.text||'—',answer.sources||[]);if(answer.action==='specialization'){state.activeLayer='mahalla';state.selectedSpecialization=answer.specialization;renderCategories();renderMarkers();openFilterPanel()}if(answer.action==='invest')openInvestorMode();if(answer.focus)setTimeout(()=>openDetail(answer.focus,answer.focus._kind||answer.focus.type||'mahalla'),220)}
-async function openAI(){await closeMajorPanels('aiPanel');await showSmooth('#aiPanel',{duration:420,keyframes:[{opacity:0,translate:'18px 16px',scale:.96,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});ensureAIWelcome();setDockActive('ai')}
+async function openAI(){await closeMajorPanels('aiPanel');await showSmooth('#aiPanel',{duration:320,keyframes:[{opacity:0,transform:'translate3d(14px,12px,0) scale(.99)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});ensureAIWelcome();setDockActive('ai')}
 
 function setupVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;const r=new SR();r.interimResults=false;r.continuous=false;r.onstart=()=>$('#voiceBtn')?.classList.add('listening');r.onend=()=>$('#voiceBtn')?.classList.remove('listening');r.onresult=e=>{const q=e.results[0][0].transcript;if($('#aiInput'))$('#aiInput').value=q;askAI(q)};state.voiceRecognition=r}
 function startVoice(){if(!state.voiceRecognition){toast('Ovozli qidiruv','Brauzer qo‘llab-quvvatlamaydi');return}state.voiceRecognition.lang=localeCode();state.voiceRecognition.start()}
 
-function openSheet(id){showSmooth('#'+id,{duration:360,keyframes:[{opacity:0,filter:'blur(8px)'},{opacity:1,filter:'blur(0px)'}]});setTimeout(refreshLiquidGlass,80)}function closeSheet(id){hideSmooth('#'+id,{duration:260,keyframes:[{opacity:1},{opacity:0,filter:'blur(6px)'}]})}
+function openSheet(id){showSmooth('#'+id,{duration:300})}function closeSheet(id){hideSmooth('#'+id,{duration:220})}
 function loadPrefs(){let p={};try{p=JSON.parse(localStorage.getItem('uchkoprik-prefs')||'{}')}catch{}document.documentElement.dataset.theme=p.light?'light':'dark';document.documentElement.classList.toggle('reduce-motion',!!p.reduceMotion);document.documentElement.classList.toggle('reduce-transparency',!!p.reduceTransparency);document.documentElement.classList.toggle('high-contrast',!!p.highContrast);document.documentElement.style.setProperty('--font-scale',p.fontScale||1);if($('#lightModeToggle'))$('#lightModeToggle').checked=!!p.light;if($('#reduceMotionToggle'))$('#reduceMotionToggle').checked=!!p.reduceMotion;if($('#reduceTransparencyToggle'))$('#reduceTransparencyToggle').checked=!!p.reduceTransparency;if($('#highContrastToggle'))$('#highContrastToggle').checked=!!p.highContrast}
-function savePrefs(){const p={light:!!$('#lightModeToggle')?.checked,reduceMotion:!!$('#reduceMotionToggle')?.checked,reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,highContrast:!!$('#highContrastToggle')?.checked,fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1};localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));loadPrefs();applyMapTheme();updateIdleSphereTheme();refreshLiquidGlass()}
+function savePrefs(){const p={light:!!$('#lightModeToggle')?.checked,reduceMotion:!!$('#reduceMotionToggle')?.checked,reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,highContrast:!!$('#highContrastToggle')?.checked,fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1};localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));loadPrefs();applyMapTheme();updateIdleSphereTheme()}
 function setFont(key){document.documentElement.style.setProperty('--font-scale',{small:.92,normal:1,large:1.12}[key]||1);$$('[data-font]').forEach(b=>b.classList.toggle('active',b.dataset.font===key));savePrefs()}
 
 const scenes=()=>[
-  {eyebrow:'DIGITAL DISTRICT',title:'Uchko‘prik tumani',text:'Raqamli hudud, xarita va tasdiqlangan ma’lumotlar.',center:[71.045,40.54],zoom:9.7,pitch:20,bearing:0},
-  {eyebrow:'51 MFY',title:'Mahallalar',text:'51 ta mahalla yagona interaktiv xaritada.',center:[71.045,40.54],zoom:10.4,pitch:38,bearing:-7},
-  {eyebrow:'AHOLI',title:fmt(state.data.district.population),text:'Tasdiqlangan tuman statistikasi.',center:[71.03,40.54],zoom:10.7,pitch:44,bearing:8},
-  {eyebrow:'IQTISODIYOT',title:'Investor Mode',text:'Sanoat, qishloq xo‘jaligi va xizmatlar.',center:[71.07,40.53],zoom:11,pitch:50,bearing:-10},
-  {eyebrow:'MADE IN UCHKO‘PRIK',title:'Mahalliy mahsulotlar',text:'Mahalliy ishlab chiqaruvchilar va mahsulotlar.',center:[71.01,40.50],zoom:10.8,pitch:42,bearing:10},
-  {eyebrow:'AI · MAP · DATA',title:'Digital District',text:'Raqamli boshqaruv va zamonaviy hududiy ma’lumotlar.',center:[71.045,40.54],zoom:9.8,pitch:50,bearing:0}
+  {eyebrow:'DIGITAL DISTRICT',title:'Uchko‘prik tumani',text:'Raqamli hudud, xarita va tasdiqlangan ma’lumotlar.',center:[71.045,40.54],zoom:9.75,pitch:18,bearing:0},
+  {eyebrow:'51 MFY',title:'Mahallalar',text:'51 ta mahalla yagona interaktiv xaritada.',center:[71.045,40.54],zoom:10.45,pitch:32,bearing:-7},
+  {eyebrow:'AHOLI',title:fmt(state.data.district.population),text:'Tuman aholisi va mahallalar kesimidagi tasdiqlangan statistika.',center:[71.03,40.54],zoom:10.8,pitch:38,bearing:8},
+  {eyebrow:'IQTISODIYOT',title:'Investor Mode',text:'Sanoat, qishloq xo‘jaligi, xizmatlar va investitsiya muhiti.',center:[71.07,40.53],zoom:11.1,pitch:42,bearing:-11},
+  {eyebrow:'HUDUD',title:`${fmt(state.data.district.areaKm2)} km²`,text:'Hudud, infratuzilma va tashkilotlar yagona raqamli xaritada.',center:[71.01,40.50],zoom:10.85,pitch:34,bearing:10},
+  {eyebrow:'AI · MAP · DATA',title:'Digital District',text:'Delegatsiya va boshqaruv uchun zamonaviy raqamli taqdimot.',center:[71.045,40.54],zoom:9.85,pitch:24,bearing:0}
 ];
-function openPresentation(){showSmooth('#presentationOverlay',{duration:620,keyframes:[{opacity:0,scale:1.035,filter:'blur(14px)'},{opacity:1,scale:1,filter:'blur(0px)'}]});state.presentation.index=0;state.presentation.playing=true;if(!state.presentation.map)state.presentation.map=new maplibregl.Map({container:'presentationMap',style:getMapStyleUrl(),center:[71.045,40.54],zoom:9.7,pitch:20,interactive:false,attributionControl:true});renderScene();scheduleScene()}
-function closePresentation(){hideSmooth('#presentationOverlay',{duration:360,keyframes:[{opacity:1,scale:1},{opacity:0,scale:1.025,filter:'blur(10px)'}]});clearTimeout(state.presentation.timer)}
-function renderScene(){const all=scenes(),s=all[state.presentation.index];setText('#sceneEyebrow',s.eyebrow);setText('#sceneTitle',s.title);setText('#sceneText',s.text);setText('#sceneCounter',`${state.presentation.index+1} / ${all.length}`);if($('#scenePlay'))$('#scenePlay').innerHTML=`<span class="icon">${svg(state.presentation.playing?'pause':'play')}</span>`;state.presentation.map?.flyTo({center:s.center,zoom:s.zoom,pitch:s.pitch,bearing:s.bearing,duration:document.documentElement.classList.contains('reduce-motion')?0:1600})}
-function scheduleScene(){clearTimeout(state.presentation.timer);if(!state.presentation.playing)return;state.presentation.timer=setTimeout(()=>{state.presentation.index=(state.presentation.index+1)%scenes().length;renderScene();scheduleScene()},6500)}
-function sceneStep(d){state.presentation.index=(state.presentation.index+d+scenes().length)%scenes().length;renderScene();scheduleScene()}function togglePresentationPlay(){state.presentation.playing=!state.presentation.playing;renderScene();scheduleScene()}
+function presentationGeoJSON(){return {type:'FeatureCollection',features:state.data.mahallas.filter(validCoords).map(m=>({type:'Feature',geometry:{type:'Point',coordinates:[m.lng,m.lat]},properties:{name:m.name,color:getSpecializationColor(m.specialization)}}))}}
+function setupPresentationLayers(){
+  const map=state.presentation.map;if(!map||!map.isStyleLoaded())return;const data=presentationGeoJSON();
+  if(map.getSource('presentation-mahallas'))map.getSource('presentation-mahallas').setData(data);else{
+    map.addSource('presentation-mahallas',{type:'geojson',data});
+    map.addLayer({id:'presentation-glow',type:'circle',source:'presentation-mahallas',paint:{'circle-radius':8,'circle-color':['get','color'],'circle-opacity':.16,'circle-blur':1}});
+    map.addLayer({id:'presentation-stars',type:'circle',source:'presentation-mahallas',paint:{'circle-radius':3.2,'circle-color':['get','color'],'circle-stroke-color':'#ffffff','circle-stroke-width':.7,'circle-opacity':.95}});
+  }
+}
+function animateSceneCopy(){
+  if(motionDisabled())return;const el=$('.presentation-copy');if(!el)return;
+  el.animate([{opacity:.15,transform:'translate3d(0,16px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:520,easing:easeOut()});
+}
+async function openPresentation(){
+  await showSmooth('#presentationOverlay',{duration:360,keyframes:[{opacity:0,transform:'scale(1.01)'},{opacity:1,transform:'scale(1)'}]});
+  state.presentation.index=0;state.presentation.playing=true;
+  if(!state.presentation.map){
+    state.presentation.map=new maplibregl.Map({container:'presentationMap',style:getMapStyleUrl(),center:[71.045,40.54],zoom:9.75,pitch:18,bearing:0,interactive:false,attributionControl:false,fadeDuration:80});
+    state.presentation.map.on('load',()=>{setupPresentationLayers();state.presentation.map.resize();renderScene()});
+  }else{state.presentation.map.resize();setupPresentationLayers();renderScene()}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{state.presentation.map?.resize();renderScene()}));
+  scheduleScene();
+}
+function closePresentation(){hideSmooth('#presentationOverlay',{duration:260,keyframes:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.008)'}]});clearTimeout(state.presentation.timer)}
+function renderScene(){
+  const all=scenes(),s=all[state.presentation.index];setText('#sceneEyebrow',s.eyebrow);setText('#sceneTitle',s.title);setText('#sceneText',s.text);setText('#sceneCounter',`${state.presentation.index+1} / ${all.length}`);
+  if($('#scenePlay'))$('#scenePlay').innerHTML=`<span class="icon">${svg(state.presentation.playing?'pause':'play')}</span>`;
+  animateSceneCopy();
+  const map=state.presentation.map;if(!map)return;map.resize();setupPresentationLayers();
+  if(map.loaded())map.flyTo({center:s.center,zoom:s.zoom,pitch:s.pitch,bearing:s.bearing,duration:motionDisabled()?0:2400,curve:1.35,speed:.55,essential:true});
+}
+function scheduleScene(){clearTimeout(state.presentation.timer);if(!state.presentation.playing)return;state.presentation.timer=setTimeout(()=>{state.presentation.index=(state.presentation.index+1)%scenes().length;renderScene();scheduleScene()},6800)}
+function sceneStep(d){state.presentation.index=(state.presentation.index+d+scenes().length)%scenes().length;renderScene();scheduleScene()}
+function togglePresentationPlay(){state.presentation.playing=!state.presentation.playing;renderScene();scheduleScene()}
 
 
 function ensureIdleOverlay(){
@@ -506,8 +439,7 @@ async function initIdleSphere(){
     },{passive:true});
     const release=()=>{state.idle.dragging=false};
     canvas.addEventListener('pointerup',release,{passive:true});canvas.addEventListener('pointercancel',release,{passive:true});canvas.addEventListener('pointerleave',release,{passive:true});
-    const animate=()=>{state.idle.frame=requestAnimationFrame(animate);if(!state.idle.active)return;const t=performance.now();if(!state.idle.dragging)state.idle.targetY+=.00135;group.rotation.x+=(state.idle.targetX-group.rotation.x)*.045;group.rotation.y+=(state.idle.targetY-group.rotation.y)*.055;group.rotation.z=Math.sin(t*.00011)*.045;group.scale.setScalar(1+Math.sin(t*.00072)*.007);points.material.opacity=.82+Math.sin(t*.0013)*.12;renderer.render(scene,camera)};
-    animate();
+    state.idle.renderFrame=()=>{if(!state.idle.active){state.idle.frame=null;return}const t=performance.now();if(!state.idle.dragging)state.idle.targetY+=.00135;group.rotation.x+=(state.idle.targetX-group.rotation.x)*.045;group.rotation.y+=(state.idle.targetY-group.rotation.y)*.055;group.rotation.z=Math.sin(t*.00011)*.045;group.scale.setScalar(1+Math.sin(t*.00072)*.007);points.material.opacity=.82+Math.sin(t*.0013)*.12;renderer.render(scene,camera);state.idle.frame=requestAnimationFrame(state.idle.renderFrame)};
   }catch(e){console.warn('Idle sphere:',e)}
 }
 function updateIdleSphereTheme(){if(!state.idle.points)return;state.idle.points.material.color.setHex(0xffffff)}
@@ -525,16 +457,16 @@ async function enterIdleMode(manual=false){
   state.idle.manualGraceUntil=manual?Date.now()+650:0;
   document.body.classList.add('idle-mode');
   $('#idleSphereOverlay')?.setAttribute('aria-hidden','false');
-  state.map?.resize();
-  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:0,scale:.24,rotate:'-8deg',filter:'blur(22px)'},{opacity:1,scale:1,rotate:'0deg',filter:'blur(0px)'}],{duration:1050,easing:easeOut()});
+  if(!state.idle.frame&&state.idle.renderFrame)state.idle.frame=requestAnimationFrame(state.idle.renderFrame);
+  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.35)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:760,easing:easeOut()});
 }
 function exitIdleMode(){
   if(!state.idle.active)return;
-  state.idle.active=false;
-  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:1,scale:1,filter:'blur(0px)'},{opacity:0,scale:.34,filter:'blur(18px)'}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)'});
+  state.idle.active=false;if(state.idle.frame){cancelAnimationFrame(state.idle.frame);state.idle.frame=null}
+  if(!motionDisabled())$('#idleSphereCanvas')?.animate([{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:'translate(-50%,-50%) scale(.45)'}],{duration:420,easing:'cubic-bezier(.4,0,.2,1)'});
   document.body.classList.remove('idle-mode');
   $('#idleSphereOverlay')?.setAttribute('aria-hidden','true');
-  setTimeout(()=>{state.map?.resize();if(!motionDisabled())$('#map')?.animate([{scale:.82,opacity:.12,filter:'blur(12px)'},{scale:1,opacity:1,filter:'blur(0px)'}],{duration:820,easing:easeOut()})},420);
+  setTimeout(()=>{if(!motionDisabled())$('#map')?.animate([{opacity:.15,transform:'scale(.96)'},{opacity:1,transform:'scale(1)'}],{duration:520,easing:easeOut()})},260);
 }
 function setupIdleDetection(){
   let last=0;
@@ -580,7 +512,7 @@ function renderAllTextual(){renderCategories();renderProducts();renderDistrictMe
 function setupEvents(){
   $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#fitDistrict')?.addEventListener('click',()=>{state.selectedSpecialization=null;state.selectedOrganizationType=null;renderSpecializationFilters();renderOrganizationFilters();applyMarkerFilters();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters()});
   $('#districtPassportBtn')?.addEventListener('click',openPassportMode);$('#districtClose')?.addEventListener('click',()=>closePassportMode());
-  $('#searchOpen')?.addEventListener('click',async()=>{await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:380,keyframes:[{opacity:0,translate:'0 -10px',scale:.97,filter:'blur(10px)'},{opacity:1,translate:'0 0',scale:1,filter:'blur(0px)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSmooth('#searchDialog',{duration:240}));$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
+  $('#searchOpen')?.addEventListener('click',async()=>{await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:300,keyframes:[{opacity:0,transform:'translate3d(0,-10px,0) scale(.99)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSmooth('#searchDialog',{duration:240}));$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
   $$('.dock-item').forEach(btn=>btn.addEventListener('click',()=>{const nav=btn.dataset.nav;if(nav==='explore')return openFilterPanel();if(nav==='map'){closeMajorPanels();closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeFilterPanel();fitDistrict();return}if(nav==='ai')return openAI();if(nav==='invest')return openInvestorMode();if(nav==='products')return openPanel('products')}));
   $('#investorClose')?.addEventListener('click',closeInvestorMode);$('#showBusinesses')?.addEventListener('click',()=>{state.activeLayer='business';renderCategories();renderMarkers();closeInvestorMode()});$('#askInvestment')?.addEventListener('click',()=>askAI('Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'));$('#productsClose')?.addEventListener('click',openFilterPanel);
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
@@ -590,5 +522,5 @@ function setupEvents(){
   document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}if(e.key==='Escape'){if(state.selected){closeDetail();return}if(document.body.classList.contains('passport-mode')){closePassportMode();return}$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden');if(!$('#presentationOverlay')?.classList.contains('hidden'))closePresentation()}if(!$('#presentationOverlay')?.classList.contains('hidden')){if(e.key==='ArrowRight')sceneStep(1);if(e.key==='ArrowLeft')sceneStep(-1)}});window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize()});
 }
 
-async function boot(){detectLanguage();loadPrefs();ensureIdleOverlay();ensureSphereTestButton();bindIcons();initLiquidGlassSystem();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();setupIdleDetection();refreshLiquidGlass();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
+async function boot(){detectLanguage();loadPrefs();ensureIdleOverlay();ensureSphereTestButton();bindIcons();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();setupIdleDetection();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
 boot().catch(error=>{console.error('Application error:',error);toast('Application error',error.message)});
