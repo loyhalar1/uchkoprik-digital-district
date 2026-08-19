@@ -44,6 +44,8 @@ const state={
   idle:{timer:null,timeout:10*60*1000,active:false,initialized:false,renderer:null,scene:null,camera:null,group:null,frame:null}
 };
 
+const MOTION_PREF_VERSION=2;
+
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -163,7 +165,7 @@ function initMap(){
   state.map.on('resize',()=>{if(state.selected)updateConnector()});
 }
 function getCamera(){if(!state.map)return null;const c=state.map.getCenter();return{center:[c.lng,c.lat],zoom:state.map.getZoom(),pitch:state.map.getPitch(),bearing:state.map.getBearing()}}
-function restoreCamera(cam,duration=700){if(!state.map||!cam)return;state.map.easeTo({...cam,duration:document.documentElement.classList.contains('reduce-motion')?0:duration})}
+function restoreCamera(cam,duration=700){if(!state.map||!cam)return;state.map.stop();state.map.easeTo({...cam,duration:motionDisabled()?0:duration,essential:true})}
 function districtBounds(){
   if(!state.data.mahallas.length)return null;
   const b=new maplibregl.LngLatBounds();
@@ -173,11 +175,11 @@ function districtBounds(){
 function fitDistrict(animate=true){
   if(!state.map)return;const b=districtBounds();if(!b)return;
   const passport=document.body.classList.contains('passport-mode');
-  state.map.fitBounds(b,{padding:passport?38:{top:92,bottom:84,left:72,right:72},duration:animate&&!motionDisabled()?760:0,maxZoom:passport?11.1:11.4,essential:true});
+  state.map.stop();state.map.fitBounds(b,{padding:passport?38:{top:92,bottom:84,left:72,right:72},duration:animate&&!motionDisabled()?760:0,maxZoom:passport?11.1:11.4,essential:true});
 }
 function flyToItem(item){
   if(!state.map||!validCoords(item))return;
-  state.map.flyTo({center:[Number(item.lng),Number(item.lat)],zoom:13.25,pitch:8,bearing:0,duration:motionDisabled()?0:900,curve:1.42,speed:.85,essential:true});
+  state.map.stop();state.map.flyTo({center:[Number(item.lng),Number(item.lat)],zoom:13.25,pitch:8,bearing:0,duration:motionDisabled()?0:900,curve:1.42,speed:.85,essential:true});
 }
 
 function getCategory(id){return state.data.categories.find(c=>c.id===id||c.slug===id)}
@@ -238,17 +240,28 @@ function renderDistrictTopMahallas(){
 }
 
 async function openPassportMode(){
-  closeDetail(false);await closeMajorPanels();
+  closeDetail(false);
+  await closeMajorPanels();
   if(!document.body.classList.contains('passport-mode'))state.passportCamera=getCamera();
-  document.body.classList.add('passport-mode');state.activePanel='district';setDockActive(null);
-  await showSmooth('#districtPanel',{duration:360,keyframes:[{opacity:0,transform:'translate3d(22px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}]});
-  setTimeout(()=>{state.map?.resize();fitDistrict(true)},360);
+  document.body.classList.add('passport-mode');
+  state.activePanel='district';
+  setDockActive(null);
+  requestAnimationFrame(()=>state.map?.resize());
+  await showSmooth('#districtPanel',{duration:390,keyframes:[{opacity:0,transform:'translate3d(24px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}]});
+  setTimeout(()=>{state.map?.resize();fitDistrict(true)},580);
 }
-function closePassportMode(restore=true){
+async function closePassportMode(restore=true){
   if(!document.body.classList.contains('passport-mode'))return;
-  hideSmooth('#districtPanel',{duration:220,keyframes:[{opacity:1,transform:'translate3d(0,0,0)'},{opacity:0,transform:'translate3d(18px,0,0)'}]});
-  document.body.classList.remove('passport-mode');state.activePanel='explore';
-  setTimeout(()=>{state.map?.resize();if(restore&&state.passportCamera)restoreCamera(state.passportCamera,720);else fitDistrict(true);state.passportCamera=null},330);
+  await hideSmooth('#districtPanel',{duration:240,keyframes:[{opacity:1,transform:'translate3d(0,0,0)'},{opacity:0,transform:'translate3d(18px,0,0)'}]});
+  document.body.classList.remove('passport-mode');
+  state.activePanel='explore';
+  requestAnimationFrame(()=>state.map?.resize());
+  setTimeout(()=>{
+    state.map?.resize();
+    if(restore&&state.passportCamera)restoreCamera(state.passportCamera,760);
+    else fitDistrict(true);
+    state.passportCamera=null;
+  },580);
 }
 
 async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):(item.description||item.address||'Ma’lumot mavjud emas'));
@@ -263,19 +276,21 @@ function scheduleConnectorUpdate(){if(!state.selected||state.connectorFrame)retu
 function updateConnector(){if(!state.selected||!state.map||window.innerWidth<=760)return;const marker=state.markers.find(m=>String(m.item.id)===String(state.selected.item.id)),card=$('#detailCard'),s=$('#uxConnector');if(!marker||!card||!s||card.classList.contains('hidden'))return;const mr=marker.el.getBoundingClientRect(),cr=card.getBoundingClientRect(),w=innerWidth,h=innerHeight;s.setAttribute('viewBox',`0 0 ${w} ${h}`);const x1=mr.left+mr.width/2,y1=mr.top+mr.height/2,x2=cr.left,y2=cr.top+Math.min(cr.height*.42,190),d=Math.max(90,Math.abs(x2-x1)*.43),path=`M ${x1} ${y1} C ${x1+d} ${y1}, ${x2-d*.65} ${y2}, ${x2} ${y2}`;$$('path',s).forEach(p=>p.setAttribute('d',path))}
 
 async function openFilterPanel(){
+  if(state.selected)closeDetail(false);
   await closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');
   if(!motionDisabled())$('#explorePanel')?.animate([{opacity:0,transform:'translate3d(-16px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:320,easing:easeOut()});
 }
 function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map')}
-async function closeMajorPanels(except=null){const jobs=[];['investorPanel','productsPanel'].forEach(id=>{if(id!==except)jobs.push(hideSmooth('#'+id,{duration:260}))});if(except!=='searchDialog')jobs.push(hideSmooth('#searchDialog',{duration:230}));if(except!=='aiPanel')jobs.push(hideSmooth('#aiPanel',{duration:230}));await Promise.all(jobs)}
+function hideSearchSmooth(){return hideSmooth('#searchDialog',{duration:230,keyframes:[{opacity:1,transform:'translate3d(-50%,0,0) scale(1)'},{opacity:0,transform:'translate3d(-50%,-8px,0) scale(.99)'}]})}
+async function closeMajorPanels(except=null){const jobs=[];['investorPanel','productsPanel'].forEach(id=>{if(id!==except)jobs.push(hideSmooth('#'+id,{duration:260}))});if(except!=='searchDialog')jobs.push(hideSearchSmooth());if(except!=='aiPanel')jobs.push(hideSmooth('#aiPanel',{duration:230}));await Promise.all(jobs)}
 function setDockActive(name){$$('.dock-item').forEach(x=>x.classList.toggle('active',!!name&&x.dataset.nav===name))}
-async function openPanel(name){if(name==='explore'){await openFilterPanel();return}closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();await closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')await showSmooth('#investorPanel',{duration:420});if(name==='products')await showSmooth('#productsPanel',{duration:420});state.activePanel=name;setDockActive(name)}
-function openInvestorMode(){openPanel('invest');state.activeLayer='business';renderCategories();renderMarkers();state.map?.easeTo({pitch:35,bearing:-5,duration:750})}
-async function closeInvestorMode(){await hideSmooth('#investorPanel',{duration:280});await openFilterPanel();state.map?.easeTo({pitch:10,bearing:0,duration:550})}
+async function openPanel(name){if(name==='explore'){await openFilterPanel();return}closeDetail(false);if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();document.body.classList.add('filter-closed');if(name==='invest')await showSmooth('#investorPanel',{duration:420});if(name==='products')await showSmooth('#productsPanel',{duration:420});state.activePanel=name;setDockActive(name)}
+async function openInvestorMode(){await openPanel('invest');state.activeLayer='business';renderCategories();renderMarkers();state.map?.easeTo({pitch:35,bearing:-5,duration:motionDisabled()?0:750,essential:true})}
+async function closeInvestorMode(){await hideSmooth('#investorPanel',{duration:280});await openFilterPanel();state.map?.easeTo({pitch:8,bearing:0,duration:motionDisabled()?0:600,essential:true})}
 
 function allSearchItems(){return[...state.data.mahallas.map(x=>({...x,_kind:'mahalla',_type:'MFY'})),...state.data.businesses.map(x=>({...x,_kind:'business',_type:x.categoryName||'Tashkilot'})),...state.data.places.map(x=>({...x,_kind:'place',_type:categoryLabel(getCategory(x.category))})),...state.data.products.map(x=>({...x,_kind:'product',_type:'Mahsulot'}))]}
 function searchLocal(q){q=normalize(q).trim();const all=allSearchItems();if(!q)return all.slice(0,12);const terms=q.split(/\s+/);return all.map(item=>{const hay=normalize([item.name,item.officialName,item.specialization,item.description,item.industry,item.sector,item.address,item.categoryName,item.organizationType,item._type].filter(Boolean).join(' '));let score=hay.startsWith(q)?4:0;terms.forEach(t=>{if(hay.includes(t))score+=2});return{item,score}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,30).map(x=>x.item)}
-function renderSearchResults(q=''){const host=$('#searchResults');if(!host)return;const rows=searchLocal(q);if(!rows.length){host.innerHTML='<div class="search-empty">Natija topilmadi</div>';return}host.innerHTML=rows.map(i=>`<button type="button" class="search-result" data-search-id="${esc(i.id)}" data-search-kind="${esc(i._kind)}"><span class="result-icon"><span class="icon">${svg(i._kind==='mahalla'?'home':i._kind==='business'?'briefcase':'marker')}</span></span><span class="result-copy"><strong>${esc(i.name)}</strong><small>${esc(i.specialization||i.organizationType||i.address||i.description||'')}</small></span><span class="result-type">${esc(i._type)}</span></button>`).join('');$$('[data-search-id]',host).forEach(btn=>btn.addEventListener('click',()=>{const item=allSearchItems().find(x=>String(x.id)===btn.dataset.searchId&&x._kind===btn.dataset.searchKind);$('#searchDialog')?.classList.add('hidden');openDetail(item,item._kind)}))}
+function renderSearchResults(q=''){const host=$('#searchResults');if(!host)return;const rows=searchLocal(q);if(!rows.length){host.innerHTML='<div class="search-empty">Natija topilmadi</div>';return}host.innerHTML=rows.map(i=>`<button type="button" class="search-result" data-search-id="${esc(i.id)}" data-search-kind="${esc(i._kind)}"><span class="result-icon"><span class="icon">${svg(i._kind==='mahalla'?'home':i._kind==='business'?'briefcase':'marker')}</span></span><span class="result-copy"><strong>${esc(i.name)}</strong><small>${esc(i.specialization||i.organizationType||i.address||i.description||'')}</small></span><span class="result-type">${esc(i._type)}</span></button>`).join('');$$('[data-search-id]',host).forEach(btn=>btn.addEventListener('click',()=>{const item=allSearchItems().find(x=>String(x.id)===btn.dataset.searchId&&x._kind===btn.dataset.searchKind);hideSearchSmooth();setTimeout(()=>openDetail(item,item._kind),140)}))}
 
 function renderProducts(){const host=$('#productGrid');if(!host)return;if(!state.data.products.length){host.innerHTML='<div class="search-empty">Hozircha mahsulotlar kiritilmagan.</div>';return}host.innerHTML=state.data.products.map(p=>`<button class="product-card" type="button" data-product="${esc(p.id)}"><div class="product-visual"><span class="icon">${svg('package')}</span></div><div class="product-info"><small>${esc(p.category||'')}</small><strong>${esc(p.name)}</strong><p>${esc(p.description||'')}</p></div></button>`).join('')}
 function renderLanguages(){const host=$('#languageGrid');if(!host)return;host.innerHTML=LANGUAGES.map(l=>`<button type="button" class="language-option ${l.code===state.lang?'active':''}" data-lang="${l.code}"><span class="language-code">${esc(l.short)}</span><span><strong>${esc(l.native)}</strong><small>${esc(l.name)}</small></span></button>`).join('');$$('.language-option',host).forEach(btn=>btn.addEventListener('click',()=>setLanguage(btn.dataset.lang)))}
@@ -285,58 +300,189 @@ function ensureAIWelcome(){const host=$('#aiMessages');if(host&&!host.children.l
 function addMessage(role,text,sources=[]){const host=$('#aiMessages');if(!host)return;const el=document.createElement('div');el.className=`message ${role}`;el.textContent=text;if(sources.length){const row=document.createElement('div');row.className='source-row';sources.forEach(s=>{const b=document.createElement('span');b.className='badge verified';b.textContent=s;row.appendChild(b)});el.appendChild(row)}host.appendChild(el);host.scrollTop=host.scrollHeight}
 function localAI(question){const q=normalize(question),d=state.data.district,m=state.data.mahallas;if(/nechta.*(mfy|mahalla)|how many.*mahalla/.test(q))return{text:`Uchko‘prik tumanida ${fmt(d.mahallas)} ta MFY mavjud.`,sources:['Tasdiqlangan ma’lumot']};if(/eng.*kop.*aholi|largest.*population|most populous/.test(q)){const top=[...m].sort((a,b)=>b.population-a.population)[0];return{text:`${top.name} — ${fmt(top.population)} nafar.`,sources:['Tasdiqlangan ma’lumot'],focus:top}}const spec=getSpecializationStats().find(x=>q.includes(normalize(x.name)));if(spec)return{text:`${spec.name} bo‘yicha ${spec.count} ta MFY topildi.`,action:'specialization',specialization:spec.name};if(/invest/.test(q))return{text:`Uchko‘prik tumani aholisi ${fmt(d.population)} nafar, maydoni ${fmt(d.areaKm2)} km².`,action:'invest'};const hit=searchLocal(question)[0];if(hit)return{text:`${hit.name} topildi.`,focus:hit};return{text:'Bu ma’lumot hozircha tasdiqlangan bazada mavjud emas.'}}
 async function askAI(question){question=String(question||'').trim();if(!question)return;openAI();addMessage('user',question);if($('#aiInput'))$('#aiInput').value='';addMessage('system','Tahlil qilinmoqda…');let answer=null;try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:question,lang:state.lang})});if(r.ok){const j=await r.json();if(j?.ok)answer=j}}catch{}$('#aiMessages .message.system:last-child')?.remove();if(!answer)answer=localAI(question);addMessage('assistant',answer.text||'—',answer.sources||[]);if(answer.action==='specialization'){state.activeLayer='mahalla';state.selectedSpecialization=answer.specialization;renderCategories();renderMarkers();openFilterPanel()}if(answer.action==='invest')openInvestorMode();if(answer.focus)setTimeout(()=>openDetail(answer.focus,answer.focus._kind||answer.focus.type||'mahalla'),220)}
-async function openAI(){await closeMajorPanels('aiPanel');await showSmooth('#aiPanel',{duration:320,keyframes:[{opacity:0,transform:'translate3d(14px,12px,0) scale(.99)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});ensureAIWelcome();setDockActive('ai')}
+async function openAI(){if(state.selected)closeDetail(false);if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels('aiPanel');await showSmooth('#aiPanel',{duration:320,keyframes:[{opacity:0,transform:'translate3d(14px,12px,0) scale(.99)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});ensureAIWelcome();setDockActive('ai')}
 
 function setupVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;const r=new SR();r.interimResults=false;r.continuous=false;r.onstart=()=>$('#voiceBtn')?.classList.add('listening');r.onend=()=>$('#voiceBtn')?.classList.remove('listening');r.onresult=e=>{const q=e.results[0][0].transcript;if($('#aiInput'))$('#aiInput').value=q;askAI(q)};state.voiceRecognition=r}
 function startVoice(){if(!state.voiceRecognition){toast('Ovozli qidiruv','Brauzer qo‘llab-quvvatlamaydi');return}state.voiceRecognition.lang=localeCode();state.voiceRecognition.start()}
 
 function openSheet(id){showSmooth('#'+id,{duration:300})}function closeSheet(id){hideSmooth('#'+id,{duration:220})}
-function loadPrefs(){let p={};try{p=JSON.parse(localStorage.getItem('uchkoprik-prefs')||'{}')}catch{}document.documentElement.dataset.theme=p.light?'light':'dark';document.documentElement.classList.toggle('reduce-motion',!!p.reduceMotion);document.documentElement.classList.toggle('reduce-transparency',!!p.reduceTransparency);document.documentElement.classList.toggle('high-contrast',!!p.highContrast);document.documentElement.style.setProperty('--font-scale',p.fontScale||1);if($('#lightModeToggle'))$('#lightModeToggle').checked=!!p.light;if($('#reduceMotionToggle'))$('#reduceMotionToggle').checked=!!p.reduceMotion;if($('#reduceTransparencyToggle'))$('#reduceTransparencyToggle').checked=!!p.reduceTransparency;if($('#highContrastToggle'))$('#highContrastToggle').checked=!!p.highContrast}
-function savePrefs(){const p={light:!!$('#lightModeToggle')?.checked,reduceMotion:!!$('#reduceMotionToggle')?.checked,reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,highContrast:!!$('#highContrastToggle')?.checked,fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1};localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));loadPrefs();applyMapTheme();updateIdleSphereTheme()}
+function loadPrefs(){
+  let p={};
+  try{p=JSON.parse(localStorage.getItem('uchkoprik-prefs')||'{}')}catch{}
+
+  // Old builds could leave reduce-motion enabled permanently.
+  // Migrate once to the new motion preference format so animations are on by default.
+  if(p.motionVersion!==MOTION_PREF_VERSION){
+    p={...p,reduceMotion:false,motionVersion:MOTION_PREF_VERSION};
+    localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));
+  }
+
+  document.documentElement.dataset.theme=p.light?'light':'dark';
+  document.documentElement.classList.toggle('reduce-motion',p.reduceMotion===true);
+  document.documentElement.classList.toggle('reduce-transparency',!!p.reduceTransparency);
+  document.documentElement.classList.toggle('high-contrast',!!p.highContrast);
+  document.documentElement.style.setProperty('--font-scale',p.fontScale||1);
+
+  if($('#lightModeToggle'))$('#lightModeToggle').checked=!!p.light;
+  if($('#reduceMotionToggle'))$('#reduceMotionToggle').checked=p.reduceMotion===true;
+  if($('#reduceTransparencyToggle'))$('#reduceTransparencyToggle').checked=!!p.reduceTransparency;
+  if($('#highContrastToggle'))$('#highContrastToggle').checked=!!p.highContrast;
+}
+function savePrefs(){
+  const p={
+    light:!!$('#lightModeToggle')?.checked,
+    reduceMotion:!!$('#reduceMotionToggle')?.checked,
+    reduceTransparency:!!$('#reduceTransparencyToggle')?.checked,
+    highContrast:!!$('#highContrastToggle')?.checked,
+    fontScale:Number(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'))||1,
+    motionVersion:MOTION_PREF_VERSION
+  };
+  localStorage.setItem('uchkoprik-prefs',JSON.stringify(p));
+  loadPrefs();
+  applyMapTheme();
+  updateIdleSphereTheme();
+}
 function setFont(key){document.documentElement.style.setProperty('--font-scale',{small:.92,normal:1,large:1.12}[key]||1);$$('[data-font]').forEach(b=>b.classList.toggle('active',b.dataset.font===key));savePrefs()}
 
 const scenes=()=>[
-  {eyebrow:'DIGITAL DISTRICT',title:'Uchko‘prik tumani',text:'Raqamli hudud, xarita va tasdiqlangan ma’lumotlar.',center:[71.045,40.54],zoom:9.75,pitch:18,bearing:0},
-  {eyebrow:'51 MFY',title:'Mahallalar',text:'51 ta mahalla yagona interaktiv xaritada.',center:[71.045,40.54],zoom:10.45,pitch:32,bearing:-7},
-  {eyebrow:'AHOLI',title:fmt(state.data.district.population),text:'Tuman aholisi va mahallalar kesimidagi tasdiqlangan statistika.',center:[71.03,40.54],zoom:10.8,pitch:38,bearing:8},
-  {eyebrow:'IQTISODIYOT',title:'Investor Mode',text:'Sanoat, qishloq xo‘jaligi, xizmatlar va investitsiya muhiti.',center:[71.07,40.53],zoom:11.1,pitch:42,bearing:-11},
-  {eyebrow:'HUDUD',title:`${fmt(state.data.district.areaKm2)} km²`,text:'Hudud, infratuzilma va tashkilotlar yagona raqamli xaritada.',center:[71.01,40.50],zoom:10.85,pitch:34,bearing:10},
-  {eyebrow:'AI · MAP · DATA',title:'Digital District',text:'Delegatsiya va boshqaruv uchun zamonaviy raqamli taqdimot.',center:[71.045,40.54],zoom:9.85,pitch:24,bearing:0}
+  {eyebrow:'DIGITAL DISTRICT',title:'Uchko‘prik tumani',text:'Raqamli hudud, xarita va tasdiqlangan ma’lumotlar.',center:[71.045,40.54],zoom:9.70,pitch:25,bearing:0,duration:1900},
+  {eyebrow:'51 MFY',title:'Mahallalar',text:'51 ta mahalla yagona interaktiv xaritada.',center:[71.045,40.54],zoom:10.40,pitch:42,bearing:-8,duration:2000},
+  {eyebrow:'AHOLI',title:fmt(state.data.district.population),text:'Tuman aholisi va mahallalar kesimidagi tasdiqlangan statistika.',center:[71.030,40.540],zoom:10.80,pitch:50,bearing:9,duration:2100},
+  {eyebrow:'IQTISODIYOT',title:'Investor Mode',text:'Sanoat, qishloq xo‘jaligi, xizmatlar va investitsiya muhiti.',center:[71.070,40.530],zoom:11.20,pitch:55,bearing:-12,duration:2200},
+  {eyebrow:'HUDUD',title:`${fmt(state.data.district.areaKm2)} km²`,text:'Hudud, infratuzilma va tashkilotlar yagona raqamli xaritada.',center:[71.010,40.500],zoom:11.00,pitch:48,bearing:13,duration:2100},
+  {eyebrow:'AI · MAP · DATA',title:'Digital District',text:'Delegatsiya va boshqaruv uchun zamonaviy raqamli taqdimot.',center:[71.045,40.540],zoom:9.90,pitch:58,bearing:0,duration:2200}
 ];
 function presentationGeoJSON(){return {type:'FeatureCollection',features:state.data.mahallas.filter(validCoords).map(m=>({type:'Feature',geometry:{type:'Point',coordinates:[m.lng,m.lat]},properties:{name:m.name,color:getSpecializationColor(m.specialization)}}))}}
 function setupPresentationLayers(){
-  const map=state.presentation.map;if(!map||!map.isStyleLoaded())return;const data=presentationGeoJSON();
-  if(map.getSource('presentation-mahallas'))map.getSource('presentation-mahallas').setData(data);else{
-    map.addSource('presentation-mahallas',{type:'geojson',data});
-    map.addLayer({id:'presentation-glow',type:'circle',source:'presentation-mahallas',paint:{'circle-radius':8,'circle-color':['get','color'],'circle-opacity':.16,'circle-blur':1}});
-    map.addLayer({id:'presentation-stars',type:'circle',source:'presentation-mahallas',paint:{'circle-radius':3.2,'circle-color':['get','color'],'circle-stroke-color':'#ffffff','circle-stroke-width':.7,'circle-opacity':.95}});
+  const map=state.presentation.map;
+  if(!map||!map.isStyleLoaded())return;
+  const data=presentationGeoJSON();
+  if(map.getSource('presentation-mahallas')){
+    map.getSource('presentation-mahallas').setData(data);
+    return;
   }
+  map.addSource('presentation-mahallas',{type:'geojson',data});
+  map.addLayer({
+    id:'presentation-glow',type:'circle',source:'presentation-mahallas',
+    paint:{'circle-radius':9,'circle-color':['get','color'],'circle-opacity':.15,'circle-blur':1}
+  });
+  map.addLayer({
+    id:'presentation-stars',type:'circle',source:'presentation-mahallas',
+    paint:{'circle-radius':3.1,'circle-color':['get','color'],'circle-stroke-color':'#ffffff','circle-stroke-width':.75,'circle-opacity':.94}
+  });
 }
 function animateSceneCopy(){
-  if(motionDisabled())return;const el=$('.presentation-copy');if(!el)return;
-  el.animate([{opacity:.15,transform:'translate3d(0,16px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:520,easing:easeOut()});
+  if(motionDisabled())return;
+  const eyebrow=$('#sceneEyebrow'),title=$('#sceneTitle'),text=$('#sceneText');
+  [eyebrow,title,text].filter(Boolean).forEach((el,index)=>{
+    cancelMotion(el);
+    el.animate(
+      [{opacity:0,transform:'translate3d(0,18px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],
+      {duration:520+index*70,delay:index*45,easing:easeOut()}
+    );
+  });
+}
+function updatePresentationControls(){
+  if($('#scenePlay'))$('#scenePlay').innerHTML=`<span class="icon">${svg(state.presentation.playing?'pause':'play')}</span>`;
+}
+function waitForPresentationMap(){
+  const map=state.presentation.map;
+  if(!map)return Promise.resolve();
+  if(map.loaded()&&map.isStyleLoaded())return Promise.resolve();
+  return new Promise(resolve=>map.once('idle',resolve));
 }
 async function openPresentation(){
-  await showSmooth('#presentationOverlay',{duration:360,keyframes:[{opacity:0,transform:'scale(1.01)'},{opacity:1,transform:'scale(1)'}]});
-  state.presentation.index=0;state.presentation.playing=true;
+  clearTimeout(state.presentation.timer);
+  if(state.selected)closeDetail(false);
+  if(document.body.classList.contains('passport-mode'))await closePassportMode(false);
+  await closeMajorPanels();
+  state.presentation.index=0;
+  state.presentation.playing=true;
+  await showSmooth('#presentationOverlay',{
+    duration:420,
+    keyframes:[{opacity:0,transform:'scale(1.012)'},{opacity:1,transform:'scale(1)'}]
+  });
+
   if(!state.presentation.map){
-    state.presentation.map=new maplibregl.Map({container:'presentationMap',style:getMapStyleUrl(),center:[71.045,40.54],zoom:9.75,pitch:18,bearing:0,interactive:false,attributionControl:false,fadeDuration:80});
-    state.presentation.map.on('load',()=>{setupPresentationLayers();state.presentation.map.resize();renderScene()});
-  }else{state.presentation.map.resize();setupPresentationLayers();renderScene()}
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{state.presentation.map?.resize();renderScene()}));
+    state.presentation.map=new maplibregl.Map({
+      container:'presentationMap',
+      style:getMapStyleUrl(),
+      center:[70.88,40.62],
+      zoom:8.7,
+      pitch:0,
+      bearing:0,
+      interactive:false,
+      attributionControl:false,
+      fadeDuration:120
+    });
+    state.presentation.map.on('load',setupPresentationLayers);
+    state.presentation.map.on('styledata',setupPresentationLayers);
+  }
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>state.presentation.map?.resize()));
+  await waitForPresentationMap();
+  state.presentation.map?.resize();
+  setupPresentationLayers();
+  renderScene({opening:true});
   scheduleScene();
 }
-function closePresentation(){hideSmooth('#presentationOverlay',{duration:260,keyframes:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.008)'}]});clearTimeout(state.presentation.timer)}
-function renderScene(){
-  const all=scenes(),s=all[state.presentation.index];setText('#sceneEyebrow',s.eyebrow);setText('#sceneTitle',s.title);setText('#sceneText',s.text);setText('#sceneCounter',`${state.presentation.index+1} / ${all.length}`);
-  if($('#scenePlay'))$('#scenePlay').innerHTML=`<span class="icon">${svg(state.presentation.playing?'pause':'play')}</span>`;
-  animateSceneCopy();
-  const map=state.presentation.map;if(!map)return;map.resize();setupPresentationLayers();
-  if(map.loaded())map.flyTo({center:s.center,zoom:s.zoom,pitch:s.pitch,bearing:s.bearing,duration:motionDisabled()?0:2400,curve:1.35,speed:.55,essential:true});
+async function closePresentation(){
+  clearTimeout(state.presentation.timer);
+  state.presentation.map?.stop();
+  await hideSmooth('#presentationOverlay',{
+    duration:300,
+    keyframes:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.008)'}]
+  });
 }
-function scheduleScene(){clearTimeout(state.presentation.timer);if(!state.presentation.playing)return;state.presentation.timer=setTimeout(()=>{state.presentation.index=(state.presentation.index+1)%scenes().length;renderScene();scheduleScene()},6800)}
-function sceneStep(d){state.presentation.index=(state.presentation.index+d+scenes().length)%scenes().length;renderScene();scheduleScene()}
-function togglePresentationPlay(){state.presentation.playing=!state.presentation.playing;renderScene();scheduleScene()}
+function renderScene({opening=false}={}){
+  const all=scenes();
+  const s=all[state.presentation.index];
+  if(!s)return;
+  setText('#sceneEyebrow',s.eyebrow);
+  setText('#sceneTitle',s.title);
+  setText('#sceneText',s.text);
+  setText('#sceneCounter',`${state.presentation.index+1} / ${all.length}`);
+  updatePresentationControls();
+  animateSceneCopy();
+
+  const map=state.presentation.map;
+  if(!map)return;
+  if(!map.loaded()||!map.isStyleLoaded()){
+    map.once('idle',()=>renderScene({opening}));
+    return;
+  }
+  setupPresentationLayers();
+  map.stop();
+  map.flyTo({
+    center:s.center,
+    zoom:s.zoom,
+    pitch:motionDisabled()?0:s.pitch,
+    bearing:s.bearing,
+    duration:motionDisabled()?0:(opening?2200:s.duration),
+    curve:1.35,
+    speed:.62,
+    essential:true
+  });
+}
+function scheduleScene(){
+  clearTimeout(state.presentation.timer);
+  if(!state.presentation.playing)return;
+  state.presentation.timer=setTimeout(()=>{
+    state.presentation.index=(state.presentation.index+1)%scenes().length;
+    renderScene();
+    scheduleScene();
+  },6500);
+}
+function sceneStep(delta){
+  state.presentation.index=(state.presentation.index+delta+scenes().length)%scenes().length;
+  renderScene();
+  scheduleScene();
+}
+function togglePresentationPlay(){
+  state.presentation.playing=!state.presentation.playing;
+  updatePresentationControls();
+  scheduleScene();
+}
 
 
 function ensureIdleOverlay(){
@@ -512,15 +658,63 @@ function renderAllTextual(){renderCategories();renderProducts();renderDistrictMe
 function setupEvents(){
   $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#fitDistrict')?.addEventListener('click',()=>{state.selectedSpecialization=null;state.selectedOrganizationType=null;renderSpecializationFilters();renderOrganizationFilters();applyMarkerFilters();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters()});
   $('#districtPassportBtn')?.addEventListener('click',openPassportMode);$('#districtClose')?.addEventListener('click',()=>closePassportMode());
-  $('#searchOpen')?.addEventListener('click',async()=>{await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:300,keyframes:[{opacity:0,transform:'translate3d(0,-10px,0) scale(.99)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSmooth('#searchDialog',{duration:240}));$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
+  $('#searchOpen')?.addEventListener('click',async()=>{if(state.selected)closeDetail(false);if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:300,keyframes:[{opacity:0,transform:'translate3d(-50%,-10px,0) scale(.99)'},{opacity:1,transform:'translate3d(-50%,0,0) scale(1)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSearchSmooth());$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
   $$('.dock-item').forEach(btn=>btn.addEventListener('click',()=>{const nav=btn.dataset.nav;if(nav==='explore')return openFilterPanel();if(nav==='map'){closeMajorPanels();closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeFilterPanel();fitDistrict();return}if(nav==='ai')return openAI();if(nav==='invest')return openInvestorMode();if(nav==='products')return openPanel('products')}));
   $('#investorClose')?.addEventListener('click',closeInvestorMode);$('#showBusinesses')?.addEventListener('click',()=>{state.activeLayer='business';renderCategories();renderMarkers();closeInvestorMode()});$('#askInvestment')?.addEventListener('click',()=>askAI('Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'));$('#productsClose')?.addEventListener('click',openFilterPanel);
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
   $('#aiClose')?.addEventListener('click',()=>{hideSmooth('#aiPanel',{duration:260});setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
   $('#languageBtn')?.addEventListener('click',()=>openSheet('languageSheet'));$('#accessibilityBtn')?.addEventListener('click',()=>openSheet('accessibilitySheet'));$$('[data-sheet-close]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.sheetClose)));$$('.sheet-backdrop').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)closeSheet(s.id)}));['lightModeToggle','reduceMotionToggle','reduceTransparencyToggle','highContrastToggle'].forEach(id=>$('#'+id)?.addEventListener('change',savePrefs));$$('[data-font]').forEach(btn=>btn.addEventListener('click',()=>setFont(btn.dataset.font)));
   $('#presentationBtn')?.addEventListener('click',openPresentation);$('#presentationExit')?.addEventListener('click',closePresentation);$('#scenePrev')?.addEventListener('click',()=>sceneStep(-1));$('#sceneNext')?.addEventListener('click',()=>sceneStep(1));$('#scenePlay')?.addEventListener('click',togglePresentationPlay);$('#idleSphereClose')?.addEventListener('click',()=>{exitIdleMode();resetIdleTimer()});
-  document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}if(e.key==='Escape'){if(state.selected){closeDetail();return}if(document.body.classList.contains('passport-mode')){closePassportMode();return}$('#searchDialog')?.classList.add('hidden');$('#aiPanel')?.classList.add('hidden');if(!$('#presentationOverlay')?.classList.contains('hidden'))closePresentation()}if(!$('#presentationOverlay')?.classList.contains('hidden')){if(e.key==='ArrowRight')sceneStep(1);if(e.key==='ArrowLeft')sceneStep(-1)}});window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize()});
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchOpen')?.click()}
+    const presentationOpen=!$('#presentationOverlay')?.classList.contains('hidden');
+    if(e.key==='Escape'){
+      if(presentationOpen){closePresentation();return}
+      if(state.selected){closeDetail();return}
+      if(document.body.classList.contains('passport-mode')){closePassportMode();return}
+      hideSearchSmooth();
+      hideSmooth('#aiPanel',{duration:180});
+    }
+    if(presentationOpen){
+      if(e.key==='ArrowRight'){e.preventDefault();sceneStep(1)}
+      if(e.key==='ArrowLeft'){e.preventDefault();sceneStep(-1)}
+      if(e.key===' '){e.preventDefault();togglePresentationPlay()}
+    }
+  });
+  window.addEventListener('resize',()=>{scheduleConnectorUpdate();state.map?.resize();state.presentation.map?.resize()});
 }
 
-async function boot(){detectLanguage();loadPrefs();ensureIdleOverlay();ensureSphereTestButton();bindIcons();console.log('Uchko‘prik Digital District UX V2 ishga tushmoqda...');await loadData();applyLanguage();renderLanguages();setupEvents();setupVoice();initMap();ensureAIWelcome();setupIdleDetection();requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(e=>console.warn('Service Worker:',e))}console.log('Uchko‘prik Digital District UX V2 tayyor.')}
+async function boot(){
+  detectLanguage();
+  loadPrefs();
+  document.documentElement.classList.add('motion-ready');
+  ensureIdleOverlay();
+  ensureSphereTestButton();
+  bindIcons();
+  console.log('Uchko‘prik Digital District ishga tushmoqda...');
+
+  await loadData();
+  applyLanguage();
+  renderLanguages();
+  setupEvents();
+  setupVoice();
+  initMap();
+  ensureAIWelcome();
+  setupIdleDetection();
+  requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));
+
+  if('serviceWorker' in navigator){
+    let reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(reloading)return;
+      reloading=true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'})
+      .then(registration=>registration.update())
+      .catch(error=>console.warn('Service Worker:',error));
+  }
+
+  console.log('Uchko‘prik Digital District tayyor.');
+}
 boot().catch(error=>{console.error('Application error:',error);toast('Application error',error.message)});
