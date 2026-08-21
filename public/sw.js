@@ -1,4 +1,4 @@
-const CACHE='uchkoprik-v2.3.0-gemini-detail-ui';
+const CACHE='uchkoprik-v3.0.0-presentation-studio';
 const CORE=[
   '/uz',
   '/logo.svg',
