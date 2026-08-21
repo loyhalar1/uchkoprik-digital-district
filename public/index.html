@@ -701,41 +701,29 @@
 <!-- ======================================================
        PRESENTATION MODE
   ======================================================= -->
-<section aria-label="Presentation Mode" class="presentation hidden" id="presentationOverlay">
+<section aria-label="Presentation Mode" class="presentation hidden" id="presentationOverlay" data-layout="hero" data-slide-type="hero">
 <div class="presentation-map" id="presentationMap"></div>
+<div class="presentation-media hidden" id="presentationMedia"></div>
 <div class="presentation-shade"></div>
 <div class="presentation-brand">
 <img alt="" src="/logo.svg"/>
-<span>
-        UCHKO‘PRIK
-      </span>
+<span>UCHKO‘PRIK</span>
 </div>
 <div class="presentation-copy">
-<span class="eyebrow" id="sceneEyebrow">
-        DIGITAL DISTRICT
-      </span>
-<h2 id="sceneTitle">
-        Welcome to Uchko‘prik
-      </h2>
-<p id="sceneText">
-</p>
+<span class="eyebrow" id="sceneEyebrow">DIGITAL DISTRICT</span>
+<h2 id="sceneTitle">Uchko‘prik tumani</h2>
+<p id="sceneText"></p>
+<div class="presentation-entity hidden" id="presentationEntity"></div>
+<div class="presentation-stats hidden" id="presentationStats"></div>
+<button class="presentation-cta hidden" id="presentationCta" type="button"></button>
 </div>
+<div class="presentation-progress" aria-hidden="true"><i id="presentationProgress"></i></div>
 <div class="presentation-controls glass floating">
-<button id="scenePrev" type="button">
-<span class="icon" data-icon="arrowLeft"></span>
-</button>
-<button id="scenePlay" type="button">
-<span class="icon" data-icon="pause"></span>
-</button>
-<span id="sceneCounter">
-        1 / 6
-      </span>
-<button id="sceneNext" type="button">
-<span class="icon" data-icon="arrowRight"></span>
-</button>
-<button id="presentationExit" type="button">
-<span class="icon" data-icon="x"></span>
-</button>
+<button id="scenePrev" type="button" title="Oldingi slayd"><span class="icon" data-icon="arrowLeft"></span></button>
+<button id="scenePlay" type="button" title="Pauza / davom ettirish"><span class="icon" data-icon="pause"></span></button>
+<span id="sceneCounter">1 / 1</span>
+<button id="sceneNext" type="button" title="Keyingi slayd"><span class="icon" data-icon="arrowRight"></span></button>
+<button id="presentationExit" type="button" title="Yopish"><span class="icon" data-icon="x"></span></button>
 </div>
 </section>
 <!-- ======================================================
