@@ -31,3 +31,53 @@ body.passport-mode{background:#020407!important}.passport-mode .glass,.passport-
 .topbar,.explore-panel,.dock,.mode-panel,.detail-card,.ai-panel,.search-dialog,.sheet{backface-visibility:hidden}html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 @media(max-width:900px){.passport-mode #map{width:calc(100vw - 36px)!important;height:34vh!important}.passport-mode #districtPanel{left:18px!important;right:18px!important;top:calc(34vh + 98px)!important;width:auto!important;height:calc(32vh - 20px)!important}.passport-mode #passportDashboard{display:none!important}}
 @media(max-width:760px){.topbar{top:8px!important;width:calc(100vw - 16px)!important;height:54px!important;grid-template-columns:42px 1fr auto!important}.ux-top-left .ux-top-button{width:40px!important;padding:0!important}.ux-top-left .ux-top-button span:last-child,.ux-district-title small,#presentationBtn,#accessibilityBtn,.ux-top-right #searchOpen span:last-child{display:none!important}.ux-district-title{min-width:0;padding:0 8px}.ux-district-title strong{font-size:.61rem;letter-spacing:.08em}.explore-panel{left:8px!important;right:8px!important;top:auto!important;bottom:80px!important;width:auto!important;max-height:62vh!important}.ux-filter-toggle{left:10px!important;top:auto!important;bottom:88px!important}.dock{bottom:8px!important;width:calc(100vw - 16px)!important}.dock-item{min-width:56px!important;flex:1!important;padding:4px!important}.detail-card{left:8px!important;right:8px!important;top:auto!important;bottom:80px!important;width:auto!important;max-height:66vh!important;transform:none!important}.presentation-copy{left:24px;top:46%;width:calc(100vw - 48px)}.presentation-copy h2{font-size:clamp(3rem,15vw,5rem)}.presentation-controls{bottom:14px!important}.sphere-test-button{right:10px!important;bottom:82px!important}.sphere-test-label{display:none}}
+
+
+/* =========================================================
+   V2.1 — MAP PERFORMANCE / 3D CAMERA / TELEGRAM GLASS
+   Keep MapLibre marker-root transforms untouched.
+========================================================= */
+body.ux-v2 .mfy-marker{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important}
+body.ux-v2 .mfy-dot{width:8px!important;height:8px!important;border-radius:50%!important;background:var(--marker)!important;border:1px solid rgba(255,255,255,.72)!important;box-shadow:0 0 7px color-mix(in srgb,var(--marker) 72%,transparent)!important;animation:none!important;will-change:auto!important;opacity:.92!important;transform:none!important}
+body.ux-v2 .mfy-dot::before,body.ux-v2 .mfy-dot::after{display:none!important;animation:none!important}
+body.ux-v2 .mfy-marker:hover .mfy-dot,body.ux-v2 .mfy-marker.is-active .mfy-dot{animation:none!important;opacity:1!important;transform:scale(1.32)!important;box-shadow:0 0 10px var(--marker)!important}
+body.ux-v2 .place-marker{width:28px!important;height:34px!important;min-width:28px!important;min-height:34px!important;overflow:visible!important}
+body.ux-v2 .place-pin{position:relative!important;width:18px!important;height:18px!important;border-radius:50% 50% 50% 0!important;background:linear-gradient(145deg,color-mix(in srgb,var(--marker) 88%,white),var(--marker))!important;border:1px solid rgba(255,255,255,.72)!important;box-shadow:0 4px 10px rgba(0,0,0,.34),0 0 8px color-mix(in srgb,var(--marker) 55%,transparent)!important;animation:none!important;transform:rotate(-45deg)!important;transform-origin:50% 50%!important;will-change:auto!important}
+body.ux-v2 .place-pin::before,body.ux-v2 .place-pin::after{display:none!important}
+body.ux-v2 .place-pin .pin-core{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.94);transform:translate(-50%,-50%);box-shadow:0 1px 2px rgba(0,0,0,.22)}
+body.ux-v2 .place-marker:hover .place-pin,body.ux-v2 .place-marker.is-active .place-pin{animation:none!important;transform:rotate(-45deg) scale(1.14)!important;box-shadow:0 5px 12px rgba(0,0,0,.38),0 0 10px var(--marker)!important}
+.presentation-map-marker{width:24px;height:30px;display:grid;place-items:end center;pointer-events:none}
+.presentation-pin-shape{position:relative;display:block;width:16px;height:16px;border-radius:50% 50% 50% 0;background:linear-gradient(145deg,color-mix(in srgb,var(--marker) 86%,white),var(--marker));border:1px solid rgba(255,255,255,.82);box-shadow:0 5px 12px rgba(0,0,0,.46),0 0 9px color-mix(in srgb,var(--marker) 48%,transparent);transform:rotate(-45deg)}
+.presentation-pin-shape>span{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+body.ux-v2 #investorPanel{position:fixed!important;left:auto!important;right:18px!important;top:92px!important;bottom:auto!important;width:390px!important;max-height:calc(100vh - 190px)!important;overflow:auto!important;padding:22px!important}
+body.ux-v2 #productsPanel{position:fixed!important;left:auto!important;right:18px!important;top:92px!important;bottom:auto!important;width:min(680px,calc(100vw - 360px))!important;max-height:calc(100vh - 190px)!important;overflow:auto!important;padding:22px!important}
+body.ux-v2 .detail-card{top:92px!important;bottom:88px!important;right:24px!important;transform:none!important;height:auto!important;max-height:none!important;overflow:auto!important}
+body.ux-v2 .ai-suggestions{display:flex!important;flex-wrap:wrap!important;overflow:visible!important;max-height:92px;align-content:flex-start}
+body.ux-v2 .ai-suggestion{white-space:normal!important;line-height:1.2!important}
+.economic-zone-section .filter-count{font-size:.58rem;color:#91efff;border:1px solid rgba(145,239,255,.18);background:rgba(145,239,255,.06);border-radius:999px;padding:3px 7px}
+.economic-zone-list{display:grid;gap:6px}
+.economic-zone-item{width:100%;display:grid;gap:3px;text-align:left;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.075)!important;color:var(--text);cursor:pointer}
+.economic-zone-item:hover{background:rgba(255,255,255,.07)!important;border-color:rgba(94,216,255,.28)!important}
+.economic-zone-item strong{font-size:.62rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.economic-zone-item small{font-size:.53rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.economic-zone-more{font-size:.54rem;color:var(--muted);padding:5px 7px}
+html.liquid-glass body.ux-v2 .topbar,
+html.liquid-glass body.ux-v2 .explore-panel,
+html.liquid-glass body.ux-v2 .dock,
+html.liquid-glass body.ux-v2 .mode-panel,
+html.liquid-glass body.ux-v2 .detail-card,
+html.liquid-glass body.ux-v2 .ai-panel,
+html.liquid-glass body.ux-v2 .search-dialog,
+html.liquid-glass body.ux-v2 .sheet,
+html.liquid-glass body.ux-v2 .presentation-controls{background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.045) 42%,rgba(255,255,255,.025)),rgba(12,16,21,.54)!important;border:1px solid rgba(255,255,255,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,255,255,.055),0 16px 42px rgba(0,0,0,.28)!important;backdrop-filter:blur(16px) saturate(142%) brightness(1.04)!important;-webkit-backdrop-filter:blur(16px) saturate(142%) brightness(1.04)!important}
+html[data-theme="light"].liquid-glass body.ux-v2 .topbar,
+html[data-theme="light"].liquid-glass body.ux-v2 .explore-panel,
+html[data-theme="light"].liquid-glass body.ux-v2 .dock,
+html[data-theme="light"].liquid-glass body.ux-v2 .mode-panel,
+html[data-theme="light"].liquid-glass body.ux-v2 .detail-card,
+html[data-theme="light"].liquid-glass body.ux-v2 .ai-panel,
+html[data-theme="light"].liquid-glass body.ux-v2 .search-dialog,
+html[data-theme="light"].liquid-glass body.ux-v2 .sheet{background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(255,255,255,.48)),rgba(240,246,250,.46)!important;border-color:rgba(255,255,255,.72)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 16px 40px rgba(32,46,58,.14)!important}
+html.reduce-transparency body.ux-v2 .glass,html.reduce-transparency body.ux-v2 .floating{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(max-width:980px){body.ux-v2 #productsPanel{left:18px!important;right:18px!important;width:auto!important}}
+@media(max-width:760px){body.ux-v2 #investorPanel,body.ux-v2 #productsPanel{left:8px!important;right:8px!important;top:auto!important;bottom:80px!important;width:auto!important;max-height:70vh!important;padding:18px!important}body.ux-v2 .detail-card{left:8px!important;right:8px!important;top:auto!important;bottom:80px!important;max-height:66vh!important;height:auto!important;transform:none!important}}
