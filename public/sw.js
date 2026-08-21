@@ -1,4 +1,4 @@
-const CACHE='uchkoprik-v2.1.0-map-ui';
+const CACHE='uchkoprik-v2.2.0-layer-list-admin';
 const CORE=[
   '/uz',
   '/logo.svg',
