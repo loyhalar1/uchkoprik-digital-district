@@ -2,11 +2,126 @@
 <html lang="uz" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Uchko‘prik Digital District — Admin</title><link rel="icon" href="/logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/css/admin.css"></head>
 <body>
 <section id="loginScreen" class="login-screen"><form id="loginForm" class="login-card glass"><img src="/logo.svg" alt="" width="48" height="48"><span class="eyebrow">UCHKO‘PRIK DIGITAL DISTRICT</span><h1>Admin panel</h1><p>Supabase Auth orqali xavfsiz kirish.</p><label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="admin@example.uz"></label><label>Parol<input id="adminPassword" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Kirish</button><div id="loginError" class="error hidden"></div></form></section>
-<div id="adminApp" class="admin-app hidden"><aside class="sidebar glass"><a class="admin-brand" href="/uz" target="_blank"><img src="/logo.svg" alt=""><span><strong>UCHKO‘PRIK</strong><small>Digital District</small></span></a><nav id="adminNav"><button class="nav-item active" data-view="dashboard">Dashboard</button><button class="nav-item" data-view="mahallas">MFYlar</button><button class="nav-item" data-view="organizations">Tashkilotlar</button><button class="nav-item" data-view="categories">Kategoriyalar</button><button class="nav-item" data-view="economicZones">Iqtisodiy zonalar</button><button class="nav-item" data-view="district">Tuman pasporti</button></nav><div class="sidebar-foot"><span id="adminIdentity">—</span><a href="/uz" target="_blank">Public platforma</a><button id="logoutBtn">Chiqish</button></div></aside>
+<div id="adminApp" class="admin-app hidden"><aside class="sidebar glass"><a class="admin-brand" href="/uz" target="_blank"><img src="/logo.svg" alt=""><span><strong>UCHKO‘PRIK</strong><small>Digital District</small></span></a><nav id="adminNav"><button class="nav-item active" data-view="dashboard">Dashboard</button><button class="nav-item" data-view="mahallas">MFYlar</button><button class="nav-item" data-view="organizations">Tashkilotlar</button><button class="nav-item" data-view="categories">Kategoriyalar</button><button class="nav-item" data-view="economicZones">Iqtisodiy zonalar</button><button class="nav-item" data-view="district">Tuman pasporti</button><button class="nav-item nav-presentation" data-view="presentation">Prezentatsiya</button></nav><div class="sidebar-foot"><span id="adminIdentity">—</span><a href="/uz" target="_blank">Public platforma</a><button id="logoutBtn">Chiqish</button></div></aside>
 <main class="content"><header class="admin-topbar glass"><div><span id="viewEyebrow" class="eyebrow">SYSTEM</span><h1 id="viewTitle">Dashboard</h1></div><div class="top-actions"><button id="refreshBtn" class="secondary">Yangilash</button><button id="addBtn" class="primary hidden">+ Yangi</button></div></header>
 <section id="dashboardView" class="view"><div id="metricGrid" class="metric-grid"></div><div class="dashboard-grid"><section class="panel glass"><div class="panel-head"><h2>Ma’lumot holati</h2></div><div id="coverageList" class="coverage-list"></div></section><section class="panel glass"><div class="panel-head"><h2>Tuman pasporti</h2></div><div id="districtPreview" class="district-preview"></div></section></div></section>
 <section id="tableView" class="view hidden"><div class="table-toolbar glass"><input id="tableSearch" type="search" placeholder="Nom, slug, JSHIR/INN yoki tur bo‘yicha qidirish…"><div id="tableCount"></div></div><div class="table-wrap glass"><table><thead id="dataHead"></thead><tbody id="dataBody"></tbody></table></div></section>
 <section id="districtView" class="view hidden"><form id="districtForm" class="district-form panel glass"><div class="panel-head"><h2>Tuman ko‘rsatkichlari</h2><button class="primary" type="submit">Saqlash</button></div><div id="districtFields" class="editor-fields"></div></form></section>
+<section id="presentationView" class="view hidden presentation-studio-view">
+  <div id="presentationSetupWarning" class="presentation-warning hidden">
+    <strong>Presentation Studio hali Supabase’da yaratilmagan.</strong>
+    <span><code>presentation_studio.sql</code> faylini Supabase SQL Editor’da ishga tushiring.</span>
+  </div>
+  <div class="presentation-studio">
+    <aside class="studio-library panel glass">
+      <div class="studio-library-head">
+        <div><span class="eyebrow">PLAYLIST</span><h2>Slaydlar</h2></div>
+        <button id="presentationAddSlide" class="primary mini" type="button">+ Slayd</button>
+      </div>
+      <label class="studio-playlist-select"><span>Playlist</span><select id="presentationPlaylistSelect"></select></label>
+      <div class="studio-playlist-actions">
+        <button id="presentationNewPlaylist" class="secondary mini" type="button">+ Playlist</button>
+        <button id="presentationSetDefault" class="secondary mini" type="button">Default</button>
+        <button id="presentationPreviewPublic" class="secondary mini" type="button">Preview ↗</button>
+      </div>
+      <p class="studio-hint">Slaydlarni sichqoncha bilan tortib tartiblash mumkin.</p>
+      <div id="presentationSlideList" class="presentation-slide-list"></div>
+    </aside>
+
+    <section class="studio-workspace panel glass">
+      <div class="studio-empty" id="presentationEmptyState">
+        <span class="eyebrow">PRESENTATION STUDIO</span>
+        <h2>Slaydni tanlang yoki yangi slayd yarating</h2>
+        <p>Matn, media, xarita kamerasi va real Supabase ma’lumotlarini shu yerda boshqaring.</p>
+      </div>
+      <form id="presentationForm" class="presentation-form hidden">
+        <input id="presSlideId" type="hidden">
+        <div class="studio-form-head">
+          <div><span class="eyebrow">SLIDE EDITOR</span><h2 id="presEditorTitle">Yangi slayd</h2></div>
+          <div class="studio-form-actions">
+            <button id="presentationDuplicate" class="secondary mini" type="button">Nusxalash</button>
+            <button id="presentationDelete" class="danger mini" type="button">O‘chirish</button>
+            <button class="primary" type="submit">Saqlash</button>
+          </div>
+        </div>
+
+        <div class="studio-preview" id="presentationAdminPreview">
+          <div class="studio-preview-media" id="presentationAdminPreviewMedia"></div>
+          <div class="studio-preview-copy">
+            <span id="presentationAdminPreviewEyebrow">DIGITAL DISTRICT</span>
+            <strong id="presentationAdminPreviewTitle">Uchko‘prik tumani</strong>
+            <p id="presentationAdminPreviewBody">Slayd matni shu yerda ko‘rinadi.</p>
+            <div id="presentationAdminPreviewStats" class="studio-preview-stats"></div>
+          </div>
+        </div>
+
+        <div class="studio-tabs">
+          <button class="studio-tab active" type="button" data-studio-tab="content">Kontent</button>
+          <button class="studio-tab" type="button" data-studio-tab="data">Data</button>
+          <button class="studio-tab" type="button" data-studio-tab="media">Media</button>
+          <button class="studio-tab" type="button" data-studio-tab="camera">Xarita</button>
+          <button class="studio-tab" type="button" data-studio-tab="advanced">Sozlama</button>
+        </div>
+
+        <div class="studio-tab-panel" data-studio-panel="content">
+          <div class="editor-fields studio-fields">
+            <label class="field"><span>Slayd turi</span><select id="presSlideType"><option value="hero">Hero</option><option value="map">Map</option><option value="statistics">Statistics</option><option value="gallery">Gallery</option><option value="mfy">MFY</option><option value="organization">Organization</option><option value="economic-zone">Economic zone</option><option value="investment">Investment</option><option value="ai">AI</option><option value="video">Video</option><option value="final">Final</option></select></label>
+            <label class="field"><span>Layout</span><select id="presLayout"><option value="hero">Hero</option><option value="split">Split</option><option value="media-right">Media right</option><option value="full-media">Full media</option><option value="stats">Stats</option><option value="spotlight">Spotlight</option></select></label>
+            <label class="field"><span>Eyebrow</span><input id="presEyebrow" type="text" placeholder="DIGITAL DISTRICT"></label>
+            <label class="field"><span>Accent rang</span><input id="presAccent" type="color" value="#7cefff"></label>
+            <label class="field full"><span>Sarlavha</span><input id="presTitle" type="text" required placeholder="Uchko‘prik tumani"></label>
+            <label class="field full"><span>Tavsif</span><textarea id="presBody" placeholder="Slaydning asosiy matni"></textarea></label>
+            <label class="field"><span>CTA tugma matni</span><input id="presCtaLabel" type="text" placeholder="Platformani ochish"></label>
+            <label class="field"><span>CTA URL</span><input id="presCtaUrl" type="url" placeholder="https://..."></label>
+            <label class="field full"><span>Tarjimalar JSON (ixtiyoriy)</span><textarea id="presTranslations" class="code-field" placeholder='{"en":{"title":"Uchkoprik District","body":"..."},"ru":{"title":"Учкуприк"}}'></textarea><small class="field-help">UZ asosiy matn yuqorida. Boshqa tillar shu JSON orqali almashtiriladi.</small></label>
+          </div>
+        </div>
+
+        <div class="studio-tab-panel hidden" data-studio-panel="data">
+          <div class="editor-fields studio-fields">
+            <label class="field"><span>Data obyekt turi</span><select id="presEntityType"><option value="none">Bog‘lanmagan</option><option value="mahalla">MFY</option><option value="organization">Tashkilot</option><option value="economic-zone">Iqtisodiy zona</option></select></label>
+            <label class="field"><span>Data obyekt</span><select id="presEntityId"><option value="">Tanlanmagan</option></select></label>
+            <label class="field"><span>Statistika preset</span><select id="presStatsPreset"><option value="none">Yo‘q</option><option value="district">Tuman</option><option value="economy">Iqtisodiyot</option><option value="entity">Tanlangan obyekt</option><option value="platform">Platforma</option></select></label>
+            <div class="field full"><span>Dinamik qiymatlar</span><div class="template-help"><code>{{district.population}}</code><code>{{district.areaKm2}}</code><code>{{counts.mahallas}}</code><code>{{counts.organizations}}</code><code>{{counts.economicZones}}</code><code>{{entity.name}}</code></div></div>
+            <div class="field full"><span>Maxsus statistikalar (4 tagacha)</span><div id="presentationCustomStats" class="custom-stats-editor"></div></div>
+          </div>
+        </div>
+
+        <div class="studio-tab-panel hidden" data-studio-panel="media">
+          <div class="editor-fields studio-fields">
+            <label class="field"><span>Media turi</span><select id="presMediaType"><option value="none">Yo‘q</option><option value="image">Rasm</option><option value="video">Video</option><option value="gallery">Gallery</option></select></label>
+            <label class="field"><span>Overlay kuchi</span><input id="presOverlay" type="number" min="0" max="1" step="0.05" value="0.55"></label>
+            <label class="field full"><span>Media URL</span><input id="presMediaUrl" type="url" placeholder="Supabase Storage URL avtomatik yoziladi"></label>
+            <label class="field full presentation-media-upload"><span>Rasm yoki video yuklash</span><input id="presMediaFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"><small class="field-help">Rasm WebP’ga optimallashtiriladi. Video MP4/WebM ko‘rinishida saqlanadi.</small></label>
+            <label class="field full"><span>Gallery URLlar</span><textarea id="presGalleryUrls" placeholder="Har bir qatorda bitta rasm URL"></textarea></label>
+          </div>
+        </div>
+
+        <div class="studio-tab-panel hidden" data-studio-panel="camera">
+          <div class="editor-fields studio-fields">
+            <label class="check"><input id="presShowMap" type="checkbox" checked><span>Xaritani ko‘rsatish</span></label>
+            <label class="field"><span>Xarita qatlamlari</span><select id="presMapLayer"><option value="all">Barchasi</option><option value="mahalla">MFYlar</option><option value="business">Tashkilotlar</option><option value="economic-zone">Iqtisodiy zonalar</option><option value="none">Marker yo‘q</option></select></label>
+            <label class="field"><span>Markaz Latitude</span><input id="presCenterLat" type="number" step="any" placeholder="40.540"></label>
+            <label class="field"><span>Markaz Longitude</span><input id="presCenterLng" type="number" step="any" placeholder="71.045"></label>
+            <label class="field"><span>Zoom</span><input id="presZoom" type="number" step="0.1" min="2" max="20" value="10.2"></label>
+            <label class="field"><span>Pitch</span><input id="presPitch" type="number" step="1" min="0" max="70" value="42"></label>
+            <label class="field"><span>Bearing</span><input id="presBearing" type="number" step="1" min="-180" max="180" value="-8"></label>
+            <label class="field"><span>Kamera animatsiyasi, ms</span><input id="presCameraDuration" type="number" min="0" max="30000" step="100" value="2000"></label>
+            <button id="presentationUseEntityCoords" class="secondary" type="button">Tanlangan obyekt koordinatasini olish</button>
+          </div>
+        </div>
+
+        <div class="studio-tab-panel hidden" data-studio-panel="advanced">
+          <div class="editor-fields studio-fields">
+            <label class="field"><span>Tartib</span><input id="presSortOrder" type="number" step="10" value="100"></label>
+            <label class="field"><span>Slayd davomiyligi, ms</span><input id="presDisplayDuration" type="number" min="1000" max="120000" step="500" value="6500"></label>
+            <label class="check"><input id="presActive" type="checkbox" checked><span>Slayd faol</span></label>
+          </div>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>
 </main></div>
 <section id="editorBackdrop" class="modal-backdrop hidden"><form id="editorForm" class="editor glass"><div class="editor-head"><div><span class="eyebrow">DATA EDITOR</span><h2 id="editorTitle">Yozuv</h2></div><button id="editorClose" type="button" class="icon-btn">×</button></div><div id="editorFields" class="editor-fields"></div><div class="editor-actions"><button id="deleteBtn" type="button" class="danger hidden">O‘chirish</button><span></span><button id="cancelBtn" type="button" class="secondary">Bekor qilish</button><button type="submit" class="primary">Saqlash</button></div></form></section>
 <div id="toastHost" class="toast-host"></div>
