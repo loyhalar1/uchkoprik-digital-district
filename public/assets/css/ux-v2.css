@@ -145,3 +145,94 @@ body.ux-v2 .detail-hero{position:relative;overflow:hidden;background-color:rgba(
 
 @media(max-width:900px){body.ux-v2 .layer-list-toggle{left:8px!important;width:calc(100vw - 16px)!important;bottom:80px!important}.layer-list-panel{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:136px!important;max-height:46vh!important}.layer-list-open .explore-panel{max-height:210px!important}.passport-mode #passportDashboard{display:none!important}}
 @media(max-height:720px) and (min-width:901px){body.ux-v2 .layer-list-panel{top:330px!important}.layer-list-open .explore-panel{max-height:226px!important}}
+
+
+/* =========================================================
+   UX PATCH V3 — compact pins, complete detail, tidy AI
+========================================================= */
+body.ux-v2 *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
+body.ux-v2 *::-webkit-scrollbar{width:6px;height:6px}
+body.ux-v2 *::-webkit-scrollbar-track{background:transparent}
+body.ux-v2 *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.20);border-radius:999px}
+body.ux-v2 *::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.32)}
+
+body.ux-v2.passport-mode .topbar{
+  width:330px!important;height:58px!important;grid-template-columns:1fr!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;padding:7px!important
+}
+body.ux-v2.passport-mode .ux-top-left,body.ux-v2.passport-mode .ux-top-right{display:none!important}
+body.ux-v2.passport-mode .ux-district-title{width:100%!important;min-width:0!important;height:42px!important;padding:0 16px!important}
+
+body.ux-v2 .map-data-marker{width:30px!important;height:35px!important;min-width:30px!important;min-height:35px!important;place-items:end center!important}
+body.ux-v2 .map-data-marker.mfy-marker{width:28px!important;height:33px!important;min-width:28px!important;min-height:33px!important}
+body.ux-v2 .map-pin-3d{width:25px!important;height:31px!important;filter:drop-shadow(0 5px 4px rgba(0,0,0,.34))!important}
+body.ux-v2 .marker-mahalla .map-pin-3d{width:23px!important;height:29px!important}
+body.ux-v2 .map-pin-face{
+  left:50%!important;top:1px!important;width:22px!important;height:22px!important;
+  transform:translateX(-50%) rotate(-45deg)!important;border-radius:52% 52% 52% 16%!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--marker) 66%,white),var(--marker) 52%,color-mix(in srgb,var(--marker) 70%,black))!important;
+  border:1px solid rgba(255,255,255,.68)!important;
+  box-shadow:inset 3px 3px 5px rgba(255,255,255,.26),inset -4px -4px 6px rgba(0,0,0,.18),0 0 8px color-mix(in srgb,var(--marker) 30%,transparent)!important
+}
+body.ux-v2 .marker-mahalla .map-pin-face{width:20px!important;height:20px!important}
+body.ux-v2 .map-pin-face::after{display:none!important}
+body.ux-v2 .map-pin-core{
+  width:7px!important;height:7px!important;background:rgba(255,255,255,.90)!important;border:0!important;
+  box-shadow:0 0 0 2px rgba(0,0,0,.10)!important;transform:translate(-50%,-50%) rotate(45deg)!important
+}
+body.ux-v2 .map-pin-glint{left:22%!important;top:18%!important;width:4px!important;height:2px!important;transform:rotate(25deg)!important}
+body.ux-v2 .map-pin-foot{bottom:0!important;width:14px!important;height:4px!important;opacity:.62}
+body.ux-v2 .map-data-marker:hover .map-pin-3d,body.ux-v2 .map-data-marker.is-active .map-pin-3d{
+  transform:translateY(-2px) scale(1.09)!important;filter:drop-shadow(0 7px 5px rgba(0,0,0,.38)) drop-shadow(0 0 5px color-mix(in srgb,var(--marker) 38%,transparent))!important
+}
+.maplibregl-popup.marker-name-popup{transform:translateY(-5px)}
+.marker-popup-card{
+  min-width:118px!important;max-width:220px!important;padding:7px 9px!important;border-radius:11px!important;
+  transform:none!important;background:rgba(12,16,20,.88)!important;backdrop-filter:blur(9px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(9px) saturate(120%)!important
+}
+
+body.ux-v2 .detail-card{max-height:calc(100vh - 112px)!important}
+.detail-data-title{position:sticky;top:0;z-index:2;padding:7px 0 6px;background:linear-gradient(180deg,rgba(10,14,18,.96),rgba(10,14,18,.80));color:#8cefff;font-size:.56rem;font-weight:800;letter-spacing:.10em;text-transform:uppercase}
+.detail-data-row{align-items:flex-start!important}
+.detail-data-row strong{max-width:62%;overflow-wrap:anywhere;word-break:break-word}
+.detail-actions{display:grid!important;grid-template-columns:auto minmax(130px,1fr) 38px!important;gap:8px!important;align-items:center!important}
+#detailDirections{width:auto!important;min-width:76px!important;height:40px!important;padding:0 12px!important;border-radius:13px!important;gap:6px!important;font-size:.67rem!important}
+#detailDirections .icon{width:16px!important;height:16px!important}
+#detailAsk{height:40px!important;border-radius:13px!important}
+
+#uxConnector .main{
+  stroke:url(#uxConnectorGradient)!important;stroke-width:1.45!important;stroke-dasharray:7 8!important;
+  animation:connectorFlow 1.15s linear infinite!important;filter:drop-shadow(0 0 3px rgba(98,230,255,.40))
+}
+#uxConnector .glow{display:block!important;fill:none!important;stroke:rgba(98,230,255,.10)!important;stroke-width:6!important}
+#uxConnector .connector-pulse{fill:#8cf6ff;filter:drop-shadow(0 0 5px #62e6ff);opacity:.95}
+@keyframes connectorFlow{to{stroke-dashoffset:-30}}
+
+.dock .center{min-width:66px!important}
+.dock-ai{
+  width:42px!important;height:42px!important;border-radius:15px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.035)),rgba(9,18,22,.82)!important;
+  color:#7cf3ff!important;border:1px solid rgba(124,243,255,.28)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.14),0 8px 18px rgba(0,0,0,.24),0 0 14px rgba(91,235,247,.12)!important
+}
+.dock-ai::after{display:none!important}
+.dock-ai .icon{width:22px!important;height:22px!important;filter:drop-shadow(0 0 5px rgba(124,243,255,.34))}
+
+body.ux-v2 .ai-panel{
+  width:min(430px,calc(100vw - 28px))!important;height:min(590px,calc(100vh - 112px))!important;max-height:none!important;
+  display:grid!important;grid-template-rows:auto minmax(0,1fr) auto auto auto!important;overflow:hidden!important
+}
+.ai-head{min-height:62px!important}.ai-head-actions{display:flex;gap:7px;align-items:center}.ai-voice-toggle.active{color:#7cf3ff!important;border-color:rgba(124,243,255,.30)!important;background:rgba(124,243,255,.08)!important}
+.ai-messages{min-height:0!important;height:auto!important;overflow:auto!important;padding:14px!important}
+.ai-suggestions{display:flex!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:8px 12px 10px!important;white-space:nowrap!important;scrollbar-width:none!important}
+.ai-suggestions::-webkit-scrollbar{display:none}
+.ai-suggestion{flex:0 0 auto!important;max-width:260px!important;height:34px!important;padding:0 12px!important;border-radius:999px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-compose{position:static!important;margin:0 12px 10px!important;min-height:48px!important}
+.ai-foot{position:static!important;min-height:42px!important;padding:8px 13px!important}
+.message{position:relative!important;padding-right:34px!important}.message.user{padding-right:12px!important}
+.message-speak{position:absolute;right:7px;top:7px;width:26px;height:26px;border-radius:9px;background:rgba(255,255,255,.045);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.message-speak:hover{color:#7cf3ff;background:rgba(124,243,255,.08)}.message-speak svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8}
+.search-results{overscroll-behavior:contain}
+html.reduce-motion #uxConnector .main{animation:none!important}
+html.reduce-motion .dock-ai .icon{filter:none!important}
