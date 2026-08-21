@@ -223,8 +223,47 @@ async function renderIndex(req,res){
   }
 }
 
-app.get('/',(req,res)=>res.redirect(302,'/uz'));
-app.get(/^\/(uz|en|ru|zh|ar|tr|ko|de|fr|es)(\/.*)?$/,renderIndex);
-app.get('/{*splat}',(req,res,next)=>{if(req.path.startsWith('/api/'))return next();return renderIndex(req,res)});
-app.use('/api',(req,res)=>res.status(404).json({ok:false,error:'API endpoint not found'}));
-app.listen(PORT,HOST,()=>console.log(`Uchko‘prik Digital District: ${HOST}:${PORT}`));
+// Root → asosiy o‘zbekcha sahifa
+app.get('/', (req,res) => {
+  res.redirect(301, '/uz');
+});
+
+// Faqat mavjud til sahifalari
+app.get(
+  /^\/(uz|en|ru|zh|ar|tr|ko|de|fr|es)\/?$/,
+  renderIndex
+);
+
+// Noma’lum API endpointlari
+app.use('/api', (req,res) => {
+  res.status(404).json({
+    ok: false,
+    error: 'API endpoint not found'
+  });
+});
+
+// Barcha noma’lum URL → haqiqiy 404
+app.use((req,res) => {
+  res.status(404).type('html').send(`
+    <!doctype html>
+    <html lang="uz">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="robots" content="noindex,nofollow">
+        <title>Sahifa topilmadi — Uchko‘prik Digital District</title>
+      </head>
+      <body>
+        <main>
+          <h1>404</h1>
+          <p>Sahifa topilmadi.</p>
+          <a href="/uz">Uchko‘prik Digital District’ga qaytish</a>
+        </main>
+      </body>
+    </html>
+  `);
+});
+
+app.listen(PORT,HOST,()=>{
+  console.log(`Uchko‘prik Digital District: ${HOST}:${PORT}`);
+});
