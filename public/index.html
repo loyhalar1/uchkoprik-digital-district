@@ -6,6 +6,7 @@
 <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
 <title>%%TITLE%%</title>
 <meta content="%%DESCRIPTION%%" name="description"/>
+<meta content="Uchko‘prik tumani, Uchkoprik, Uchko‘prik xarita, Uchko‘prik MFY, Uchko‘prik tashkilotlar, iqtisodiy zonalar, Farg‘ona" name="keywords"/>
 <meta content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" name="robots"/>
 <meta content="#071017" name="theme-color"/>
 <link href="%%CANONICAL%%" rel="canonical"/>
@@ -438,9 +439,7 @@
 <div class="detail-actions">
 <button class="primary-btn" id="detailDirections" type="button">
 <span class="icon" data-icon="navigation"></span>
-<span data-i18n="directions">
-                Yo‘nalish
-              </span>
+<span>Yo‘l</span>
 </button>
 <button class="secondary-btn" id="detailAsk" type="button">
 <span class="icon" data-icon="sparkles"></span>
@@ -470,6 +469,7 @@
 </defs>
 <path class="glow" d=""></path>
 <path class="main" d=""></path>
+<circle class="connector-pulse" cx="0" cy="0" r="2.2"></circle>
 </svg>
 <!-- ==================================================
            SEARCH
@@ -507,9 +507,14 @@
               </small>
 </div>
 </div>
+<div class="ai-head-actions">
+<button aria-pressed="true" class="icon-btn ai-voice-toggle active" id="aiVoiceToggle" title="Ovozli javob" type="button">
+<span class="icon" data-icon="speaker"></span>
+</button>
 <button class="icon-btn" id="aiClose" type="button">
 <span class="icon" data-icon="x"></span>
 </button>
+</div>
 </div>
 <div class="ai-messages" id="aiMessages"></div>
 <div class="ai-suggestions" id="aiSuggestions"></div>
