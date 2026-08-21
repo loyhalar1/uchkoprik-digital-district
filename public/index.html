@@ -201,6 +201,23 @@
 <div class="economic-zone-list" id="economicZoneList"></div>
 </section>
 </aside>
+<button class="layer-list-toggle glass floating" id="layerListToggle" type="button" aria-expanded="false">
+  <span class="icon" data-icon="list"></span>
+  <span id="layerListToggleLabel">Ro‘yxat</span>
+  <span class="layer-list-chevron">↑</span>
+</button>
+<section class="layer-list-panel glass floating" id="layerListPanel" aria-label="Tanlangan qatlam ro‘yxati">
+  <div class="layer-list-head">
+    <div><span class="eyebrow">RO‘YXAT</span><h2 id="layerListTitle">Ro‘yxat</h2></div>
+    <span class="layer-list-count" id="layerListCount">0</span>
+    <button class="icon-btn" id="layerListClose" type="button" aria-label="Ro‘yxatni yopish"><span class="icon" data-icon="x"></span></button>
+  </div>
+  <label class="layer-list-search">
+    <span class="icon" data-icon="search"></span>
+    <input id="layerListSearch" type="search" placeholder="Ro‘yxatdan qidirish..." autocomplete="off">
+  </label>
+  <div class="layer-list-items" id="layerListItems"></div>
+</section>
 <!-- ==================================================
            INVESTOR MODE
       =================================================== -->
@@ -381,36 +398,19 @@
 </div>
 </article>
 <!-- GENERAL -->
-<article class="passport-card passport-top-mfy glass floating"><h3>Eng ko‘p aholili MFYlar</h3><div class="passport-ranking" id="passportTopMahallas"></div></article><article class="passport-card glass floating">
-<h3>
-            Umumiy ko‘rsatkichlar
-          </h3>
+<article class="passport-card passport-general-card glass floating">
+<h3>Umumiy ko‘rsatkichlar</h3>
 <div id="passportGeneral">
-<div class="passport-row">
-<span>
-                Tashkil topgan
-              </span>
-<strong id="passportFounded">
-                —
-              </strong>
-</div><div class="passport-row"><span>Tuman hokimi</span><strong id="passportGovernor">—</strong></div>
-<div class="passport-row">
-<span>
-                Maydoni
-              </span>
-<strong id="passportArea">
-                —
-              </strong>
+  <div class="passport-row"><span>Tashkil topgan</span><strong id="passportFounded">—</strong></div>
+  <div class="passport-row"><span>Tuman hokimi</span><strong id="passportGovernor">—</strong></div>
+  <div class="passport-row"><span>Maydoni</span><strong id="passportArea">—</strong></div>
+  <div class="passport-row"><span>Chegara uzunligi</span><strong id="passportBorder">—</strong></div>
+  <div class="passport-row"><span>Tashkilotlar</span><strong id="passportOrganizations">—</strong></div>
+  <div class="passport-row"><span>Iqtisodiy zona loyihalari</span><strong id="passportEconomicZones">—</strong></div>
+  <div class="passport-row"><span>Xaritadagi tashkilotlar</span><strong id="passportMapReadyOrganizations">—</strong></div>
+  <div class="passport-row"><span>Xaritadagi EIZ loyihalari</span><strong id="passportMapReadyEconomicZones">—</strong></div>
+  <div class="passport-row"><span>Jami ma’lumot yozuvlari</span><strong id="passportDataPoints">—</strong></div>
 </div>
-<div class="passport-row">
-<span>
-                Chegara uzunligi
-              </span>
-<strong id="passportBorder">
-                —
-              </strong>
-</div>
-<div class="passport-row"><span>Tashkilotlar</span><strong id="passportOrganizations">—</strong></div><div class="passport-row"><span>Kategoriyalar</span><strong id="passportCategories">—</strong></div></div>
 </article>
 </section>
 <!-- ==================================================
