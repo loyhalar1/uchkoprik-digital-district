@@ -3262,3 +3262,63 @@ html.reduce-motion .dock-ai .icon{
     bottom:4px;
   }
 }
+
+/* =========================================================
+   AI SUGGESTIONS — INPUT OVERLAP FIX
+========================================================= */
+
+body.ux-v2 .ai-suggestions{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+
+  width:100%!important;
+  min-width:0!important;
+  height:46px!important;
+  max-height:46px!important;
+
+  padding:6px 12px 8px!important;
+  gap:7px!important;
+
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+
+  white-space:nowrap!important;
+  flex-shrink:0!important;
+
+  scrollbar-width:none!important;
+  overscroll-behavior-x:contain;
+}
+
+body.ux-v2 .ai-suggestions::-webkit-scrollbar{
+  display:none!important;
+}
+
+body.ux-v2 .ai-suggestion{
+  flex:0 0 auto!important;
+
+  width:auto!important;
+  max-width:none!important;
+
+  min-height:34px!important;
+  height:34px!important;
+
+  padding:0 11px!important;
+
+  white-space:nowrap!important;
+  line-height:1!important;
+}
+
+body.ux-v2 .ai-compose{
+  position:relative!important;
+  z-index:5!important;
+
+  flex-shrink:0!important;
+
+  margin:0 12px 10px!important;
+  min-height:48px!important;
+}
+
+body.ux-v2 .ai-messages{
+  min-height:0!important;
+  overflow-y:auto!important;
+}
