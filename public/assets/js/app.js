@@ -29,7 +29,8 @@ const ICONS = {
   home:'<path d="m3 11 9-8 9 8v10h-6v-6H9v6H3V11Z"></path>',
   marker:'<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>',
   globe:'<circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path>',
-  info:'<circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path>'
+  info:'<circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13"></path><circle cx="4" cy="6" r="1"></circle><circle cx="4" cy="12" r="1"></circle><circle cx="4" cy="18" r="1"></circle>'
 };
 
 const iconForCategory={mahalla:'home',business:'briefcase',education:'school',health:'health',culture:'landmark',service:'service',investment:'chart',government:'landmark'};
@@ -38,8 +39,8 @@ const FALLBACK_COLORS=['#39e676','#ffad2f','#6b79ff','#21c7e8','#ef59c7','#a96bf
 
 const state={
   lang:'uz', data:{mahallas:[],categories:[],places:[],businesses:[],products:[],economicZones:[],district:{}},
-  map:null, markers:[], selected:null, activeLayer:'mahalla', selectedSpecialization:null, selectedOrganizationType:null,
-  activePanel:'explore', detailCamera:null, passportCamera:null, connectorFrame:null,
+  map:null, markers:[], selected:null, activeLayer:'all', selectedSpecialization:null, selectedOrganizationType:null,
+  activePanel:'explore', detailCamera:null, passportCamera:null, connectorFrame:null, layerListOpen:false, layerListQuery:'', hoverPopup:null,
   presentation:{map:null,index:0,timer:null,playing:true,markers:[]}, voiceRecognition:null,
   idle:{timer:null,timeout:10*60*1000,active:false,initialized:false,renderer:null,scene:null,camera:null,group:null,frame:null}
 };
@@ -54,6 +55,7 @@ const localeCode=()=>({uz:'uz-UZ',en:'en-US',ru:'ru-RU',zh:'zh-CN',ar:'ar-SA',tr
 const fmt=v=>new Intl.NumberFormat(localeCode()).format(Number(v)||0);
 const tr=k=>{try{return t(state.lang,k)}catch{return k}};
 const safeDate=v=>{if(!v)return null;try{return new Date(v).toLocaleDateString(localeCode())}catch{return v}};
+const toCoord=v=>v===null||v===undefined||v===''?null:(Number.isFinite(Number(v))?Number(v):null);
 const validCoords=i=>i&&i.lng!==null&&i.lng!==undefined&&i.lng!==''&&i.lat!==null&&i.lat!==undefined&&i.lat!==''&&Number.isFinite(Number(i.lng))&&Number.isFinite(Number(i.lat))&&Math.abs(Number(i.lng))<=180&&Math.abs(Number(i.lat))<=90;
 function svg(name){return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]||ICONS.info}</svg>`}
 function bindIcons(root=document){$$('[data-icon]',root).forEach(el=>el.innerHTML=svg(el.dataset.icon))}
@@ -136,7 +138,7 @@ async function loadData(){
     window.sb.from('mahallas').select('*').eq('status','active').order('legacy_id',{ascending:true}),
     window.sb.from('categories').select('*').eq('active',true).order('sort_order',{ascending:true}),
     window.sb.from('district').select('*').eq('slug','uchkoprik').single(),
-    window.sb.from('organizations').select(`id,slug,name,inn,organization_type,sector,activity,mahalla_id,address,latitude,longitude,website,image_url,status,verified,category_id,source,created_at,updated_at,category:categories(id,slug,name,icon,color)`).eq('status','active'),
+    window.sb.from('organizations').select(`id,slug,name,inn,organization_type,sector,activity,mahalla_id,address,latitude,longitude,website,image_url,status,verified,category_id,source,phone,responsible_person,created_at,updated_at,category:categories(id,slug,name,icon,color)`).eq('status','active'),
     window.sb.from('economic_zone_projects').select('*').eq('status','active').order('source_no',{ascending:true})
   ]);
   if(mRes.error)throw new Error(`MFY: ${mRes.error.message}`);
@@ -147,8 +149,12 @@ async function loadData(){
 
   const mahallas=(mRes.data||[]).map(m=>({id:m.legacy_id??m.id,uuid:m.id,legacyId:m.legacy_id,slug:m.slug,name:m.name||m.official_name||'Noma’lum MFY',officialName:m.official_name||m.name,head:m.chairman||null,phone:m.phone||null,specialization:m.specialization||'Belgilanmagan',population:Number(m.population||0),households:Number(m.households||0),families:Number(m.families||0),schools:Number(m.schools||0),kindergartens:Number(m.kindergartens||0),clinics:Number(m.clinics||0),mosques:Number(m.mosques||0),shops:Number(m.shops||0),lat:Number(m.latitude),lng:Number(m.longitude),imageUrl:m.image_url||null,verified:m.verified!==false,source:m.source||null,updatedAt:safeDate(m.updated_at),type:'mahalla',category:'mahalla'}));
   let categories=(cRes.data||[]).map(c=>({id:c.slug==='mahallas'?'mahalla':c.slug,dbId:c.id,slug:c.slug,name:c.name,icon:c.icon||'marker',color:c.color||'#63e6ff',active:c.active!==false,sortOrder:Number(c.sort_order||0)}));
-  const businesses=(oRes.data||[]).map(o=>({id:o.id,slug:o.slug,name:o.name,inn:o.inn||null,organizationType:o.organization_type||'Tashkilot',sector:o.sector||null,industry:o.activity||null,description:o.activity||o.sector||'',mahallaId:o.mahalla_id||null,address:o.address||null,lat:Number(o.latitude),lng:Number(o.longitude),website:o.website||null,imageUrl:o.image_url||null,verified:o.verified===true,source:o.source||null,updatedAt:safeDate(o.updated_at),type:'business',category:o.category?.slug||'business',categoryName:o.category?.name||'Tashkilot',categoryColor:o.category?.color||'#8b7cff',categoryIcon:o.category?.icon||'briefcase'}));
-  const economicZones=(eRes.data||[]).map(z=>({id:z.id,sourceNo:z.source_no,slug:z.slug,name:z.company_name||z.zone_name||'Iqtisodiy zona loyihasi',zoneName:z.zone_name||'Iqtisodiy zona',companyName:z.company_name||null,districtCity:z.district_city||null,inn:z.inn||null,occupiedAreaHa:z.occupied_area_ha===null||z.occupied_area_ha===undefined?null:Number(z.occupied_area_ha),activityType:z.activity_type||null,founderCitizenship:z.founder_citizenship||null,executiveDirector:z.executive_director||null,phoneOriginal:z.phone_original||null,phoneDigits:z.phone_digits||null,sourceDate:safeDate(z.source_date),verified:z.verified===true,status:z.status||'active',sourceFile:z.source_file||null,lat:z.latitude??z.lat??null,lng:z.longitude??z.lng??null,type:'economic-zone',category:'economic-zone',categoryName:'Iqtisodiy zonalar',categoryColor:'#5ed8ff'}));
+  const businesses=(oRes.data||[]).map(o=>({id:o.id,slug:o.slug,name:o.name,inn:o.inn||null,organizationType:o.organization_type||'Tashkilot',sector:o.sector||null,industry:o.activity||null,description:o.activity||o.sector||'',mahallaId:o.mahalla_id||null,address:o.address||null,lat:toCoord(o.latitude),lng:toCoord(o.longitude),website:o.website||null,imageUrl:o.image_url||null,phone:o.phone||null,responsiblePerson:o.responsible_person||null,verified:o.verified===true,source:o.source||null,updatedAt:safeDate(o.updated_at),type:'business',category:o.category?.slug||'business',categoryName:o.category?.name||'Tashkilot',categoryColor:o.category?.color||'#8b7cff',categoryIcon:o.category?.icon||'briefcase'}));
+  const businessByInn=new Map(businesses.filter(b=>b.inn).map(b=>[String(b.inn).replace(/\D/g,''),b]));
+  const economicZones=(eRes.data||[]).map(z=>{
+    const match=z.inn?businessByInn.get(String(z.inn).replace(/\D/g,'')):null;
+    return {id:z.id,sourceNo:z.source_no,slug:z.slug,name:z.company_name||z.zone_name||'Iqtisodiy zona loyihasi',zoneName:z.zone_name||'Iqtisodiy zona',companyName:z.company_name||null,districtCity:z.district_city||null,inn:z.inn||null,occupiedAreaHa:z.occupied_area_ha===null||z.occupied_area_ha===undefined?null:Number(z.occupied_area_ha),activityType:z.activity_type||null,description:z.description||z.activity_type||null,founderCitizenship:z.founder_citizenship||null,executiveDirector:z.executive_director||null,phoneOriginal:z.phone_original||null,phoneDigits:z.phone_digits||null,sourceDate:safeDate(z.source_date),verified:z.verified===true,status:z.status||'active',sourceFile:z.source_file||null,imageUrl:z.image_url||match?.imageUrl||null,lat:toCoord(z.latitude)??match?.lat??null,lng:toCoord(z.longitude)??match?.lng??null,type:'economic-zone',category:'economic-zone',categoryName:'Iqtisodiy zonalar',categoryColor:'#5ed8ff'};
+  });
   if(!categories.some(c=>c.id==='mahalla'))categories.unshift({id:'mahalla',slug:'mahallas',name:'MFYlar',icon:'home',color:'#63e6ff',active:true,sortOrder:0});
   if(businesses.length&&!categories.some(c=>c.id==='business'))categories.push({id:'business',slug:'business',name:'Tashkilotlar',icon:'briefcase',color:'#8b7cff',active:true,sortOrder:90});
   if(economicZones.length&&!categories.some(c=>c.id==='economic-zone'))categories.push({id:'economic-zone',slug:'economic-zone',name:'Iqtisodiy zonalar',icon:'chart',color:'#5ed8ff',active:true,sortOrder:95});
@@ -196,9 +202,22 @@ function getSpecializationColor(name){if(SPEC_COLORS[name])return SPEC_COLORS[na
 function getSpecializationStats(){const m=new Map();state.data.mahallas.forEach(x=>m.set(x.specialization||'Belgilanmagan',(m.get(x.specialization||'Belgilanmagan')||0)+1));return[...m.entries()].map(([name,count])=>({name,count,color:getSpecializationColor(name)})).sort((a,b)=>b.count-a.count)}
 function getOrganizationTypes(){const m=new Map();state.data.businesses.forEach(x=>{const n=x.organizationType||x.categoryName||'Tashkilot';m.set(n,(m.get(n)||0)+1)});return[...m.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)}
 
-function renderCategories(){const host=$('#categoryChips');if(!host)return;const rows=[{id:'all',name:'Barchasi',color:'#ffffff',icon:'map'},...state.data.categories.filter(c=>c.active!==false)];host.innerHTML=rows.map(c=>`<button class="category-chip ${state.activeLayer===c.id?'active':''}" type="button" data-category="${esc(c.id)}" style="--chip:${c.color||'#63e6ff'}"><span class="dot" style="color:${c.color||'#63e6ff'};background:${c.color||'#63e6ff'}"></span><span>${esc(c.id==='all'?'Barchasi':categoryLabel(c))}</span></button>`).join('');$$('.category-chip',host).forEach(btn=>btn.addEventListener('click',()=>{state.activeLayer=btn.dataset.category;state.selectedSpecialization=null;state.selectedOrganizationType=null;renderCategories();renderMarkers()}));renderSpecializationFilters();renderOrganizationFilters();renderEconomicZoneFilters()}
-function renderSpecializationFilters(){const section=$('#specializationFilters'),host=$('#specializationList');if(!section||!host)return;if(state.activeLayer!=='mahalla'){section.classList.add('hidden');return}const items=getSpecializationStats();section.classList.remove('hidden');host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedSpecialization===i.name?'active':''}" type="button" data-specialization="${esc(i.name)}" style="--spec-color:${i.color}"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-specialization]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.specialization;state.selectedSpecialization=state.selectedSpecialization===v?null:v;renderSpecializationFilters();applyMarkerFilters()}))}
-function renderOrganizationFilters(){const section=$('#organizationFilters'),host=$('#organizationFilterList');if(!section||!host)return;const isOrg=state.activeLayer==='business'||(state.activeLayer!=='all'&&state.activeLayer!=='mahalla'&&state.data.businesses.some(b=>b.category===state.activeLayer));if(!isOrg||!state.data.businesses.length){section.classList.add('hidden');return}section.classList.remove('hidden');const items=getOrganizationTypes();host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedOrganizationType===i.name?'active':''}" type="button" data-organization-type="${esc(i.name)}" style="--spec-color:#8b7cff"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-organization-type]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.organizationType;state.selectedOrganizationType=state.selectedOrganizationType===v?null:v;renderOrganizationFilters();applyMarkerFilters()}))}
+function renderCategories(){
+  const host=$('#categoryChips');if(!host)return;
+  const rows=[{id:'all',name:'Barchasi',color:'#ffffff',icon:'map'},...state.data.categories.filter(c=>c.active!==false)];
+  host.innerHTML=rows.map(c=>`<button class="category-chip ${state.activeLayer===c.id?'active':''}" type="button" data-category="${esc(c.id)}" style="--chip:${c.color||'#63e6ff'}"><span class="dot" style="color:${c.color||'#63e6ff'};background:${c.color||'#63e6ff'}"></span><span>${esc(c.id==='all'?'Barchasi':categoryLabel(c))}</span></button>`).join('');
+  $$('.category-chip',host).forEach(btn=>btn.addEventListener('click',()=>{
+    state.activeLayer=btn.dataset.category;
+    state.selectedSpecialization=null;
+    state.selectedOrganizationType=null;
+    state.layerListQuery='';
+    renderCategories();
+    renderMarkers();
+  }));
+  renderSpecializationFilters();renderOrganizationFilters();renderEconomicZoneFilters();renderLayerList();
+}
+function renderSpecializationFilters(){const section=$('#specializationFilters'),host=$('#specializationList');if(!section||!host)return;if(state.activeLayer!=='mahalla'){section.classList.add('hidden');return}const items=getSpecializationStats();section.classList.remove('hidden');host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedSpecialization===i.name?'active':''}" type="button" data-specialization="${esc(i.name)}" style="--spec-color:${i.color}"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-specialization]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.specialization;state.selectedSpecialization=state.selectedSpecialization===v?null:v;renderSpecializationFilters();applyMarkerFilters();renderLayerList()}))}
+function renderOrganizationFilters(){const section=$('#organizationFilters'),host=$('#organizationFilterList');if(!section||!host)return;const isOrg=state.activeLayer==='business'||(state.activeLayer!=='all'&&state.activeLayer!=='mahalla'&&state.data.businesses.some(b=>b.category===state.activeLayer));if(!isOrg||!state.data.businesses.length){section.classList.add('hidden');return}section.classList.remove('hidden');const items=getOrganizationTypes();host.innerHTML=items.map(i=>`<button class="filter-specialization ${state.selectedOrganizationType===i.name?'active':''}" type="button" data-organization-type="${esc(i.name)}" style="--spec-color:#8b7cff"><span class="color"></span><span class="name">${esc(i.name)}</span><span class="count">${i.count}</span></button>`).join('');$$('[data-organization-type]',host).forEach(btn=>btn.addEventListener('click',()=>{const v=btn.dataset.organizationType;state.selectedOrganizationType=state.selectedOrganizationType===v?null:v;renderOrganizationFilters();applyMarkerFilters();renderLayerList()}))}
 
 function renderEconomicZoneFilters(){
   const section=$('#economicZoneFilters'),host=$('#economicZoneList'),count=$('#economicZoneCount');
@@ -211,24 +230,105 @@ function renderEconomicZoneFilters(){
   $$('[data-economic-zone]',host).forEach(btn=>btn.addEventListener('click',()=>{const item=zones.find(z=>String(z.id)===btn.dataset.economicZone);if(item)openDetail(item,'economic-zone')}));
 }
 
-function clearMarkers(){state.markers.forEach(x=>x.marker.remove());state.markers=[]}
+function activeLayerList(){
+  if(state.activeLayer==='mahalla'){
+    const items=state.selectedSpecialization?state.data.mahallas.filter(x=>x.specialization===state.selectedSpecialization):state.data.mahallas;
+    return {title:'MFYlar',kind:'mahalla',items};
+  }
+  if(state.activeLayer==='economic-zone')return {title:'Iqtisodiy zonalar',kind:'economic-zone',items:state.data.economicZones};
+  if(state.activeLayer==='business'){
+    const items=state.selectedOrganizationType?state.data.businesses.filter(x=>x.organizationType===state.selectedOrganizationType):state.data.businesses;
+    return {title:'Tashkilotlar',kind:'business',items};
+  }
+  if(state.activeLayer==='all')return {title:'Barcha qatlamlar',kind:'all',items:[]};
+  let orgs=state.data.businesses.filter(x=>x.category===state.activeLayer);
+  if(state.selectedOrganizationType)orgs=orgs.filter(x=>x.organizationType===state.selectedOrganizationType);
+  if(orgs.length)return {title:categoryLabel(getCategory(state.activeLayer))||'Tashkilotlar',kind:'business',items:orgs};
+  return {title:'Ro‘yxat',kind:'all',items:[]};
+}
+function renderLayerList(){
+  const host=$('#layerListItems'),title=$('#layerListTitle'),count=$('#layerListCount'),search=$('#layerListSearch'),toggleLabel=$('#layerListToggleLabel');
+  if(!host)return;
+  const data=activeLayerList();
+  if(title)title.textContent=data.title;
+  if(toggleLabel)toggleLabel.textContent=state.activeLayer==='all'?'Ro‘yxat':`${data.title} ro‘yxati`;
+  if(search&&search.value!==state.layerListQuery)search.value=state.layerListQuery;
+  let items=[...data.items];
+  const q=normalize(state.layerListQuery).trim();
+  if(q)items=items.filter(i=>normalize([i.name,i.officialName,i.specialization,i.organizationType,i.sector,i.address,i.zoneName,i.districtCity,i.inn,i.activityType,i.responsiblePerson,i.executiveDirector].filter(Boolean).join(' ')).includes(q));
+  if(count)count.textContent=fmt(items.length);
+  if(data.kind==='all'){
+    host.innerHTML=`<div class="layer-list-empty"><strong>Qatlamni tanlang</strong><span>MFYlar, Tashkilotlar yoki Iqtisodiy zonalarni tanlasangiz shu yerda to‘liq ro‘yxat ochiladi.</span></div>`;
+    return;
+  }
+  if(!items.length){host.innerHTML='<div class="layer-list-empty">Natija topilmadi.</div>';return}
+  const visible=items.slice(0,180);
+  host.innerHTML=visible.map((item,index)=>{
+    const kind=data.kind;
+    const subtitle=kind==='mahalla'?item.specialization:kind==='business'?(item.organizationType||item.sector||item.address):([item.zoneName,item.districtCity].filter(Boolean).join(' · '));
+    const coord=validCoords(item);
+    return `<button class="layer-list-item ${coord?'':'no-location'}" type="button" data-layer-list-index="${index}">
+      <span class="layer-list-pin" style="--item-color:${kind==='mahalla'?getSpecializationColor(item.specialization):kind==='economic-zone'?'#5ed8ff':(item.categoryColor||'#8b7cff')}"></span>
+      <span class="layer-list-copy"><strong>${esc(item.name||item.companyName||'—')}</strong><small>${esc(subtitle||'')}</small></span>
+      <span class="layer-list-location">${coord?'Xarita':'Joylashuv yo‘q'}</span>
+    </button>`;
+  }).join('')+(items.length>visible.length?`<div class="layer-list-more">${fmt(items.length-visible.length)} ta yozuv. Qidiruv orqali aniq yozuvni toping.</div>`:'');
+  $$('[data-layer-list-index]',host).forEach(btn=>btn.addEventListener('click',()=>{
+    const item=visible[Number(btn.dataset.layerListIndex)];
+    if(!item)return;
+    closeLayerList();
+    setTimeout(()=>openDetail(item,data.kind),120);
+  }));
+}
+function openLayerList(){
+  state.layerListOpen=true;
+  document.body.classList.add('layer-list-open');
+  $('#layerListToggle')?.setAttribute('aria-expanded','true');
+  renderLayerList();
+  setTimeout(()=>$('#layerListSearch')?.focus(),180);
+}
+function closeLayerList(){
+  state.layerListOpen=false;
+  document.body.classList.remove('layer-list-open');
+  $('#layerListToggle')?.setAttribute('aria-expanded','false');
+}
+function toggleLayerList(){state.layerListOpen?closeLayerList():openLayerList()}
+
+function clearMarkers(){hideMarkerHover();state.markers.forEach(x=>x.marker.remove());state.markers=[]}
+function hideMarkerHover(){state.hoverPopup?.remove();state.hoverPopup=null}
+function showMarkerHover(item,kind,color){
+  if(!state.map||!validCoords(item))return;
+  hideMarkerHover();
+  const type=kind==='mahalla'?'MFY':kind==='economic-zone'?'Iqtisodiy zona':kind==='business'?'Tashkilot':'Joy';
+  state.hoverPopup=new maplibregl.Popup({closeButton:false,closeOnClick:false,offset:[0,-30],className:'marker-name-popup'})
+    .setLngLat([Number(item.lng),Number(item.lat)])
+    .setHTML(`<div class="marker-popup-card" style="--marker:${color}"><span>${esc(type)}</span><strong>${esc(item.name||item.companyName||'—')}</strong></div>`)
+    .addTo(state.map);
+}
 function markerElement(item,kind,color){
   const el=document.createElement('button');
-  el.type='button';el.className=kind==='mahalla'?'mfy-marker':'place-marker';
-  el.setAttribute('aria-label',item.name||'');el.title=item.name||'';
-  const style=`--marker:${color}`;
-  el.innerHTML=kind==='mahalla'?`<span class="mfy-dot" style="${style}"></span>`:`<span class="place-pin" style="${style}"><span class="pin-core"></span></span>`;
-  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openDetail(item,kind)});
+  el.type='button';
+  el.className=`map-data-marker ${kind==='mahalla'?'mfy-marker':'place-marker'} marker-${kind}`;
+  el.setAttribute('aria-label',item.name||'');
+  el.innerHTML=`<span class="map-pin-3d" style="--marker:${color}"><span class="map-pin-face"><span class="map-pin-core"></span><span class="map-pin-glint"></span></span><span class="map-pin-foot"></span></span>`;
+  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();hideMarkerHover();openDetail(item,kind)});
+  el.addEventListener('mouseenter',()=>showMarkerHover(item,kind,color));
+  el.addEventListener('mouseleave',hideMarkerHover);
   return el;
 }
-function addMarker(item,kind,color){if(!validCoords(item))return;const el=markerElement(item,kind,color);const marker=new maplibregl.Marker({element:el,anchor:kind==='mahalla'?'center':'bottom',pitchAlignment:'map',rotationAlignment:'map'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(state.map);state.markers.push({item,kind,marker,el})}
+function addMarker(item,kind,color){
+  if(!validCoords(item))return;
+  const el=markerElement(item,kind,color);
+  const marker=new maplibregl.Marker({element:el,anchor:'bottom',pitchAlignment:'map',rotationAlignment:'map'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(state.map);
+  state.markers.push({item,kind,marker,el});
+}
 function renderMarkers(){if(!state.map)return;clearMarkers();const layer=state.activeLayer;if(layer==='all'||layer==='mahalla')state.data.mahallas.forEach(m=>addMarker(m,'mahalla',getSpecializationColor(m.specialization)));state.data.places.forEach(p=>{if(layer==='all'||layer===p.category)addMarker(p,'place',getCategoryColor(p.category))});state.data.businesses.forEach(b=>{if(layer==='all'||layer==='business'||layer===b.category)addMarker(b,'business',b.categoryColor||getCategoryColor(b.category))});state.data.economicZones.forEach(z=>{if(layer==='all'||layer==='economic-zone')addMarker(z,'economic-zone','#5ed8ff')});applyMarkerFilters()}
 function applyMarkerFilters(){state.markers.forEach(m=>{let dim=false;if(m.kind==='mahalla'&&state.selectedSpecialization)dim=m.item.specialization!==state.selectedSpecialization;if(m.kind==='business'&&state.selectedOrganizationType)dim=m.item.organizationType!==state.selectedOrganizationType;m.el.classList.toggle('is-dim',dim)})}
 
 function renderDistrictMetrics(){
   const d=state.data.district,host=$('#districtMetrics');
   if(host){
-    const vals=[[d.population,'Umumiy aholi'],[d.households,'Umumiy xonadon'],[d.families,'Umumiy oila'],[d.mahallas,'MFY soni'],[state.data.businesses.length,'Tashkilotlar'],[state.data.categories.filter(c=>c.id!=='mahalla').length,'Kategoriyalar']];
+    const vals=[[d.population,'Umumiy aholi'],[d.households,'Umumiy xonadon'],[d.families,'Umumiy oila'],[d.mahallas,'MFY soni'],[state.data.businesses.length,'Tashkilotlar'],[state.data.economicZones.length,'Iqtisodiy zona loyihalari']];
     host.innerHTML=vals.map(([v,l])=>`<div class="metric-card"><strong>${fmt(v)}</strong><span>${esc(l)}</span><small>Tasdiqlangan</small></div>`).join('');
   }
   setText('#districtUpdated',d.updatedAt||'—');renderPassportAnalytics();renderInvestorMetrics();
@@ -236,20 +336,20 @@ function renderDistrictMetrics(){
 function renderInvestorMetrics(){const host=$('#investorMetrics');if(!host)return;const d=state.data.district;host.innerHTML=[[d.population,'Aholi'],[d.areaKm2,'km²'],[d.mahallas,'MFY'],[state.data.businesses.length,'Tashkilot'],[state.data.economicZones.length,'EIZ loyihalari']].map(([v,l])=>`<div class="metric-card"><strong>${fmt(v)}</strong><span>${esc(l)}</span><small>Tasdiqlangan</small></div>`).join('')}
 function renderPassportAnalytics(){
   const d=state.data.district;
+  const mapReadyOrganizations=state.data.businesses.filter(validCoords).length;
+  const mapReadyEconomicZones=state.data.economicZones.filter(validCoords).length;
   setText('#passportIndustry',d.industryVolume||'—');setText('#passportAgriculture',d.agricultureVolume||'—');setText('#passportServices',d.servicesVolume||'—');
   setText('#passportUnemployment',d.unemploymentRate?`${d.unemploymentRate} %`:'—');setText('#passportPoverty',d.povertyRate?`${d.povertyRate} %`:'—');setText('#passportHealthcare',d.healthcareCount?`${fmt(d.healthcareCount)} ta muassasa`:'—');
   setText('#passportFounded',d.founded||'—');setText('#passportGovernor',d.governor||'—');setText('#passportArea',d.areaKm2?`${fmt(d.areaKm2)} km²`:'—');setText('#passportBorder',d.borderLengthKm?`${d.borderLengthKm} km`:'—');
-  setText('#passportOrganizations',`${fmt(state.data.businesses.length)} ta`);setText('#passportCategories',`${fmt(state.data.categories.filter(c=>c.id!=='mahalla').length)} ta`);
-  renderDistrictSpecializationStats();renderDistrictTopMahallas();
+  setText('#passportOrganizations',`${fmt(state.data.businesses.length)} ta`);
+  setText('#passportEconomicZones',`${fmt(state.data.economicZones.length)} ta`);
+  setText('#passportMapReadyOrganizations',`${fmt(mapReadyOrganizations)} ta`);
+  setText('#passportMapReadyEconomicZones',`${fmt(mapReadyEconomicZones)} ta`);
+  setText('#passportDataPoints',`${fmt(state.data.mahallas.length+state.data.businesses.length+state.data.economicZones.length)} ta`);
+  renderDistrictSpecializationStats();
 }
 function renderDistrictSpecializationStats(){const host=$('#districtSpecializationStats');if(!host)return;const stats=getSpecializationStats(),max=Math.max(1,...stats.map(x=>x.count));host.innerHTML=stats.map(x=>`<div class="passport-bar-row"><span class="label" title="${esc(x.name)}">${esc(x.name)}</span><span class="passport-bar"><i style="width:${x.count/max*100}%;--bar-color:${x.color}"></i></span><b>${x.count}</b></div>`).join('')}
-function renderDistrictTopMahallas(){
-  const hosts=[$('#passportTopMahallas'),$('#districtTopMahallas')].filter(Boolean);if(!hosts.length)return;
-  const top=[...state.data.mahallas].sort((a,b)=>b.population-a.population).slice(0,5);
-  const html=top.map((m,i)=>`<button type="button" class="passport-rank-item" data-top-mahalla="${m.id}"><span class="rank-index">${i+1}</span><span class="rank-copy"><strong>${esc(m.name)}</strong><small>${esc(m.specialization)}</small></span><b>${fmt(m.population)}</b></button>`).join('');
-  hosts.forEach(h=>h.innerHTML=html);
-  $$('[data-top-mahalla]').forEach(btn=>btn.addEventListener('click',()=>{const item=state.data.mahallas.find(m=>String(m.id)===btn.dataset.topMahalla);closePassportMode(false);setTimeout(()=>openDetail(item,'mahalla'),260)}));
-}
+
 
 async function openPassportMode(){
   closeDetail(false);
@@ -276,10 +376,20 @@ async function closePassportMode(restore=true){
   },580);
 }
 
+function renderDetailHero(item,kind){
+  const hero=$('#detailHero');if(!hero)return;
+  const image=item?.imageUrl;
+  hero.classList.toggle('has-image',!!image);
+  hero.style.backgroundImage=image?`linear-gradient(180deg,rgba(4,7,10,.08),rgba(4,7,10,.72)),url("${String(image).replace(/"/g,'%22')}")`:'';
+  hero.style.backgroundSize=image?'cover':'';
+  hero.style.backgroundPosition=image?'center':'';
+  const symbol=$('#detailSymbol');
+  if(symbol)symbol.classList.toggle('on-image',!!image);
+}
 async function openDetail(item,kind){if(!item)return;if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels();if(!state.selected)state.detailCamera=getCamera();state.selected={item,kind};setText('#detailKicker',kind==='mahalla'?'Mahalla fuqarolar yig‘ini':kind==='business'?(item.categoryName||'Tashkilot'):kind==='economic-zone'?(item.zoneName||'Iqtisodiy zona loyihasi'):kind==='product'?'Mahsulot':categoryLabel(getCategory(item.category)));setText('#detailTitle',item.name||item.officialName||'—');setText('#detailDescription',kind==='mahalla'?(item.specialization?`Ixtisoslashuv: ${item.specialization}`:'Ma’lumot mavjud emas'):kind==='economic-zone'?(item.activityType||'Iqtisodiy zona loyihasi'):(item.description||item.address||'Ma’lumot mavjud emas'));
   const verify=$('#detailVerification');if(verify)verify.innerHTML=`<span class="badge ${item.verified?'verified':'demo'}"><span class="icon">${svg(item.verified?'shield':'info')}</span>${item.verified?'Tasdiqlangan':'Tasdiqlanmagan'}</span>${item.updatedAt?`<span class="badge">${esc(item.updatedAt)}</span>`:''}`;
-  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}if(kind==='economic-zone'){if(item.occupiedAreaHa!==null)stats.push([`${item.occupiedAreaHa} ha`,'Maydon']);if(item.inn)stats.push([item.inn,'INN']);if(item.districtCity)stats.push([item.districtCity,'Hudud'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='economic-zone'?'chart':kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;flyToItem(item);showSmooth('#detailCard',{duration:340,keyframes:[{opacity:0,transform:'translate3d(24px,0,0) scale(.985)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));setTimeout(showConnector,920)}
-function renderDetailExtra(item,kind){const host=$('#detailExtra');if(!host)return;const rows=[];if(kind==='mahalla'){if(item.schools)rows.push(['Maktablar',item.schools]);if(item.kindergartens)rows.push(['Bog‘chalar',item.kindergartens]);if(item.clinics)rows.push(['Tibbiyot',item.clinics]);if(item.mosques)rows.push(['Masjidlar',item.mosques]);if(item.shops)rows.push(['Savdo nuqtalari',item.shops]);if(item.head)rows.push(['MFY raisi',item.head])}if(kind==='business'){if(item.address)rows.push(['Manzil',item.address]);if(item.website)rows.push(['Veb-sayt',item.website])}if(kind==='economic-zone'){if(item.zoneName)rows.push(['Iqtisodiy zona',item.zoneName]);if(item.activityType)rows.push(['Faoliyat turi',item.activityType]);if(item.founderCitizenship)rows.push(['Ta’sischi / fuqaroligi',item.founderCitizenship]);if(item.executiveDirector)rows.push(['Ijrochi direktor',item.executiveDirector]);if(item.phoneOriginal)rows.push(['Telefon',item.phoneOriginal]);if(item.sourceDate)rows.push(['Manba sanasi',item.sourceDate]);if(item.sourceFile)rows.push(['Manba fayl',item.sourceFile])}host.innerHTML=rows.length?`<div class="detail-extra-grid">${rows.map(([l,v])=>`<div class="passport-row"><span>${esc(l)}</span><strong>${typeof v==='number'?fmt(v):esc(v)}</strong></div>`).join('')}</div>`:''}
+  const stats=[];if(kind==='mahalla')stats.push([item.population,'Aholi'],[item.households,'Xonadon'],[item.families,'Oila']);if(kind==='business'){if(item.organizationType)stats.push([item.organizationType,'Tashkilot turi']);if(item.sector)stats.push([item.sector,'Sektor'])}if(kind==='economic-zone'){if(item.occupiedAreaHa!==null)stats.push([`${item.occupiedAreaHa} ha`,'Maydon']);if(item.inn)stats.push([item.inn,'INN']);if(item.districtCity)stats.push([item.districtCity,'Hudud'])}const sh=$('#detailStats');if(sh)sh.innerHTML=stats.map(([v,l])=>`<div class="detail-stat"><strong>${typeof v==='number'?fmt(v):esc(v)}</strong><span>${esc(l)}</span></div>`).join('');renderDetailExtra(item,kind);const icon=kind==='mahalla'?'home':kind==='business'?getCategoryIcon(item.category):kind==='economic-zone'?'chart':kind==='product'?'package':'marker';if($('#detailSymbol'))$('#detailSymbol').innerHTML=`<span class="icon">${svg(icon)}</span>`;renderDetailHero(item,kind);flyToItem(item);showSmooth('#detailCard',{duration:340,keyframes:[{opacity:0,transform:'translate3d(24px,0,0) scale(.985)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}]});state.markers.forEach(m=>m.el.classList.toggle('is-active',String(m.item.id)===String(item.id)));setTimeout(showConnector,920)}
+function renderDetailExtra(item,kind){const host=$('#detailExtra');if(!host)return;const rows=[];if(kind==='mahalla'){if(item.schools)rows.push(['Maktablar',item.schools]);if(item.kindergartens)rows.push(['Bog‘chalar',item.kindergartens]);if(item.clinics)rows.push(['Tibbiyot',item.clinics]);if(item.mosques)rows.push(['Masjidlar',item.mosques]);if(item.shops)rows.push(['Savdo nuqtalari',item.shops]);if(item.head)rows.push(['MFY raisi',item.head])}if(kind==='business'){if(item.responsiblePerson)rows.push(['Rahbar / mas’ul',item.responsiblePerson]);if(item.phone)rows.push(['Telefon',item.phone]);if(item.address)rows.push(['Manzil',item.address]);if(item.website)rows.push(['Veb-sayt',item.website])}if(kind==='economic-zone'){if(item.zoneName)rows.push(['Iqtisodiy zona',item.zoneName]);if(item.activityType)rows.push(['Faoliyat turi',item.activityType]);if(item.founderCitizenship)rows.push(['Ta’sischi / fuqaroligi',item.founderCitizenship]);if(item.executiveDirector)rows.push(['Ijrochi direktor',item.executiveDirector]);if(item.phoneOriginal)rows.push(['Telefon',item.phoneOriginal]);if(item.sourceDate)rows.push(['Manba sanasi',item.sourceDate]);if(item.sourceFile)rows.push(['Manba fayl',item.sourceFile])}host.innerHTML=rows.length?`<div class="detail-extra-grid">${rows.map(([l,v])=>`<div class="passport-row"><span>${esc(l)}</span><strong>${typeof v==='number'?fmt(v):esc(v)}</strong></div>`).join('')}</div>`:''}
 function closeDetail(restore=true){const had=!!state.selected;hideSmooth('#detailCard',{duration:220,keyframes:[{opacity:1,transform:'translate3d(0,0,0) scale(1)'},{opacity:0,transform:'translate3d(22px,0,0) scale(.99)'}]});document.body.classList.remove('detail-focus');hideConnector();state.markers.forEach(m=>m.el.classList.remove('is-active'));state.selected=null;if(restore&&had&&state.detailCamera)restoreCamera(state.detailCamera,820);state.detailCamera=null}
 
 function showConnector(){if(!state.selected||window.innerWidth<=760){hideConnector();return}$('#uxConnector')?.classList.remove('hidden');updateConnector()}
@@ -292,7 +402,7 @@ async function openFilterPanel(){
   await closeMajorPanels();document.body.classList.remove('filter-closed');$('#explorePanel')?.classList.remove('hidden');state.activePanel='explore';setDockActive('explore');
   if(!motionDisabled())$('#explorePanel')?.animate([{opacity:0,transform:'translate3d(-16px,0,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:320,easing:easeOut()});
 }
-function closeFilterPanel(){document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map')}
+function closeFilterPanel(){closeLayerList();document.body.classList.add('filter-closed');state.activePanel='map';setDockActive('map')}
 function hideSearchSmooth(){return hideSmooth('#searchDialog',{duration:230,keyframes:[{opacity:1,transform:'translate3d(-50%,0,0) scale(1)'},{opacity:0,transform:'translate3d(-50%,-8px,0) scale(.99)'}]})}
 async function closeMajorPanels(except=null){const jobs=[];['investorPanel','productsPanel'].forEach(id=>{if(id!==except)jobs.push(hideSmooth('#'+id,{duration:260}))});if(except!=='searchDialog')jobs.push(hideSearchSmooth());if(except!=='aiPanel')jobs.push(hideSmooth('#aiPanel',{duration:230}));await Promise.all(jobs)}
 function setDockActive(name){$$('.dock-item').forEach(x=>x.classList.toggle('active',!!name&&x.dataset.nav===name))}
@@ -670,10 +780,10 @@ function ensureSphereTestButton(){
   });
 }
 function toast(title,body=''){const host=$('#toastHost');if(!host)return;const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${body?`<small>${esc(body)}</small>`:''}`;host.appendChild(el);setTimeout(()=>el.remove(),3200)}
-function renderAllTextual(){renderCategories();renderEconomicZoneFilters();renderProducts();renderDistrictMetrics();renderAISuggestions()}
+function renderAllTextual(){renderCategories();renderEconomicZoneFilters();renderLayerList();renderProducts();renderDistrictMetrics();renderAISuggestions()}
 
 function setupEvents(){
-  $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#fitDistrict')?.addEventListener('click',()=>{state.selectedSpecialization=null;state.selectedOrganizationType=null;renderSpecializationFilters();renderOrganizationFilters();applyMarkerFilters();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters()});
+  $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#layerListToggle')?.addEventListener('click',toggleLayerList);$('#layerListClose')?.addEventListener('click',closeLayerList);$('#layerListSearch')?.addEventListener('input',e=>{state.layerListQuery=e.target.value;renderLayerList()});$('#fitDistrict')?.addEventListener('click',()=>{state.activeLayer='all';state.selectedSpecialization=null;state.selectedOrganizationType=null;renderCategories();renderMarkers();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters();renderLayerList()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters();renderLayerList()});
   $('#districtPassportBtn')?.addEventListener('click',openPassportMode);$('#districtClose')?.addEventListener('click',()=>closePassportMode());
   $('#searchOpen')?.addEventListener('click',async()=>{if(state.selected)closeDetail(false);if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:300,keyframes:[{opacity:0,transform:'translate3d(-50%,-10px,0) scale(.99)'},{opacity:1,transform:'translate3d(-50%,0,0) scale(1)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSearchSmooth());$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
   $$('.dock-item').forEach(btn=>btn.addEventListener('click',()=>{const nav=btn.dataset.nav;if(nav==='explore')return openFilterPanel();if(nav==='map'){closeMajorPanels();closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeFilterPanel();fitDistrict();return}if(nav==='ai')return openAI();if(nav==='invest')return openInvestorMode();if(nav==='products')return openPanel('products')}));
