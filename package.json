@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/assets/js/app.js && node --check public/assets/js/admin.js && node --check public/assets/js/i18n.js && node --check public/assets/js/supabase.js && node --check public/sw.js && node scripts/verify-static.mjs"
+    "check": "node --check server.js && node --check public/assets/js/app.js && node --check public/assets/js/admin.js && node --check public/assets/js/i18n.js && node --check public/assets/js/supabase.js && node --check public/assets/js/entity-reader.js && node --check public/assets/js/admin-descriptions.js && node --check public/assets/js/sysone-brand.js && node --check public/sw.js"
   },
   "engines": {
     "node": ">=20"
