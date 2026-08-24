@@ -183,8 +183,7 @@
 <body class="ux-v2 app-booting">
 
 <!-- ======================================================
-     FIRST VISIT — iOS-STYLE HELLO
-     Only greeting text + multilingual Start button.
+     FIRST VISIT — iOS-STYLE DRAWN HELLO
 ======================================================= -->
 
 <section
@@ -193,17 +192,40 @@
   id="firstVisitWelcome"
 >
   <div
-    class="welcome-content"
-    aria-live="polite"
     aria-atomic="true"
+    aria-live="polite"
+    class="welcome-content"
+    dir="ltr"
+    id="welcomeWord"
+    lang="uz"
   >
-    <strong
-      dir="ltr"
-      id="welcomeWord"
-      lang="uz"
+    <svg
+      aria-hidden="true"
+      class="welcome-word-svg"
+      id="welcomeWordSvg"
+      preserveAspectRatio="xMidYMid meet"
+      viewBox="0 0 1200 260"
     >
-      Salom
-    </strong>
+      <text
+        class="welcome-word-stroke"
+        id="welcomeWordStroke"
+        text-anchor="middle"
+        x="600"
+        y="178"
+      >
+        Salom
+      </text>
+
+      <text
+        class="welcome-word-fill"
+        id="welcomeWordFill"
+        text-anchor="middle"
+        x="600"
+        y="178"
+      >
+        Salom
+      </text>
+    </svg>
   </div>
 
   <button
