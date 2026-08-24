@@ -263,24 +263,24 @@ function liquidPress(el){
 
 
 /* =========================================================
-   FIRST VISIT — MULTILINGUAL WELCOME
-   Only once per browser/profile. Internal panel navigation
-   never replays this sequence.
+   FIRST VISIT — iOS-STYLE MULTILINGUAL HELLO
+   Clean full-screen glass overlay.
+   Greeting + Start button rotate through all languages.
 ========================================================= */
 
-const FIRST_VISIT_WELCOME_KEY='uchkoprik-first-welcome-v1';
+const FIRST_VISIT_WELCOME_KEY='uchkoprik-first-welcome-v2';
 
 const WELCOME_COPY={
-  uz:'Xush kelibsiz',
-  en:'Welcome',
-  ru:'Добро пожаловать',
-  zh:'欢迎',
-  ar:'مرحباً بكم',
-  tr:'Hoş geldiniz',
-  ko:'환영합니다',
-  de:'Willkommen',
-  fr:'Bienvenue',
-  es:'Bienvenido'
+  uz:{hello:'Salom',start:'Boshlash'},
+  en:{hello:'Hello',start:'Start'},
+  ru:{hello:'Здравствуйте',start:'Начать'},
+  zh:{hello:'你好',start:'开始'},
+  ar:{hello:'مرحباً',start:'ابدأ'},
+  tr:{hello:'Merhaba',start:'Başla'},
+  ko:{hello:'안녕하세요',start:'시작'},
+  de:{hello:'Hallo',start:'Starten'},
+  fr:{hello:'Bonjour',start:'Commencer'},
+  es:{hello:'Hola',start:'Comenzar'}
 };
 
 function wait(ms){
@@ -301,150 +301,188 @@ function markFirstVisitWelcomeSeen(){
   }catch{}
 }
 
-function setWelcomeLanguage(language,index,total){
+function setWelcomeLanguage(language,animate=true){
   const word=$('#welcomeWord');
-  const native=$('#welcomeLanguageName');
-  const counter=$('#welcomeLanguageCounter');
+  const startButton=$('#welcomeStart');
+
+  const copy=
+    WELCOME_COPY[language?.code] ||
+    WELCOME_COPY.en;
+
+  const dir=
+    language?.dir ||
+    (language?.code==='ar'?'rtl':'ltr');
 
   if(word){
-    const next=WELCOME_COPY[language.code]||WELCOME_COPY.en;
-    word.textContent=next;
-    word.setAttribute('lang',language.code);
-    word.setAttribute('dir',language.dir||'ltr');
+    word.textContent=copy.hello;
+    word.setAttribute('lang',language?.code||'en');
+    word.setAttribute('dir',dir);
   }
 
-  if(native){
-    native.textContent=language.native||language.name||language.code.toUpperCase();
+  if(startButton){
+    startButton.textContent=copy.start;
+    startButton.setAttribute('lang',language?.code||'en');
+    startButton.setAttribute('dir',dir);
   }
 
-  if(counter){
-    counter.textContent=`${index+1} / ${total}`;
+  if(
+    animate &&
+    !motionDisabled()
+  ){
+    word?.animate(
+      [
+        {
+          opacity:0,
+          transform:'translate3d(0,16px,0) scale(.985)'
+        },
+        {
+          opacity:1,
+          transform:'translate3d(0,0,0) scale(1)'
+        }
+      ],
+      {
+        duration:520,
+        easing:'cubic-bezier(.22,1,.36,1)'
+      }
+    );
+
+    startButton?.animate(
+      [
+        {
+          opacity:.45,
+          transform:'translate3d(0,6px,0)'
+        },
+        {
+          opacity:1,
+          transform:'translate3d(0,0,0)'
+        }
+      ],
+      {
+        duration:420,
+        easing:'cubic-bezier(.22,1,.36,1)'
+      }
+    );
   }
 }
 
 async function showFirstVisitWelcome(){
   const overlay=$('#firstVisitWelcome');
 
-  if(!overlay||!shouldShowFirstVisitWelcome()){
+  if(
+    !overlay ||
+    !shouldShowFirstVisitWelcome()
+  ){
     overlay?.classList.add('hidden');
     return false;
   }
 
-  markFirstVisitWelcomeSeen();
+  const startButton=
+    $('#welcomeStart');
+
+  const languages=
+    LANGUAGES.filter(Boolean);
+
+  const sequence=
+    languages.length
+      ? languages
+      : [
+          {
+            code:'uz',
+            dir:'ltr'
+          }
+        ];
+
+  let index=0;
+  let timer=null;
+  let stopped=false;
 
   overlay.classList.remove('hidden');
   overlay.setAttribute('aria-hidden','false');
 
-  const languages=LANGUAGES.filter(Boolean);
+  setWelcomeLanguage(
+    sequence[index],
+    false
+  );
 
-  if(!languages.length){
-    setWelcomeLanguage({code:'uz',native:"O‘zbekcha",dir:'ltr'},0,1);
-    await wait(900);
-  }else{
-    for(let index=0;index<languages.length;index++){
-      const language=languages[index];
+  const rotate=()=>{
+    if(stopped)return;
 
-      setWelcomeLanguage(
-        language,
-        index,
-        languages.length
-      );
+    index=
+      (index+1)%
+      sequence.length;
 
-      const word=$('#welcomeWord');
-      const native=$('#welcomeLanguageName');
+    setWelcomeLanguage(
+      sequence[index],
+      true
+    );
+  };
 
-      if(!motionDisabled()){
-        word?.animate(
-          [
-            {
-              opacity:0,
-              transform:'translate3d(0,18px,0) scale(.96)',
-              filter:'blur(8px)'
-            },
-            {
-              opacity:1,
-              transform:'translate3d(0,0,0) scale(1)',
-              filter:'blur(0px)'
-            }
-          ],
-          {
-            duration:320,
-            easing:easeOut()
-          }
-        );
-
-        native?.animate(
-          [
-            {opacity:0,transform:'translateY(6px)'},
-            {opacity:1,transform:'translateY(0)'}
-          ],
-          {
-            duration:260,
-            easing:easeOut()
-          }
-        );
-      }
-
-      await wait(index===0?520:360);
-    }
+  if(sequence.length>1){
+    timer=setInterval(
+      rotate,
+      1650
+    );
   }
 
-  const final=$('#welcomeFinal');
+  await new Promise(resolve=>{
+    if(!startButton){
+      setTimeout(resolve,900);
+      return;
+    }
 
-  if(final){
-    final.classList.add('show');
+    startButton.addEventListener(
+      'click',
+      ()=>{
+        stopped=true;
 
-    if(!motionDisabled()){
-      final.animate(
-        [
-          {
-            opacity:0,
-            transform:'translate3d(0,12px,0)',
-            letterSpacing:'.32em'
-          },
-          {
-            opacity:1,
-            transform:'translate3d(0,0,0)',
-            letterSpacing:'.20em'
-          }
-        ],
-        {
-          duration:520,
-          easing:easeOut()
+        if(timer){
+          clearInterval(timer);
+          timer=null;
         }
-      );
-    }
-  }
 
-  await wait(700);
+        markFirstVisitWelcomeSeen();
+
+        resolve();
+      },
+      {
+        once:true
+      }
+    );
+  });
 
   if(motionDisabled()){
     overlay.classList.add('hidden');
   }else{
-    const animation=overlay.animate(
-      [
+    const animation=
+      overlay.animate(
+        [
+          {
+            opacity:1
+          },
+          {
+            opacity:0
+          }
+        ],
         {
-          opacity:1,
-          filter:'blur(0px)'
-        },
-        {
-          opacity:0,
-          filter:'blur(10px)'
+          duration:480,
+          easing:'cubic-bezier(.4,0,.2,1)',
+          fill:'both'
         }
-      ],
-      {
-        duration:520,
-        easing:'cubic-bezier(.4,0,.2,1)',
-        fill:'both'
-      }
-    );
+      );
 
     await animation.finished.catch(()=>{});
-    try{animation.cancel()}catch{}
+
+    try{
+      animation.cancel();
+    }catch{}
+
     overlay.classList.add('hidden');
   }
 
-  overlay.setAttribute('aria-hidden','true');
+  overlay.setAttribute(
+    'aria-hidden',
+    'true'
+  );
 
   return true;
 }
