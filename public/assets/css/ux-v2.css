@@ -4258,3 +4258,178 @@ html.reduce-motion
     height:34px;
   }
 }
+
+/* =========================================================
+   V5 LITE — LOW GPU LOCATION MARKERS
+   Minimal glass impression without expensive filters.
+========================================================= */
+
+body.ux-v2 .map-data-marker,
+body.ux-v2 .mfy-marker,
+body.ux-v2 .place-marker{
+  width:28px!important;
+  height:36px!important;
+  min-width:28px!important;
+  min-height:36px!important;
+  padding:0!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:end center!important;
+  overflow:visible!important;
+  background:transparent!important;
+  border:0!important;
+  cursor:pointer!important;
+  outline:none!important;
+}
+
+/* Disable the previous heavy marker pieces. */
+body.ux-v2 .liquid-location-pin,
+body.ux-v2 .liquid-pin-shadow,
+body.ux-v2 .liquid-pin-shell,
+body.ux-v2 .liquid-pin-spectrum,
+body.ux-v2 .liquid-pin-glass,
+body.ux-v2 .liquid-pin-hole,
+body.ux-v2 .liquid-pin-core,
+body.ux-v2 .liquid-pin-shine,
+body.ux-v2 .map-pin-3d,
+body.ux-v2 .mfy-dot,
+body.ux-v2 .place-pin{
+  display:none!important;
+}
+
+body.ux-v2 .lite-location-pin{
+  position:relative;
+  display:block;
+  width:18px;
+  height:27px;
+  pointer-events:none;
+  transform-origin:50% 100%;
+  transition:transform .16s ease,opacity .16s ease;
+}
+
+body.ux-v2 .marker-born .lite-location-pin{
+  animation:
+    liteMarkerDrop
+    340ms
+    cubic-bezier(.2,.8,.2,1)
+    var(--marker-delay,0ms)
+    both;
+}
+
+@keyframes liteMarkerDrop{
+  from{
+    opacity:0;
+    transform:translateY(-10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+body.ux-v2.app-booting .marker-born .lite-location-pin{
+  animation-play-state:paused!important;
+}
+
+body.ux-v2 .lite-pin-head{
+  position:absolute;
+  left:50%;
+  top:0;
+  width:18px;
+  height:18px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.34);
+  box-shadow:
+    0 0 4px var(--marker),
+    inset 0 1px 1px rgba(255,255,255,.28);
+}
+
+body.ux-v2 .lite-pin-dot{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:6px;
+  height:6px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:var(--marker);
+  box-shadow:0 0 4px var(--marker);
+}
+
+body.ux-v2 .lite-pin-glint{
+  position:absolute;
+  left:4px;
+  top:3px;
+  width:4px;
+  height:2px;
+  border-radius:50%;
+  background:rgba(255,255,255,.7);
+}
+
+body.ux-v2 .lite-pin-tip{
+  position:absolute;
+  left:50%;
+  top:15px;
+  width:8px;
+  height:10px;
+  transform:translateX(-50%);
+  clip-path:polygon(50% 100%,0 0,100% 0);
+  background:rgba(255,255,255,.15);
+  border-top:1px solid rgba(255,255,255,.22);
+}
+
+body.ux-v2 .map-data-marker:hover .lite-location-pin{
+  transform:translateY(-2px) scale(1.07);
+}
+
+body.ux-v2 .map-data-marker.is-active .lite-location-pin{
+  transform:translateY(-2px) scale(1.10);
+}
+
+body.ux-v2 .map-data-marker.is-dim{
+  opacity:.14!important;
+}
+
+/* Explicitly prevent GPU-heavy marker effects. */
+body.ux-v2 .map-data-marker *,
+body.ux-v2 .lite-location-pin,
+body.ux-v2 .lite-pin-head,
+body.ux-v2 .lite-pin-tip{
+  filter:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  mix-blend-mode:normal!important;
+}
+
+@media(max-width:760px){
+  body.ux-v2 .map-data-marker,
+  body.ux-v2 .mfy-marker,
+  body.ux-v2 .place-marker{
+    width:24px!important;
+    height:32px!important;
+    min-width:24px!important;
+    min-height:32px!important;
+  }
+
+  body.ux-v2 .lite-location-pin{
+    width:16px;
+    height:24px;
+  }
+
+  body.ux-v2 .lite-pin-head{
+    width:16px;
+    height:16px;
+  }
+
+  body.ux-v2 .lite-pin-tip{
+    top:13px;
+    width:7px;
+    height:9px;
+  }
+}
+
+html.reduce-motion body.ux-v2 .marker-born .lite-location-pin{
+  animation:none!important;
+}
