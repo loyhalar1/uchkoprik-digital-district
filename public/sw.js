@@ -1,13 +1,18 @@
-const CACHE='uchkoprik-v3.0.0-presentation-studio';
+const CACHE='uchkoprik-v3.1.0-reader-final';
+
 const CORE=[
   '/uz',
   '/logo.svg',
   '/manifest.webmanifest',
   '/assets/css/app.css',
   '/assets/css/ux-v2.css',
+  '/assets/css/sysone-brand.css',
+  '/assets/css/entity-reader.css',
   '/assets/js/app.js',
   '/assets/js/i18n.js',
-  '/assets/js/supabase.js'
+  '/assets/js/supabase.js',
+  '/assets/js/sysone-brand.js',
+  '/assets/js/entity-reader.js'
 ];
 
 self.addEventListener('install',event=>{
@@ -21,7 +26,11 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
+      .then(keys=>Promise.all(
+        keys
+          .filter(key=>key!==CACHE)
+          .map(key=>caches.delete(key))
+      ))
       .then(()=>self.clients.claim())
   );
 });
@@ -29,10 +38,13 @@ self.addEventListener('activate',event=>{
 async function networkFirst(request){
   try{
     const response=await fetch(request,{cache:'no-store'});
+
     if(response.ok){
       const copy=response.clone();
-      caches.open(CACHE).then(cache=>cache.put(request,copy));
+      caches.open(CACHE)
+        .then(cache=>cache.put(request,copy));
     }
+
     return response;
   }catch(error){
     const cached=await caches.match(request);
@@ -44,11 +56,15 @@ async function networkFirst(request){
 async function cacheFirst(request){
   const cached=await caches.match(request);
   if(cached)return cached;
+
   const response=await fetch(request);
+
   if(response.ok){
     const copy=response.clone();
-    caches.open(CACHE).then(cache=>cache.put(request,copy));
+    caches.open(CACHE)
+      .then(cache=>cache.put(request,copy));
   }
+
   return response;
 }
 
@@ -58,21 +74,34 @@ self.addEventListener('fetch',event=>{
 
   if(request.method!=='GET')return;
   if(url.origin!==self.location.origin)return;
-  if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/admin')||url.pathname.startsWith('/media/'))return;
+
+  if(
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/admin') ||
+    url.pathname.startsWith('/media/')
+  ){
+    return;
+  }
 
   if(request.mode==='navigate'){
     event.respondWith(
-      networkFirst(request).catch(()=>caches.match('/uz'))
+      networkFirst(request)
+        .catch(()=>caches.match('/uz'))
     );
     return;
   }
 
-  if(request.destination==='script'||request.destination==='style'){
+  if(
+    request.destination==='script' ||
+    request.destination==='style'
+  ){
     event.respondWith(networkFirst(request));
     return;
   }
 
-  if(['image','font'].includes(request.destination)){
+  if(
+    ['image','font'].includes(request.destination)
+  ){
     event.respondWith(cacheFirst(request));
     return;
   }
