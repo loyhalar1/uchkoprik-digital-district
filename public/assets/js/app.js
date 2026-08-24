@@ -80,39 +80,175 @@ function cancelMotion(el){
 function showSmooth(target,options={}){
   const el=typeof target==='string'?$(target):target;
   if(!el)return Promise.resolve();
+
   cancelMotion(el);
   el.classList.remove('hidden');
-  if(motionDisabled())return Promise.resolve();
-  const duration=options.duration||360;
+
+  if(motionDisabled()){
+    el.style.removeProperty('opacity');
+    el.style.removeProperty('filter');
+    return Promise.resolve();
+  }
+
+  const duration=options.duration||380;
   const keyframes=options.keyframes||[
-    {opacity:0,transform:'translate3d(0,12px,0) scale(.985)'},
-    {opacity:1,transform:'translate3d(0,0,0) scale(1)'}
+    {
+      opacity:0,
+      transform:'translate3d(0,16px,0) scale(.982)',
+      filter:'blur(7px)'
+    },
+    {
+      opacity:1,
+      transform:'translate3d(0,0,0) scale(1)',
+      filter:'blur(0px)'
+    }
   ];
-  const anim=el.animate(keyframes,{duration,easing:options.easing||easeOut(),fill:'both'});
-  return anim.finished.catch(()=>{}).finally(()=>{try{anim.cancel()}catch{}});
+
+  const anim=el.animate(
+    keyframes,
+    {
+      duration,
+      easing:options.easing||easeOut(),
+      fill:'both'
+    }
+  );
+
+  return anim.finished
+    .catch(()=>{})
+    .finally(()=>{
+      try{anim.cancel()}catch{}
+    });
 }
 
 function hideSmooth(target,options={}){
   const el=typeof target==='string'?$(target):target;
   if(!el||el.classList.contains('hidden'))return Promise.resolve();
+
   cancelMotion(el);
-  if(motionDisabled()){el.classList.add('hidden');return Promise.resolve();}
-  const duration=options.duration||250;
+
+  if(motionDisabled()){
+    el.classList.add('hidden');
+    return Promise.resolve();
+  }
+
+  const duration=options.duration||260;
   const keyframes=options.keyframes||[
-    {opacity:1,transform:'translate3d(0,0,0) scale(1)'},
-    {opacity:0,transform:'translate3d(0,8px,0) scale(.99)'}
+    {
+      opacity:1,
+      transform:'translate3d(0,0,0) scale(1)',
+      filter:'blur(0px)'
+    },
+    {
+      opacity:0,
+      transform:'translate3d(0,10px,0) scale(.988)',
+      filter:'blur(5px)'
+    }
   ];
-  const anim=el.animate(keyframes,{duration,easing:options.easing||'cubic-bezier(.4,0,.2,1)',fill:'both'});
-  return anim.finished.catch(()=>{}).finally(()=>{el.classList.add('hidden');try{anim.cancel()}catch{}});
+
+  const anim=el.animate(
+    keyframes,
+    {
+      duration,
+      easing:options.easing||'cubic-bezier(.4,0,.2,1)',
+      fill:'both'
+    }
+  );
+
+  return anim.finished
+    .catch(()=>{})
+    .finally(()=>{
+      el.classList.add('hidden');
+      try{anim.cancel()}catch{}
+    });
 }
 
 function animateChromeIn(){
+  document.body.classList.remove('app-booting');
+  document.body.classList.add('app-entered');
+
   if(motionDisabled())return;
-  const rows=[['.topbar',0,'translate3d(-50%,-12px,0)'],['#explorePanel',70,'translate3d(-14px,0,0)'],['.dock',120,'translate3d(-50%,16px,0)']];
-  rows.forEach(([sel,delay,from])=>{
-    const el=$(sel);if(!el)return;
-    const to=sel==='.topbar'||sel==='.dock'?'translate3d(-50%,0,0)':'translate3d(0,0,0)';
-    el.animate([{opacity:0,transform:from},{opacity:1,transform:to}],{duration:520,delay,easing:easeOut()});
+
+  const map=$('#map');
+  if(map){
+    cancelMotion(map);
+    map.animate(
+      [
+        {
+          opacity:0,
+          transform:'scale(1.018)',
+          filter:'blur(9px)'
+        },
+        {
+          opacity:1,
+          transform:'scale(1)',
+          filter:'blur(0px)'
+        }
+      ],
+      {
+        duration:760,
+        easing:easeOut()
+      }
+    );
+  }
+
+  const rows=[
+    {
+      selector:'.topbar',
+      delay:70,
+      from:'translate3d(-50%,-18px,0) scale(.985)',
+      to:'translate3d(-50%,0,0) scale(1)'
+    },
+    {
+      selector:'#explorePanel',
+      delay:140,
+      from:'translate3d(-20px,10px,0) scale(.985)',
+      to:'translate3d(0,0,0) scale(1)'
+    },
+    {
+      selector:'#layerListToggle',
+      delay:210,
+      from:'translate3d(0,16px,0) scale(.96)',
+      to:'translate3d(0,0,0) scale(1)'
+    },
+    {
+      selector:'.dock',
+      delay:260,
+      from:'translate3d(-50%,20px,0) scale(.97)',
+      to:'translate3d(-50%,0,0) scale(1)'
+    },
+    {
+      selector:'#floatingAiBtn',
+      delay:320,
+      from:'translate3d(0,18px,0) scale(.78)',
+      to:'translate3d(0,0,0) scale(1)'
+    }
+  ];
+
+  rows.forEach(({selector,delay,from,to})=>{
+    const el=$(selector);
+    if(!el||el.classList.contains('hidden'))return;
+
+    cancelMotion(el);
+
+    el.animate(
+      [
+        {
+          opacity:0,
+          transform:from,
+          filter:'blur(6px)'
+        },
+        {
+          opacity:1,
+          transform:to,
+          filter:'blur(0px)'
+        }
+      ],
+      {
+        duration:620,
+        delay,
+        easing:easeOut()
+      }
+    );
   });
 }
 
@@ -123,6 +259,194 @@ function liquidPress(el){
     {scale:.94,offset:.42},
     {scale:1}
   ],{duration:260,easing:easeOut()});
+}
+
+
+/* =========================================================
+   FIRST VISIT — MULTILINGUAL WELCOME
+   Only once per browser/profile. Internal panel navigation
+   never replays this sequence.
+========================================================= */
+
+const FIRST_VISIT_WELCOME_KEY='uchkoprik-first-welcome-v1';
+
+const WELCOME_COPY={
+  uz:'Xush kelibsiz',
+  en:'Welcome',
+  ru:'Добро пожаловать',
+  zh:'欢迎',
+  ar:'مرحباً بكم',
+  tr:'Hoş geldiniz',
+  ko:'환영합니다',
+  de:'Willkommen',
+  fr:'Bienvenue',
+  es:'Bienvenido'
+};
+
+function wait(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+function shouldShowFirstVisitWelcome(){
+  try{
+    return localStorage.getItem(FIRST_VISIT_WELCOME_KEY)!=='1';
+  }catch{
+    return true;
+  }
+}
+
+function markFirstVisitWelcomeSeen(){
+  try{
+    localStorage.setItem(FIRST_VISIT_WELCOME_KEY,'1');
+  }catch{}
+}
+
+function setWelcomeLanguage(language,index,total){
+  const word=$('#welcomeWord');
+  const native=$('#welcomeLanguageName');
+  const counter=$('#welcomeLanguageCounter');
+
+  if(word){
+    const next=WELCOME_COPY[language.code]||WELCOME_COPY.en;
+    word.textContent=next;
+    word.setAttribute('lang',language.code);
+    word.setAttribute('dir',language.dir||'ltr');
+  }
+
+  if(native){
+    native.textContent=language.native||language.name||language.code.toUpperCase();
+  }
+
+  if(counter){
+    counter.textContent=`${index+1} / ${total}`;
+  }
+}
+
+async function showFirstVisitWelcome(){
+  const overlay=$('#firstVisitWelcome');
+
+  if(!overlay||!shouldShowFirstVisitWelcome()){
+    overlay?.classList.add('hidden');
+    return false;
+  }
+
+  markFirstVisitWelcomeSeen();
+
+  overlay.classList.remove('hidden');
+  overlay.setAttribute('aria-hidden','false');
+
+  const languages=LANGUAGES.filter(Boolean);
+
+  if(!languages.length){
+    setWelcomeLanguage({code:'uz',native:"O‘zbekcha",dir:'ltr'},0,1);
+    await wait(900);
+  }else{
+    for(let index=0;index<languages.length;index++){
+      const language=languages[index];
+
+      setWelcomeLanguage(
+        language,
+        index,
+        languages.length
+      );
+
+      const word=$('#welcomeWord');
+      const native=$('#welcomeLanguageName');
+
+      if(!motionDisabled()){
+        word?.animate(
+          [
+            {
+              opacity:0,
+              transform:'translate3d(0,18px,0) scale(.96)',
+              filter:'blur(8px)'
+            },
+            {
+              opacity:1,
+              transform:'translate3d(0,0,0) scale(1)',
+              filter:'blur(0px)'
+            }
+          ],
+          {
+            duration:320,
+            easing:easeOut()
+          }
+        );
+
+        native?.animate(
+          [
+            {opacity:0,transform:'translateY(6px)'},
+            {opacity:1,transform:'translateY(0)'}
+          ],
+          {
+            duration:260,
+            easing:easeOut()
+          }
+        );
+      }
+
+      await wait(index===0?520:360);
+    }
+  }
+
+  const final=$('#welcomeFinal');
+
+  if(final){
+    final.classList.add('show');
+
+    if(!motionDisabled()){
+      final.animate(
+        [
+          {
+            opacity:0,
+            transform:'translate3d(0,12px,0)',
+            letterSpacing:'.32em'
+          },
+          {
+            opacity:1,
+            transform:'translate3d(0,0,0)',
+            letterSpacing:'.20em'
+          }
+        ],
+        {
+          duration:520,
+          easing:easeOut()
+        }
+      );
+    }
+  }
+
+  await wait(700);
+
+  if(motionDisabled()){
+    overlay.classList.add('hidden');
+  }else{
+    const animation=overlay.animate(
+      [
+        {
+          opacity:1,
+          filter:'blur(0px)'
+        },
+        {
+          opacity:0,
+          filter:'blur(10px)'
+        }
+      ],
+      {
+        duration:520,
+        easing:'cubic-bezier(.4,0,.2,1)',
+        fill:'both'
+      }
+    );
+
+    await animation.finished.catch(()=>{});
+    try{animation.cancel()}catch{}
+    overlay.classList.add('hidden');
+  }
+
+  overlay.setAttribute('aria-hidden','true');
+
+  return true;
 }
 
 
@@ -314,24 +638,170 @@ function showMarkerHover(item,kind,color){
     .setHTML(`<div class="marker-popup-card" style="--marker:${color}"><span>${esc(type)}</span><strong>${esc(item.name||item.companyName||'—')}</strong></div>`)
     .addTo(state.map);
 }
-function markerElement(item,kind,color){
+function markerElement(item,kind,color,sequence=0){
   const el=document.createElement('button');
+
   el.type='button';
-  el.className=`map-data-marker ${kind==='mahalla'?'mfy-marker':'place-marker'} marker-${kind}`;
-  el.setAttribute('aria-label',item.name||'');
-  el.innerHTML=`<span class="map-pin-3d" style="--marker:${color}"><span class="map-pin-face"><span class="map-pin-core"></span><span class="map-pin-glint"></span></span><span class="map-pin-foot"></span></span>`;
-  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();hideMarkerHover();openDetail(item,kind)});
-  el.addEventListener('mouseenter',()=>showMarkerHover(item,kind,color));
-  el.addEventListener('mouseleave',hideMarkerHover);
+  el.className=`map-data-marker ${kind==='mahalla'?'mfy-marker':'place-marker'} marker-${kind} marker-born`;
+  el.setAttribute('aria-label',item.name||item.companyName||'');
+  el.style.setProperty('--marker',color);
+  el.style.setProperty(
+    '--marker-delay',
+    `${Math.min(Math.max(sequence,0)*14,360)}ms`
+  );
+
+  el.innerHTML=`
+    <span class="liquid-location-pin">
+      <span class="liquid-pin-shadow"></span>
+
+      <span class="liquid-pin-shell">
+        <span class="liquid-pin-spectrum"></span>
+
+        <span class="liquid-pin-glass">
+          <span class="liquid-pin-hole">
+            <span class="liquid-pin-core"></span>
+          </span>
+        </span>
+
+        <span class="liquid-pin-shine"></span>
+      </span>
+    </span>
+  `;
+
+  el.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+
+    hideMarkerHover();
+    openDetail(item,kind);
+  });
+
+  el.addEventListener(
+    'mouseenter',
+    ()=>showMarkerHover(item,kind,color)
+  );
+
+  el.addEventListener(
+    'mouseleave',
+    hideMarkerHover
+  );
+
   return el;
 }
-function addMarker(item,kind,color){
+
+function addMarker(item,kind,color,sequence=0){
   if(!validCoords(item))return;
-  const el=markerElement(item,kind,color);
-  const marker=new maplibregl.Marker({element:el,anchor:'bottom',pitchAlignment:'map',rotationAlignment:'map'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(state.map);
-  state.markers.push({item,kind,marker,el});
+
+  const el=markerElement(
+    item,
+    kind,
+    color,
+    sequence
+  );
+
+  const marker=new maplibregl.Marker({
+    element:el,
+    anchor:'bottom',
+
+    // Keep every location pin vertically facing the visitor,
+    // even when the map is pitched or rotated.
+    pitchAlignment:'viewport',
+    rotationAlignment:'viewport'
+  })
+    .setLngLat([
+      Number(item.lng),
+      Number(item.lat)
+    ])
+    .addTo(state.map);
+
+  state.markers.push({
+    item,
+    kind,
+    marker,
+    el
+  });
 }
-function renderMarkers(){if(!state.map)return;clearMarkers();const layer=state.activeLayer;if(layer==='all'||layer==='mahalla')state.data.mahallas.forEach(m=>addMarker(m,'mahalla',getSpecializationColor(m.specialization)));state.data.places.forEach(p=>{if(layer==='all'||layer===p.category)addMarker(p,'place',getCategoryColor(p.category))});state.data.businesses.forEach(b=>{if(layer==='all'||layer==='business'||layer===b.category)addMarker(b,'business',b.categoryColor||getCategoryColor(b.category))});state.data.economicZones.forEach(z=>{if(layer==='all'||layer==='economic-zone')addMarker(z,'economic-zone','#5ed8ff')});applyMarkerFilters()}
+
+function renderMarkers(){
+  if(!state.map)return;
+
+  clearMarkers();
+
+  const layer=state.activeLayer;
+  let sequence=0;
+
+  const push=(item,kind,color)=>{
+    addMarker(
+      item,
+      kind,
+      color,
+      sequence++
+    );
+  };
+
+  if(
+    layer==='all' ||
+    layer==='mahalla'
+  ){
+    state.data.mahallas.forEach(
+      item=>push(
+        item,
+        'mahalla',
+        getSpecializationColor(
+          item.specialization
+        )
+      )
+    );
+  }
+
+  state.data.places.forEach(item=>{
+    if(
+      layer==='all' ||
+      layer===item.category
+    ){
+      push(
+        item,
+        'place',
+        getCategoryColor(
+          item.category
+        )
+      );
+    }
+  });
+
+  state.data.businesses.forEach(item=>{
+    if(
+      layer==='all' ||
+      layer==='business' ||
+      layer===item.category
+    ){
+      push(
+        item,
+        'business',
+        item.categoryColor ||
+        getCategoryColor(
+          item.category
+        )
+      );
+    }
+  });
+
+  state.data.economicZones.forEach(item=>{
+    if(
+      layer==='all' ||
+      layer==='economic-zone'
+    ){
+      push(
+        item,
+        'economic-zone',
+        '#5ed8ff'
+      );
+    }
+  });
+
+  applyMarkerFilters();
+}
+
 function applyMarkerFilters(){state.markers.forEach(m=>{let dim=false;if(m.kind==='mahalla'&&state.selectedSpecialization)dim=m.item.specialization!==state.selectedSpecialization;if(m.kind==='business'&&state.selectedOrganizationType)dim=m.item.organizationType!==state.selectedOrganizationType;m.el.classList.toggle('is-dim',dim)})}
 
 function renderDistrictMetrics(){
@@ -414,7 +884,48 @@ const DETAIL_LABELS={
   phone_digits:'Telefon raqamlari',source_date:'Manba sanasi',source_file:'Manba fayli',description:'Tavsif',
   created_at:'Yaratilgan sana'
 };
-const DETAIL_SKIP=new Set(['category','_raw']);
+const DETAIL_SKIP=new Set([
+  // Internal identifiers
+  'id',
+  'legacy_id',
+  'slug',
+  'category_id',
+  'mahalla_id',
+
+  // Raw/technical geodata
+  'latitude',
+  'longitude',
+  'latitude_raw',
+  'longitude_raw',
+  'location_raw',
+  'location_status_raw',
+  'location_verified',
+
+  // System/audit metadata
+  'created_at',
+  'updated_at',
+  'source',
+  'source_no',
+  'source_date',
+  'source_file',
+  'source_row_numbers',
+  'source_duplicate_count',
+  'registration_excel_serial',
+
+  // Duplicates already shown elsewhere in the detail UI
+  'name',
+  'official_name',
+  'company_name',
+  'image_url',
+  'verified',
+  'status',
+  'phone_original',
+  'phone_digits',
+
+  // Nested/internal objects
+  'category',
+  '_raw'
+]);
 function detailValue(v){
   if(v===null||v===undefined||v==='')return null;
   if(typeof v==='boolean')return v?'Ha':'Yo‘q';
@@ -876,7 +1387,7 @@ function setupPresentationLayers(){
   clearPresentationMarkers();
   rows.forEach(([item,color,kind])=>{
     const el=document.createElement('div');el.className=`presentation-map-marker presentation-${kind}`;el.style.setProperty('--marker',color);el.innerHTML='<span class="presentation-pin-shape"><span></span></span>';
-    const marker=new maplibregl.Marker({element:el,anchor:'bottom',pitchAlignment:'map',rotationAlignment:'map'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(map);state.presentation.markers.push(marker);
+    const marker=new maplibregl.Marker({element:el,anchor:'bottom',pitchAlignment:'viewport',rotationAlignment:'viewport'}).setLngLat([Number(item.lng),Number(item.lat)]).addTo(map);state.presentation.markers.push(marker);
   });
   state.presentation.markerKey=key;
 }
@@ -1065,30 +1576,39 @@ function setupIdleDetection(){
   resetIdleTimer();
 }
 
-function ensureSphereTestButton(){
-  ensureIdleOverlay();
-  let button=$('#sphereTestBtn');
+function ensureFloatingAIButton(){
+  let button=$('#floatingAiBtn');
+
   if(!button){
     button=document.createElement('button');
-    button.id='sphereTestBtn';
+    button.id='floatingAiBtn';
     button.type='button';
-    button.className='sphere-test-button glass floating';
-    button.setAttribute('aria-label','Sphere animatsiyasini sinash');
-    button.title='Sphere animatsiyasini sinash';
-    button.innerHTML=`<span class="icon">${svg('globe')}</span><span class="sphere-test-label">Sphere</span>`;
+    button.className='sphere-test-button floating-ai-button glass floating';
+    button.setAttribute('aria-label','Uchko‘prik AI');
+    button.title='Uchko‘prik AI';
+    button.innerHTML=`<span class="icon">${svg('sparkles')}</span><span class="sphere-test-label">AI</span>`;
+
     document.body.appendChild(button);
   }
-  if(button.dataset.sphereBound==='1')return;
-  button.dataset.sphereBound='1';
+
+  if(button.dataset.aiBound==='1')return;
+
+  button.dataset.aiBound='1';
+
   button.addEventListener('click',async e=>{
     e.preventDefault();
     e.stopPropagation();
+
     liquidPress(button);
-    if(state.idle.active)return;
-    clearTimeout(state.idle.timer);
-    await enterIdleMode(true);
+
+    if(state.idle.active){
+      exitIdleMode();
+    }
+
+    await openAI();
   });
 }
+
 function toast(title,body=''){const host=$('#toastHost');if(!host)return;const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${body?`<small>${esc(body)}</small>`:''}`;host.appendChild(el);setTimeout(()=>el.remove(),3200)}
 function renderAllTextual(){renderCategories();renderEconomicZoneFilters();renderLayerList();renderProducts();renderDistrictMetrics();renderAISuggestions()}
 
@@ -1096,7 +1616,50 @@ function setupEvents(){
   $('#exploreClose')?.addEventListener('click',closeFilterPanel);$('#filterToggle')?.addEventListener('click',openFilterPanel);$('#layerListToggle')?.addEventListener('click',toggleLayerList);$('#layerListClose')?.addEventListener('click',closeLayerList);$('#layerListSearch')?.addEventListener('input',e=>{state.layerListQuery=e.target.value;renderLayerList()});$('#fitDistrict')?.addEventListener('click',()=>{state.activeLayer='all';state.selectedSpecialization=null;state.selectedOrganizationType=null;renderCategories();renderMarkers();fitDistrict()});$('#specializationReset')?.addEventListener('click',()=>{state.selectedSpecialization=null;renderSpecializationFilters();applyMarkerFilters();renderLayerList()});$('#organizationFilterReset')?.addEventListener('click',()=>{state.selectedOrganizationType=null;renderOrganizationFilters();applyMarkerFilters();renderLayerList()});
   $('#districtPassportBtn')?.addEventListener('click',openPassportMode);$('#districtClose')?.addEventListener('click',()=>closePassportMode());
   $('#searchOpen')?.addEventListener('click',async()=>{if(state.selected)closeDetail(false);if(document.body.classList.contains('passport-mode'))closePassportMode(false);await closeMajorPanels('searchDialog');await showSmooth('#searchDialog',{duration:300,keyframes:[{opacity:0,transform:'translate3d(-50%,-10px,0) scale(.99)'},{opacity:1,transform:'translate3d(-50%,0,0) scale(1)'}]});renderSearchResults();setTimeout(()=>$('#globalSearch')?.focus(),40)});$('#searchClose')?.addEventListener('click',()=>hideSearchSmooth());$('#globalSearch')?.addEventListener('input',e=>renderSearchResults(e.target.value));
-  $$('.dock-item').forEach(btn=>btn.addEventListener('click',()=>{const nav=btn.dataset.nav;if(nav==='explore')return openFilterPanel();if(nav==='map'){closeMajorPanels();closeDetail();if(document.body.classList.contains('passport-mode'))closePassportMode();closeFilterPanel();fitDistrict();return}if(nav==='ai')return openAI();if(nav==='invest')return openInvestorMode();if(nav==='products')return openPanel('products')}));
+  $$('.dock-item').forEach(btn=>btn.addEventListener('click',async()=>{
+    const nav=btn.dataset.nav;
+
+    if(nav==='explore'){
+      return openFilterPanel();
+    }
+
+    if(nav==='map'){
+      closeMajorPanels();
+      closeDetail();
+
+      if(document.body.classList.contains('passport-mode')){
+        closePassportMode();
+      }
+
+      closeFilterPanel();
+      fitDistrict();
+      return;
+    }
+
+    if(nav==='sphere'){
+      liquidPress(btn);
+      clearTimeout(state.idle.timer);
+
+      if(!state.idle.active){
+        await enterIdleMode(true);
+      }
+
+      return;
+    }
+
+    // Backward compatibility if an older cached HTML still has data-nav="ai".
+    if(nav==='ai'){
+      return openAI();
+    }
+
+    if(nav==='invest'){
+      return openInvestorMode();
+    }
+
+    if(nav==='products'){
+      return openPanel('products');
+    }
+  }));
   $('#investorClose')?.addEventListener('click',closeInvestorMode);$('#showBusinesses')?.addEventListener('click',()=>{state.activeLayer='business';renderCategories();renderMarkers();closeInvestorMode()});$('#askInvestment')?.addEventListener('click',()=>askAI('Uchko‘prik investitsiya imkoniyatlari haqida umumiy ma’lumot ber'));$('#productsClose')?.addEventListener('click',openFilterPanel);
   $('#detailClose')?.addEventListener('click',()=>closeDetail());$('#detailDirections')?.addEventListener('click',()=>{const i=state.selected?.item;if(validCoords(i))window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${i.lat},${i.lng}`)}`,'_blank','noopener')});$('#detailAsk')?.addEventListener('click',()=>{if(state.selected)askAI(`${state.selected.item.name} haqida ma’lumot ber`)});$('#detailShare')?.addEventListener('click',async()=>{const i=state.selected?.item;try{if(navigator.share)await navigator.share({title:i?.name||'Uchko‘prik',url:location.href});else{await navigator.clipboard.writeText(location.href);toast('Havola nusxalandi')}}catch{}});
   $('#aiClose')?.addEventListener('click',()=>{stopAIAudio();if(state.voice.recording)stopVoiceRecording();hideSmooth('#aiPanel',{duration:260});setDockActive(state.activePanel==='explore'?'explore':'map')});$('#aiVoiceToggle')?.addEventListener('click',toggleAIVoice);$('#aiForm')?.addEventListener('submit',e=>{e.preventDefault();askAI($('#aiInput')?.value)});$('#voiceBtn')?.addEventListener('click',startVoice);
@@ -1125,43 +1688,119 @@ function setupEvents(){
 async function boot(){
   detectLanguage();
   loadPrefs();
+
   document.documentElement.classList.add('motion-ready');
+
   ensureIdleOverlay();
-  ensureSphereTestButton();
+  ensureFloatingAIButton();
   bindIcons();
+
+  const welcomePromise=showFirstVisitWelcome();
+
   console.log('Uchko‘prik Digital District ishga tushmoqda...');
 
   await loadData();
+
   applyLanguage();
   renderLanguages();
+
   setupEvents();
   setupVoice();
+
   initMap();
+
   ensureAIWelcome();
   setupIdleDetection();
-  const initialQuery=new URLSearchParams(location.search).get('q');
+
+  await welcomePromise;
+
+  requestAnimationFrame(
+    ()=>requestAnimationFrame(
+      animateChromeIn
+    )
+  );
+
+  const initialQuery=
+    new URLSearchParams(
+      location.search
+    ).get('q');
+
   if(initialQuery){
     setTimeout(()=>{
-      const input=$('#globalSearch');if(input)input.value=initialQuery;
+      const input=$('#globalSearch');
+
+      if(input){
+        input.value=initialQuery;
+      }
+
       $('#searchOpen')?.click();
-      setTimeout(()=>renderSearchResults(initialQuery),80);
-    },420);
+
+      setTimeout(
+        ()=>renderSearchResults(
+          initialQuery
+        ),
+        80
+      );
+    },900);
   }
-  if(new URLSearchParams(location.search).get('present')==='1')setTimeout(()=>openPresentation(),720);
-  requestAnimationFrame(()=>requestAnimationFrame(animateChromeIn));
+
+  if(
+    new URLSearchParams(
+      location.search
+    ).get('present')==='1'
+  ){
+    setTimeout(
+      ()=>openPresentation(),
+      1080
+    );
+  }
 
   if('serviceWorker' in navigator){
     let reloading=false;
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(reloading)return;
-      reloading=true;
-      location.reload();
-    });
-    navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'})
-      .then(registration=>registration.update())
-      .catch(error=>console.warn('Service Worker:',error));
+
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      ()=>{
+        if(reloading)return;
+
+        reloading=true;
+        location.reload();
+      }
+    );
+
+    navigator.serviceWorker
+      .register(
+        '/sw.js',
+        {
+          updateViaCache:'none'
+        }
+      )
+      .then(
+        registration=>
+          registration.update()
+      )
+      .catch(
+        error=>
+          console.warn(
+            'Service Worker:',
+            error
+          )
+      );
   }
 
   console.log('Uchko‘prik Digital District tayyor.');
 }
-boot().catch(error=>{console.error('Application error:',error);toast('Application error',error.message)});
+
+boot().catch(error=>{
+  document.body.classList.remove('app-booting');
+
+  console.error(
+    'Application error:',
+    error
+  );
+
+  toast(
+    'Application error',
+    error.message
+  );
+});
