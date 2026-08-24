@@ -318,10 +318,13 @@ function restartWelcomeDrawing(){
 
   svg.classList.remove('is-drawing');
 
-  // Force a new animation timeline when the language changes.
-  void svg.getBoundingClientRect();
-
-  svg.classList.add('is-drawing');
+  // Browserlarda SVG text animatsiyasi ishonchli qayta boshlanishi uchun
+  // ikki frame kutamiz.
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      svg.classList.add('is-drawing');
+    });
+  });
 }
 
 function setWelcomeLanguage(
