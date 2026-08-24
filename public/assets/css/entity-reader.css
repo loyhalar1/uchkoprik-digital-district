@@ -1,0 +1,93 @@
+/* =========================================================
+   UCHKO‘PRIK — READER ONLY AI
+========================================================= */
+
+#detailDescription.entity-real-description{
+  margin-top:12px;
+  padding:14px 15px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:16px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.025)
+    );
+  color:rgba(255,255,255,.86);
+  line-height:1.55;
+}
+
+.entity-description-duplicate{
+  display:none !important;
+}
+
+#detailAsk.entity-reader-button{
+  min-width:132px;
+  gap:8px;
+}
+
+#detailAsk.entity-reader-button .icon,
+#floatingAiBtn.entity-reader-floating .icon{
+  display:grid;
+  place-items:center;
+}
+
+#detailAsk.entity-reader-button svg,
+#floatingAiBtn.entity-reader-floating svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+#detailAsk.reader-speaking,
+#floatingAiBtn.reader-speaking{
+  position:relative;
+  overflow:hidden;
+}
+
+#detailAsk.reader-speaking::after,
+#floatingAiBtn.reader-speaking::after{
+  content:"";
+  position:absolute;
+  inset:-35%;
+  border-radius:inherit;
+  background:
+    radial-gradient(
+      circle,
+      rgba(112,238,255,.20),
+      transparent 58%
+    );
+  animation:entityReaderPulse 1.15s ease-in-out infinite;
+  pointer-events:none;
+}
+
+#floatingAiBtn.entity-reader-floating{
+  color:#dffcff;
+}
+
+.reader-ai-chat-disabled,
+.reader-ai-nav-disabled{
+  display:none !important;
+}
+
+@keyframes entityReaderPulse{
+  0%,100%{
+    opacity:.30;
+    transform:scale(.72);
+  }
+  50%{
+    opacity:.82;
+    transform:scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  #detailAsk.reader-speaking::after,
+  #floatingAiBtn.reader-speaking::after{
+    animation:none;
+  }
+}
