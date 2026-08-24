@@ -264,11 +264,10 @@ function liquidPress(el){
 
 /* =========================================================
    FIRST VISIT — iOS-STYLE MULTILINGUAL HELLO
-   Clean full-screen glass overlay.
-   Greeting + Start button rotate through all languages.
+   V3: centered Start button + 50% glass + drawn text animation.
 ========================================================= */
 
-const FIRST_VISIT_WELCOME_KEY='uchkoprik-first-welcome-v2';
+const FIRST_VISIT_WELCOME_KEY='uchkoprik-first-welcome-v3';
 
 const WELCOME_COPY={
   uz:{hello:'Salom',start:'Boshlash'},
@@ -282,10 +281,6 @@ const WELCOME_COPY={
   fr:{hello:'Bonjour',start:'Commencer'},
   es:{hello:'Hola',start:'Comenzar'}
 };
-
-function wait(ms){
-  return new Promise(resolve=>setTimeout(resolve,ms));
-}
 
 function shouldShowFirstVisitWelcome(){
   try{
@@ -301,8 +296,42 @@ function markFirstVisitWelcomeSeen(){
   }catch{}
 }
 
-function setWelcomeLanguage(language,animate=true){
+function welcomeFontSize(text){
+  const length=Array.from(String(text||'')).length;
+
+  if(length>=13)return 102;
+  if(length>=11)return 116;
+  if(length>=9)return 132;
+  if(length>=7)return 148;
+  return 166;
+}
+
+function restartWelcomeDrawing(){
+  const svg=$('#welcomeWordSvg');
+
+  if(
+    !svg ||
+    motionDisabled()
+  ){
+    return;
+  }
+
+  svg.classList.remove('is-drawing');
+
+  // Force a new animation timeline when the language changes.
+  void svg.getBoundingClientRect();
+
+  svg.classList.add('is-drawing');
+}
+
+function setWelcomeLanguage(
+  language,
+  animate=true
+){
   const word=$('#welcomeWord');
+  const svg=$('#welcomeWordSvg');
+  const stroke=$('#welcomeWordStroke');
+  const fill=$('#welcomeWordFill');
   const startButton=$('#welcomeStart');
 
   const copy=
@@ -311,68 +340,104 @@ function setWelcomeLanguage(language,animate=true){
 
   const dir=
     language?.dir ||
-    (language?.code==='ar'?'rtl':'ltr');
+    (
+      language?.code==='ar'
+        ? 'rtl'
+        : 'ltr'
+    );
 
   if(word){
-    word.textContent=copy.hello;
-    word.setAttribute('lang',language?.code||'en');
-    word.setAttribute('dir',dir);
+    word.setAttribute(
+      'lang',
+      language?.code ||
+      'en'
+    );
+
+    word.setAttribute(
+      'dir',
+      dir
+    );
+
+    word.setAttribute(
+      'aria-label',
+      copy.hello
+    );
+  }
+
+  if(svg){
+    svg.style.setProperty(
+      '--welcome-font-size',
+      `${welcomeFontSize(copy.hello)}px`
+    );
+  }
+
+  if(stroke){
+    stroke.textContent=
+      copy.hello;
+  }
+
+  if(fill){
+    fill.textContent=
+      copy.hello;
   }
 
   if(startButton){
-    startButton.textContent=copy.start;
-    startButton.setAttribute('lang',language?.code||'en');
-    startButton.setAttribute('dir',dir);
+    startButton.textContent=
+      copy.start;
+
+    startButton.setAttribute(
+      'lang',
+      language?.code ||
+      'en'
+    );
+
+    startButton.setAttribute(
+      'dir',
+      dir
+    );
   }
 
-  if(
-    animate &&
-    !motionDisabled()
-  ){
-    word?.animate(
-      [
-        {
-          opacity:0,
-          transform:'translate3d(0,16px,0) scale(.985)'
-        },
-        {
-          opacity:1,
-          transform:'translate3d(0,0,0) scale(1)'
-        }
-      ],
-      {
-        duration:520,
-        easing:'cubic-bezier(.22,1,.36,1)'
-      }
-    );
+  if(animate){
+    restartWelcomeDrawing();
 
-    startButton?.animate(
-      [
+    if(
+      startButton &&
+      !motionDisabled()
+    ){
+      // Opacity only: transform is intentionally untouched,
+      // so translateX(-50%) always keeps the button centered.
+      startButton.animate(
+        [
+          {
+            opacity:.35,
+            filter:'blur(2px)'
+          },
+          {
+            opacity:1,
+            filter:'blur(0px)'
+          }
+        ],
         {
-          opacity:.45,
-          transform:'translate3d(0,6px,0)'
-        },
-        {
-          opacity:1,
-          transform:'translate3d(0,0,0)'
+          duration:460,
+          easing:'cubic-bezier(.22,1,.36,1)'
         }
-      ],
-      {
-        duration:420,
-        easing:'cubic-bezier(.22,1,.36,1)'
-      }
-    );
+      );
+    }
   }
 }
 
 async function showFirstVisitWelcome(){
-  const overlay=$('#firstVisitWelcome');
+  const overlay=
+    $('#firstVisitWelcome');
 
   if(
     !overlay ||
     !shouldShowFirstVisitWelcome()
   ){
-    overlay?.classList.add('hidden');
+    overlay?.classList.add(
+      'hidden'
+    );
+
     return false;
   }
 
@@ -396,12 +461,24 @@ async function showFirstVisitWelcome(){
   let timer=null;
   let stopped=false;
 
-  overlay.classList.remove('hidden');
-  overlay.setAttribute('aria-hidden','false');
+  overlay.classList.remove(
+    'hidden'
+  );
+
+  overlay.setAttribute(
+    'aria-hidden',
+    'false'
+  );
 
   setWelcomeLanguage(
     sequence[index],
     false
+  );
+
+  requestAnimationFrame(
+    ()=>{
+      restartWelcomeDrawing();
+    }
   );
 
   const rotate=()=>{
@@ -420,13 +497,17 @@ async function showFirstVisitWelcome(){
   if(sequence.length>1){
     timer=setInterval(
       rotate,
-      1650
+      1900
     );
   }
 
   await new Promise(resolve=>{
     if(!startButton){
-      setTimeout(resolve,900);
+      setTimeout(
+        resolve,
+        900
+      );
+
       return;
     }
 
@@ -451,7 +532,9 @@ async function showFirstVisitWelcome(){
   });
 
   if(motionDisabled()){
-    overlay.classList.add('hidden');
+    overlay.classList.add(
+      'hidden'
+    );
   }else{
     const animation=
       overlay.animate(
@@ -464,19 +547,22 @@ async function showFirstVisitWelcome(){
           }
         ],
         {
-          duration:480,
+          duration:520,
           easing:'cubic-bezier(.4,0,.2,1)',
           fill:'both'
         }
       );
 
-    await animation.finished.catch(()=>{});
+    await animation.finished
+      .catch(()=>{});
 
     try{
       animation.cancel();
     }catch{}
 
-    overlay.classList.add('hidden');
+    overlay.classList.add(
+      'hidden'
+    );
   }
 
   overlay.setAttribute(
