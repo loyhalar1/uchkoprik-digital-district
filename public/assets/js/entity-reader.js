@@ -350,6 +350,14 @@
       button.classList.add('reader-ai-nav-disabled');
       button.hidden = true;
     });
+
+    // Investor paneldagi eski chat tugmasi reader-only rejimda kerak emas.
+    const askInvestment = $('#askInvestment');
+    if (askInvestment) {
+      askInvestment.classList.add('reader-ai-nav-disabled');
+      askInvestment.hidden = true;
+      askInvestment.setAttribute('aria-hidden', 'true');
+    }
   }
 
   function observeDetail() {
