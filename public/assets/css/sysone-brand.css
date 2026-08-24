@@ -1,0 +1,875 @@
+/* =========================================================
+   SYSONE BRAND LAYER
+   Uchko‘prik Digital District
+   Lightweight static glass + GPU-friendly motion
+========================================================= */
+
+:root{
+  --sysone-accent:#7cefff;
+  --sysone-accent-2:#8b7cff;
+  --sysone-bg:rgba(5,8,12,.78);
+  --sysone-surface:rgba(255,255,255,.055);
+  --sysone-line:rgba(255,255,255,.13);
+  --sysone-muted:rgba(235,245,252,.62);
+  --sysone-ease:cubic-bezier(.16,1,.3,1);
+}
+
+
+/* =========================================================
+   TOPBAR ABOUT BUTTON
+========================================================= */
+
+body.ux-v2 #sysoneAboutBtn{
+  position:relative;
+  overflow:hidden;
+}
+
+body.ux-v2 #sysoneAboutBtn .sysone-button-glyph{
+  position:relative;
+  z-index:1;
+  width:21px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  font-size:.67rem;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.04em;
+  color:#f8fdff;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124,239,255,.22),
+      rgba(139,124,255,.10)
+    );
+  border:1px solid rgba(151,240,255,.25);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.16),
+    0 0 0 rgba(124,239,255,0);
+  transition:
+    transform .28s var(--sysone-ease),
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+body.ux-v2 #sysoneAboutBtn::after{
+  content:"";
+  position:absolute;
+  inset:7px;
+  border-radius:11px;
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      rgba(124,239,255,.18),
+      transparent 58%
+    );
+  opacity:0;
+  transform:scale(.82);
+  transition:
+    opacity .22s ease,
+    transform .3s var(--sysone-ease);
+  pointer-events:none;
+}
+
+body.ux-v2 #sysoneAboutBtn:hover::after{
+  opacity:1;
+  transform:scale(1);
+}
+
+body.ux-v2 #sysoneAboutBtn:hover .sysone-button-glyph{
+  transform:translateY(-1px) scale(1.04);
+  border-color:rgba(151,240,255,.44);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.18),
+    0 0 18px rgba(124,239,255,.14);
+}
+
+body.ux-v2 #sysoneAboutBtn:active .sysone-button-glyph{
+  transform:scale(.92);
+}
+
+
+/* =========================================================
+   ABOUT BACKDROP
+========================================================= */
+
+body.ux-v2 .sysone-about-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:190;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(0,0,0,.42);
+  backdrop-filter:blur(14px) saturate(108%);
+  -webkit-backdrop-filter:blur(14px) saturate(108%);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:
+    opacity .30s ease,
+    visibility 0s linear .30s;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition:
+    opacity .30s ease,
+    visibility 0s linear 0s;
+}
+
+
+/* =========================================================
+   ABOUT PANEL
+========================================================= */
+
+body.ux-v2 .sysone-about-panel{
+  position:relative;
+  width:min(760px,calc(100vw - 32px));
+  max-height:min(820px,calc(100vh - 40px));
+  overflow:auto;
+  border-radius:32px;
+  color:var(--text,#f8fbff);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.10),
+      rgba(255,255,255,.035) 42%,
+      rgba(255,255,255,.018)
+    ),
+    rgba(7,10,14,.82);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    0 34px 100px rgba(0,0,0,.48),
+    inset 0 1px rgba(255,255,255,.13);
+  backdrop-filter:blur(18px) saturate(116%);
+  -webkit-backdrop-filter:blur(18px) saturate(116%);
+  transform:translate3d(0,24px,0) scale(.975);
+  opacity:0;
+  transition:
+    transform .46s var(--sysone-ease),
+    opacity .30s ease;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-about-panel{
+  transform:translate3d(0,0,0) scale(1);
+  opacity:1;
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-about-panel{
+  color:#10202b;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.90),
+      rgba(255,255,255,.72)
+    );
+  border-color:rgba(16,35,47,.12);
+  box-shadow:
+    0 30px 90px rgba(35,52,64,.18),
+    inset 0 1px rgba(255,255,255,.9);
+}
+
+html.reduce-transparency body.ux-v2 .sysone-about-backdrop,
+html.reduce-transparency body.ux-v2 .sysone-about-panel{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+html.reduce-transparency body.ux-v2 .sysone-about-panel{
+  background:#0c1117;
+}
+
+html[data-theme="light"].reduce-transparency body.ux-v2 .sysone-about-panel{
+  background:#f7fafc;
+}
+
+
+/* =========================================================
+   CLOSE
+========================================================= */
+
+body.ux-v2 .sysone-about-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:5;
+  width:42px;
+  height:42px;
+  padding:0;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  color:inherit;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.12);
+  transition:
+    transform .2s var(--sysone-ease),
+    background-color .2s ease,
+    border-color .2s ease;
+}
+
+body.ux-v2 .sysone-about-close:hover{
+  transform:rotate(2deg) scale(1.04);
+  background:rgba(255,255,255,.095);
+  border-color:rgba(255,255,255,.20);
+}
+
+body.ux-v2 .sysone-about-close:active{
+  transform:scale(.92);
+}
+
+body.ux-v2 .sysone-about-close svg{
+  width:19px;
+  height:19px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+body.ux-v2 .sysone-about-hero{
+  position:relative;
+  min-height:330px;
+  padding:62px 46px 40px;
+  overflow:hidden;
+  border-bottom:1px solid rgba(255,255,255,.09);
+}
+
+body.ux-v2 .sysone-about-hero::before{
+  content:"";
+  position:absolute;
+  width:360px;
+  height:360px;
+  right:-120px;
+  top:-140px;
+  border-radius:50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(124,239,255,.14),
+      rgba(139,124,255,.06) 42%,
+      transparent 72%
+    );
+  pointer-events:none;
+}
+
+body.ux-v2 .sysone-about-hero::after{
+  content:"";
+  position:absolute;
+  left:46px;
+  right:46px;
+  bottom:0;
+  height:1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(124,239,255,.30),
+      rgba(139,124,255,.22),
+      transparent
+    );
+  transform:scaleX(.25);
+  opacity:0;
+  transform-origin:left center;
+  transition:
+    transform .9s var(--sysone-ease) .18s,
+    opacity .5s ease .18s;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-about-hero::after{
+  transform:scaleX(1);
+  opacity:1;
+}
+
+body.ux-v2 .sysone-kicker{
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:17px;
+  color:var(--sysone-accent);
+  font-size:.62rem;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+body.ux-v2 .sysone-kicker-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--sysone-accent);
+  box-shadow:0 0 13px rgba(124,239,255,.55);
+}
+
+body.ux-v2 .sysone-wordmark{
+  position:relative;
+  z-index:1;
+  margin:0;
+  font-size:clamp(3.8rem,11vw,8.4rem);
+  line-height:.82;
+  letter-spacing:-.07em;
+  font-weight:780;
+  color:rgba(255,255,255,.96);
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.18),
+    0 16px 48px rgba(0,0,0,.24);
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-wordmark{
+  color:rgba(12,23,31,.94);
+  text-shadow:none;
+}
+
+body.ux-v2 .sysone-tagline{
+  position:relative;
+  z-index:1;
+  margin:18px 0 0;
+  max-width:580px;
+  color:var(--sysone-muted);
+  font-size:clamp(.92rem,2vw,1.08rem);
+  line-height:1.7;
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-tagline{
+  color:rgba(16,32,43,.65);
+}
+
+body.ux-v2 .sysone-hero-meta{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:24px;
+}
+
+body.ux-v2 .sysone-pill{
+  display:inline-flex;
+  align-items:center;
+  min-height:31px;
+  padding:0 11px;
+  border-radius:999px;
+  color:rgba(242,250,255,.74);
+  font-size:.65rem;
+  font-weight:700;
+  letter-spacing:.03em;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-pill{
+  color:rgba(16,32,43,.72);
+  background:rgba(16,32,43,.035);
+  border-color:rgba(16,32,43,.09);
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+body.ux-v2 .sysone-about-body{
+  padding:30px 46px 34px;
+}
+
+body.ux-v2 .sysone-section-label{
+  display:block;
+  margin-bottom:10px;
+  color:var(--sysone-accent);
+  font-size:.59rem;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+body.ux-v2 .sysone-project-card{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:18px;
+  align-items:center;
+  padding:22px;
+  border-radius:22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124,239,255,.07),
+      rgba(139,124,255,.035),
+      rgba(255,255,255,.025)
+    );
+  border:1px solid rgba(124,239,255,.12);
+}
+
+body.ux-v2 .sysone-project-copy strong{
+  display:block;
+  font-size:1.10rem;
+  line-height:1.25;
+  margin-bottom:6px;
+}
+
+body.ux-v2 .sysone-project-copy p{
+  margin:0;
+  color:var(--sysone-muted);
+  font-size:.78rem;
+  line-height:1.65;
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-project-copy p{
+  color:rgba(16,32,43,.62);
+}
+
+body.ux-v2 .sysone-project-badge{
+  width:56px;
+  height:56px;
+  border-radius:19px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  font-size:1.15rem;
+  font-weight:900;
+  color:#f8fdff;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124,239,255,.24),
+      rgba(139,124,255,.14)
+    );
+  border:1px solid rgba(151,240,255,.22);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.13),
+    0 12px 30px rgba(0,0,0,.14);
+}
+
+body.ux-v2 .sysone-capability-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+body.ux-v2 .sysone-capability{
+  min-height:148px;
+  padding:17px;
+  border-radius:19px;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.08);
+  transition:
+    transform .25s var(--sysone-ease),
+    background-color .2s ease,
+    border-color .2s ease;
+}
+
+body.ux-v2 .sysone-capability:hover{
+  transform:translateY(-3px);
+  background:rgba(255,255,255,.055);
+  border-color:rgba(124,239,255,.18);
+}
+
+body.ux-v2 .sysone-capability-index{
+  display:block;
+  margin-bottom:24px;
+  color:rgba(124,239,255,.68);
+  font-size:.60rem;
+  font-weight:800;
+  letter-spacing:.10em;
+}
+
+body.ux-v2 .sysone-capability strong{
+  display:block;
+  margin-bottom:7px;
+  font-size:.82rem;
+}
+
+body.ux-v2 .sysone-capability p{
+  margin:0;
+  color:var(--sysone-muted);
+  font-size:.69rem;
+  line-height:1.55;
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-capability p{
+  color:rgba(16,32,43,.62);
+}
+
+
+/* =========================================================
+   SUPPORT / FOOTER
+========================================================= */
+
+body.ux-v2 .sysone-support{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-top:12px;
+  padding:17px 19px;
+  border-radius:18px;
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.07);
+}
+
+body.ux-v2 .sysone-support-copy{
+  display:flex;
+  align-items:center;
+  gap:11px;
+}
+
+body.ux-v2 .sysone-support-status{
+  width:9px;
+  height:9px;
+  flex:none;
+  border-radius:50%;
+  background:#62e89d;
+  box-shadow:0 0 13px rgba(98,232,157,.42);
+}
+
+body.ux-v2 .sysone-support-copy span{
+  display:block;
+  color:var(--sysone-muted);
+  font-size:.64rem;
+  margin-bottom:2px;
+}
+
+body.ux-v2 .sysone-support-copy strong{
+  display:block;
+  font-size:.76rem;
+}
+
+body.ux-v2 .sysone-support-mark{
+  color:rgba(255,255,255,.54);
+  font-size:.61rem;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+
+html[data-theme="light"] body.ux-v2 .sysone-support-mark{
+  color:rgba(16,32,43,.46);
+}
+
+body.ux-v2 .sysone-about-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-top:22px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+
+body.ux-v2 .sysone-about-footer small{
+  max-width:470px;
+  color:var(--sysone-muted);
+  font-size:.62rem;
+  line-height:1.55;
+}
+
+body.ux-v2 .sysone-about-done{
+  min-width:104px;
+  height:40px;
+  padding:0 16px;
+  border-radius:14px;
+  cursor:pointer;
+  color:#061014;
+  font-size:.70rem;
+  font-weight:800;
+  background:#e8fbff;
+  border:1px solid rgba(255,255,255,.65);
+  transition:
+    transform .2s var(--sysone-ease),
+    box-shadow .2s ease;
+}
+
+body.ux-v2 .sysone-about-done:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(124,239,255,.13);
+}
+
+body.ux-v2 .sysone-about-done:active{
+  transform:scale(.96);
+}
+
+
+/* =========================================================
+   OPEN ANIMATION — STAGGERED
+========================================================= */
+
+body.ux-v2 .sysone-reveal{
+  opacity:0;
+  transform:translate3d(0,12px,0);
+  transition:
+    opacity .45s ease,
+    transform .50s var(--sysone-ease);
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-reveal{
+  opacity:1;
+  transform:translate3d(0,0,0);
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-reveal:nth-child(1){
+  transition-delay:.08s;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-reveal:nth-child(2){
+  transition-delay:.13s;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-reveal:nth-child(3){
+  transition-delay:.18s;
+}
+
+body.ux-v2 .sysone-about-backdrop.is-open .sysone-reveal:nth-child(4){
+  transition-delay:.23s;
+}
+
+
+/* =========================================================
+   PERSISTENT WATERMARK
+========================================================= */
+
+body.ux-v2 .sysone-watermark{
+  position:fixed;
+  right:72px;
+  bottom:18px;
+  z-index:46;
+  height:42px;
+  padding:0 13px;
+  border-radius:14px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  color:rgba(240,249,255,.58);
+  background:rgba(5,8,12,.38);
+  border:1px solid rgba(255,255,255,.075);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+  transition:
+    color .2s ease,
+    background-color .2s ease,
+    border-color .2s ease,
+    transform .2s var(--sysone-ease),
+    opacity .2s ease;
+}
+
+body.ux-v2 .sysone-watermark:hover{
+  color:rgba(248,253,255,.92);
+  background:rgba(255,255,255,.055);
+  border-color:rgba(124,239,255,.15);
+  transform:translateY(-1px);
+}
+
+body.ux-v2 .sysone-watermark-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--sysone-accent);
+  box-shadow:0 0 10px rgba(124,239,255,.48);
+}
+
+body.ux-v2 .sysone-watermark span{
+  font-size:.58rem;
+  letter-spacing:.02em;
+}
+
+body.ux-v2 .sysone-watermark strong{
+  font-size:.61rem;
+  letter-spacing:.10em;
+}
+
+body.ux-v2.sysone-about-open .sysone-watermark,
+body.ux-v2.idle-mode .sysone-watermark{
+  opacity:0;
+  pointer-events:none;
+}
+
+.presentation:not(.hidden) ~ .sysone-watermark{
+  opacity:0;
+}
+
+
+/* =========================================================
+   AI CREDIT
+========================================================= */
+
+body.ux-v2 .sysone-ai-credit{
+  margin-left:auto;
+  padding-left:10px;
+  white-space:nowrap;
+  color:rgba(216,236,246,.46);
+  font-size:.52rem;
+  letter-spacing:.03em;
+}
+
+body.ux-v2 .sysone-ai-credit strong{
+  color:rgba(235,249,255,.72);
+  letter-spacing:.08em;
+}
+
+
+/* =========================================================
+   PRESENTATION CREDIT
+========================================================= */
+
+body.ux-v2 .sysone-presentation-credit{
+  position:absolute;
+  right:24px;
+  bottom:24px;
+  z-index:12;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:8px 11px;
+  border-radius:12px;
+  color:rgba(255,255,255,.52);
+  background:rgba(0,0,0,.20);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  font-size:.55rem;
+  letter-spacing:.03em;
+  pointer-events:none;
+}
+
+body.ux-v2 .sysone-presentation-credit strong{
+  color:rgba(255,255,255,.78);
+  letter-spacing:.10em;
+}
+
+
+/* =========================================================
+   RTL
+========================================================= */
+
+html[dir="rtl"] body.ux-v2 .sysone-about-close{
+  right:auto;
+  left:16px;
+}
+
+html[dir="rtl"] body.ux-v2 .sysone-about-hero::before{
+  right:auto;
+  left:-120px;
+}
+
+html[dir="rtl"] body.ux-v2 .sysone-support-mark{
+  text-align:left;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:760px){
+
+  body.ux-v2 .sysone-about-backdrop{
+    padding:8px;
+  }
+
+  body.ux-v2 .sysone-about-panel{
+    width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    border-radius:26px;
+  }
+
+  body.ux-v2 .sysone-about-hero{
+    min-height:270px;
+    padding:56px 22px 30px;
+  }
+
+  body.ux-v2 .sysone-about-hero::after{
+    left:22px;
+    right:22px;
+  }
+
+  body.ux-v2 .sysone-wordmark{
+    font-size:clamp(3.5rem,20vw,6rem);
+  }
+
+  body.ux-v2 .sysone-tagline{
+    font-size:.84rem;
+    line-height:1.58;
+  }
+
+  body.ux-v2 .sysone-about-body{
+    padding:22px;
+  }
+
+  body.ux-v2 .sysone-project-card{
+    grid-template-columns:1fr;
+  }
+
+  body.ux-v2 .sysone-project-badge{
+    grid-row:1;
+    width:48px;
+    height:48px;
+    border-radius:16px;
+  }
+
+  body.ux-v2 .sysone-capability-grid{
+    grid-template-columns:1fr;
+  }
+
+  body.ux-v2 .sysone-capability{
+    min-height:0;
+  }
+
+  body.ux-v2 .sysone-capability-index{
+    margin-bottom:12px;
+  }
+
+  body.ux-v2 .sysone-support{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  body.ux-v2 .sysone-about-footer{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  body.ux-v2 .sysone-about-done{
+    width:100%;
+  }
+
+  body.ux-v2 .sysone-watermark{
+    display:none;
+  }
+
+  body.ux-v2 .sysone-ai-credit{
+    display:none;
+  }
+
+  body.ux-v2 .sysone-presentation-credit{
+    right:12px;
+    bottom:74px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+html.reduce-motion body.ux-v2 .sysone-about-backdrop,
+html.reduce-motion body.ux-v2 .sysone-about-panel,
+html.reduce-motion body.ux-v2 .sysone-reveal,
+html.reduce-motion body.ux-v2 #sysoneAboutBtn *,
+html.reduce-motion body.ux-v2 .sysone-watermark{
+  transition-duration:.01ms!important;
+  animation-duration:.01ms!important;
+}
