@@ -180,7 +180,59 @@
      UX V2
 ========================================================= -->
 
-<body class="ux-v2">
+<body class="ux-v2 app-booting">
+
+<!-- ======================================================
+     FIRST VISIT WELCOME
+     Shows only once; controlled by app.js + localStorage
+======================================================= -->
+
+<section
+  aria-hidden="true"
+  class="first-visit-welcome hidden"
+  id="firstVisitWelcome"
+>
+  <div class="welcome-ambient welcome-ambient-a"></div>
+  <div class="welcome-ambient welcome-ambient-b"></div>
+
+  <div class="welcome-glass-orb" aria-hidden="true">
+    <span></span>
+  </div>
+
+  <div class="welcome-copy">
+    <span class="welcome-kicker">
+      UCHKO‘PRIK DIGITAL DISTRICT
+    </span>
+
+    <strong
+      dir="ltr"
+      id="welcomeWord"
+      lang="uz"
+    >
+      Xush kelibsiz
+    </strong>
+
+    <div class="welcome-meta">
+      <span id="welcomeLanguageName">
+        O‘zbekcha
+      </span>
+
+      <span aria-hidden="true">
+        ·
+      </span>
+
+      <span id="welcomeLanguageCounter">
+        1 / 10
+      </span>
+    </div>
+
+    <div id="welcomeFinal">
+      INTERAKTIV RAQAMLI TUMAN
+    </div>
+  </div>
+</section>
+
+
 
 <a
   class="skip-link"
@@ -1472,23 +1524,25 @@
       </button>
 
 
-      <!-- CENTRAL AI -->
+      <!-- CENTRAL SPHERE -->
 
       <button
+        aria-label="Digital Sphere"
         class="dock-item center"
-        data-nav="ai"
+        data-nav="sphere"
+        title="Digital Sphere"
         type="button"
       >
 
         <span class="dock-ai">
           <span
             class="icon"
-            data-icon="sparkles"
+            data-icon="globe"
           ></span>
         </span>
 
         <span>
-          AI
+          Sphere
         </span>
 
       </button>
@@ -1990,20 +2044,20 @@
 
 
 <button
-  aria-label="Sphere animatsiyasini sinash"
-  class="sphere-test-button glass floating"
-  id="sphereTestBtn"
-  title="Sphere animatsiyasini sinash"
+  aria-label="Uchko‘prik AI"
+  class="sphere-test-button floating-ai-button glass floating"
+  id="floatingAiBtn"
+  title="Uchko‘prik AI"
   type="button"
 >
 
   <span
     class="icon"
-    data-icon="globe"
+    data-icon="sparkles"
   ></span>
 
   <span class="sphere-test-label">
-    Sphere
+    AI
   </span>
 
 </button>
