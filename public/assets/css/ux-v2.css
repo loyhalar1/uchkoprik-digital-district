@@ -3351,8 +3351,8 @@ body.ux-v2.app-entered #floatingAiBtn{
 
 
 /* ---------------------------------------------------------
-   FIRST VISIT — iOS-STYLE MULTILINGUAL HELLO
-   Full-screen 80% glass. No logo, no decorative objects.
+   FIRST VISIT — iOS-STYLE DRAWN HELLO
+   50% glass overlay, lightweight SVG stroke animation.
 --------------------------------------------------------- */
 
 .first-visit-welcome{
@@ -3363,15 +3363,15 @@ body.ux-v2.app-entered #floatingAiBtn{
   overflow:hidden;
 
   background:
-    rgba(7,9,11,.80);
+    rgba(7,9,11,.50);
 
   backdrop-filter:
-    blur(28px)
-    saturate(118%);
+    blur(20px)
+    saturate(112%);
 
   -webkit-backdrop-filter:
-    blur(28px)
-    saturate(118%);
+    blur(20px)
+    saturate(112%);
 
   color:#fff;
 
@@ -3386,11 +3386,11 @@ body.ux-v2.app-entered #floatingAiBtn{
   position:absolute;
 
   left:50%;
-  top:47%;
+  top:46%;
 
   width:min(
-    920px,
-    calc(100vw - 40px)
+    1080px,
+    calc(100vw - 36px)
   );
 
   transform:
@@ -3401,14 +3401,20 @@ body.ux-v2.app-entered #floatingAiBtn{
   pointer-events:none;
 }
 
-#welcomeWord{
+.welcome-word-svg{
   display:block;
 
-  min-height:1.18em;
+  width:100%;
+  height:auto;
 
-  color:
-    rgba(255,255,255,.97);
+  overflow:visible;
 
+  --welcome-font-size:
+    166px;
+}
+
+.welcome-word-stroke,
+.welcome-word-fill{
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -3418,34 +3424,104 @@ body.ux-v2.app-entered #floatingAiBtn{
     sans-serif;
 
   font-size:
-    clamp(
-      4.4rem,
-      12vw,
-      10rem
-    );
+    var(--welcome-font-size);
 
   font-weight:300;
 
-  line-height:.98;
-
   letter-spacing:
-    -.065em;
+    -.055em;
+
+  dominant-baseline:
+    alphabetic;
 
   text-rendering:
     geometricPrecision;
 
   -webkit-font-smoothing:
     antialiased;
+}
 
-  text-shadow:
-    0 1px 0
-    rgba(255,255,255,.08);
+.welcome-word-stroke{
+  fill:transparent;
+
+  stroke:
+    rgba(255,255,255,.92);
+
+  stroke-width:1.25px;
+
+  stroke-linecap:round;
+  stroke-linejoin:round;
+
+  stroke-dasharray:1450;
+  stroke-dashoffset:1450;
+
+  opacity:0;
+}
+
+.welcome-word-fill{
+  fill:
+    rgba(255,255,255,.97);
+
+  stroke:
+    rgba(255,255,255,.10);
+
+  stroke-width:.35px;
+
+  opacity:0;
+}
+
+.welcome-word-svg.is-drawing
+.welcome-word-stroke{
+  animation:
+    welcomeStrokeDraw
+    1.12s
+    cubic-bezier(.22,1,.36,1)
+    forwards;
+}
+
+.welcome-word-svg.is-drawing
+.welcome-word-fill{
+  animation:
+    welcomeFillIn
+    .58s
+    cubic-bezier(.22,1,.36,1)
+    .60s
+    forwards;
+}
+
+@keyframes welcomeStrokeDraw{
+  0%{
+    opacity:0;
+    stroke-dashoffset:1450;
+  }
+
+  10%{
+    opacity:1;
+  }
+
+  100%{
+    opacity:.52;
+    stroke-dashoffset:0;
+  }
+}
+
+@keyframes welcomeFillIn{
+  0%{
+    opacity:0;
+    filter:blur(2px);
+  }
+
+  100%{
+    opacity:1;
+    filter:blur(0);
+  }
 }
 
 .welcome-start{
   position:absolute;
 
   left:50%;
+
   bottom:
     max(
       34px,
@@ -3455,10 +3531,11 @@ body.ux-v2.app-entered #floatingAiBtn{
       )
     );
 
+  /* This transform must never be replaced by language animations. */
   transform:
     translateX(-50%);
 
-  min-width:
+  width:
     min(
       260px,
       calc(100vw - 48px)
@@ -3469,36 +3546,39 @@ body.ux-v2.app-entered #floatingAiBtn{
   padding:
     0 28px;
 
+  box-sizing:
+    border-box;
+
   display:inline-flex;
   align-items:center;
   justify-content:center;
 
   border:
     1px solid
-    rgba(255,255,255,.24);
+    rgba(255,255,255,.22);
 
   border-radius:
     999px;
 
   background:
-    rgba(255,255,255,.10);
+    rgba(255,255,255,.09);
 
   backdrop-filter:
-    blur(16px)
-    saturate(120%);
+    blur(14px)
+    saturate(115%);
 
   -webkit-backdrop-filter:
-    blur(16px)
-    saturate(120%);
+    blur(14px)
+    saturate(115%);
 
   box-shadow:
     inset 0 1px 0
-    rgba(255,255,255,.18),
+    rgba(255,255,255,.16),
     0 10px 30px
-    rgba(0,0,0,.14);
+    rgba(0,0,0,.12);
 
   color:
-    rgba(255,255,255,.96);
+    rgba(255,255,255,.97);
 
   font-family:
     -apple-system,
@@ -3514,30 +3594,33 @@ body.ux-v2.app-entered #floatingAiBtn{
   letter-spacing:
     -.01em;
 
+  white-space:nowrap;
+
   cursor:pointer;
 
   transition:
-    transform .18s ease,
     background .18s ease,
-    border-color .18s ease;
+    border-color .18s ease,
+    box-shadow .18s ease;
 }
 
 .welcome-start:hover{
-  transform:
-    translateX(-50%)
-    scale(1.025);
-
   background:
-    rgba(255,255,255,.15);
+    rgba(255,255,255,.14);
 
   border-color:
-    rgba(255,255,255,.34);
+    rgba(255,255,255,.32);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255,255,255,.18),
+    0 12px 34px
+    rgba(0,0,0,.16);
 }
 
 .welcome-start:active{
-  transform:
-    translateX(-50%)
-    scale(.975);
+  background:
+    rgba(255,255,255,.07);
 }
 
 .welcome-start:focus-visible{
@@ -3551,32 +3634,36 @@ body.ux-v2.app-entered #floatingAiBtn{
 
 @media(max-width:760px){
   .welcome-content{
-    top:45%;
+    top:44%;
+    width:
+      calc(100vw - 22px);
   }
 
-  #welcomeWord{
-    font-size:
-      clamp(
-        3.8rem,
-        18vw,
-        6.8rem
-      );
-
-    letter-spacing:
-      -.055em;
+  .welcome-word-svg{
+    --welcome-font-size:
+      150px;
   }
 
   .welcome-start{
-    min-height:52px;
-    min-width:
+    width:
       min(
         230px,
         calc(100vw - 40px)
       );
+
+    min-height:52px;
   }
 }
 
 @media(prefers-reduced-motion:reduce){
+  .welcome-word-stroke{
+    display:none;
+  }
+
+  .welcome-word-fill{
+    opacity:1;
+  }
+
   .welcome-start{
     transition:none!important;
   }
