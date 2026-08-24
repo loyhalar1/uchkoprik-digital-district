@@ -645,46 +645,27 @@ function markerElement(item,kind,color,sequence=0){
   el.className=`map-data-marker ${kind==='mahalla'?'mfy-marker':'place-marker'} marker-${kind} marker-born`;
   el.setAttribute('aria-label',item.name||item.companyName||'');
   el.style.setProperty('--marker',color);
-  el.style.setProperty(
-    '--marker-delay',
-    `${Math.min(Math.max(sequence,0)*14,360)}ms`
-  );
+  el.style.setProperty('--marker-delay',`${Math.min(Math.max(sequence,0)*9,180)}ms`);
 
   el.innerHTML=`
-    <span class="liquid-location-pin">
-      <span class="liquid-pin-shadow"></span>
-
-      <span class="liquid-pin-shell">
-        <span class="liquid-pin-spectrum"></span>
-
-        <span class="liquid-pin-glass">
-          <span class="liquid-pin-hole">
-            <span class="liquid-pin-core"></span>
-          </span>
-        </span>
-
-        <span class="liquid-pin-shine"></span>
+    <span class="lite-location-pin">
+      <span class="lite-pin-head">
+        <span class="lite-pin-dot"></span>
+        <span class="lite-pin-glint"></span>
       </span>
+      <span class="lite-pin-tip"></span>
     </span>
   `;
 
   el.addEventListener('click',e=>{
     e.preventDefault();
     e.stopPropagation();
-
     hideMarkerHover();
     openDetail(item,kind);
   });
 
-  el.addEventListener(
-    'mouseenter',
-    ()=>showMarkerHover(item,kind,color)
-  );
-
-  el.addEventListener(
-    'mouseleave',
-    hideMarkerHover
-  );
+  el.addEventListener('mouseenter',()=>showMarkerHover(item,kind,color));
+  el.addEventListener('mouseleave',hideMarkerHover);
 
   return el;
 }
