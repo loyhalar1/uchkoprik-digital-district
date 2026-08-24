@@ -183,8 +183,8 @@
 <body class="ux-v2 app-booting">
 
 <!-- ======================================================
-     FIRST VISIT WELCOME
-     Shows only once; controlled by app.js + localStorage
+     FIRST VISIT — iOS-STYLE HELLO
+     Only greeting text + multilingual Start button.
 ======================================================= -->
 
 <section
@@ -192,44 +192,27 @@
   class="first-visit-welcome hidden"
   id="firstVisitWelcome"
 >
-  <div class="welcome-ambient welcome-ambient-a"></div>
-  <div class="welcome-ambient welcome-ambient-b"></div>
-
-  <div class="welcome-glass-orb" aria-hidden="true">
-    <span></span>
-  </div>
-
-  <div class="welcome-copy">
-    <span class="welcome-kicker">
-      UCHKO‘PRIK DIGITAL DISTRICT
-    </span>
-
+  <div
+    class="welcome-content"
+    aria-live="polite"
+    aria-atomic="true"
+  >
     <strong
       dir="ltr"
       id="welcomeWord"
       lang="uz"
     >
-      Xush kelibsiz
+      Salom
     </strong>
-
-    <div class="welcome-meta">
-      <span id="welcomeLanguageName">
-        O‘zbekcha
-      </span>
-
-      <span aria-hidden="true">
-        ·
-      </span>
-
-      <span id="welcomeLanguageCounter">
-        1 / 10
-      </span>
-    </div>
-
-    <div id="welcomeFinal">
-      INTERAKTIV RAQAMLI TUMAN
-    </div>
   </div>
+
+  <button
+    class="welcome-start"
+    id="welcomeStart"
+    type="button"
+  >
+    Boshlash
+  </button>
 </section>
 
 
